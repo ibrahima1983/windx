@@ -30,7 +30,7 @@ class DataLoader {
         }
     }
 
-    static async loadSchema(manufacturingTypeId) {
+    static async loadSchema(manufacturingTypeId, pageType = 'profile') {
         console.log('🦆 [SCHEMA] ========================================');
         console.log('🦆 [SCHEMA] Starting schema load process...');
 
@@ -40,9 +40,10 @@ class DataLoader {
         }
 
         console.log('🦆 [SCHEMA] Manufacturing type ID:', manufacturingTypeId);
+        console.log('🦆 [SCHEMA] Page type:', pageType);
 
         try {
-            const url = `/api/v1/admin/entry/profile/schema/${manufacturingTypeId}`;
+            const url = `/api/v1/admin/entry/profile/schema/${manufacturingTypeId}?page_type=${encodeURIComponent(pageType)}`;
             console.log('🦆 [SCHEMA] Constructed URL:', url);
             console.log('🦆 [SCHEMA] Initiating fetch request...');
 
@@ -105,7 +106,7 @@ class DataLoader {
         }
     }
 
-    static async loadDynamicHeaders(manufacturingTypeId) {
+    static async loadDynamicHeaders(manufacturingTypeId, pageType = 'profile') {
         console.log('🦆 [HEADERS] ========================================');
         console.log('🦆 [HEADERS] Starting dynamic headers load process...');
 
@@ -115,9 +116,10 @@ class DataLoader {
         }
 
         console.log('🦆 [HEADERS] Manufacturing type ID:', manufacturingTypeId);
+        console.log('🦆 [HEADERS] Page type:', pageType);
 
         try {
-            const url = `/api/v1/admin/entry/profile/headers/${manufacturingTypeId}`;
+            const url = `/api/v1/admin/entry/profile/headers/${manufacturingTypeId}?page_type=${encodeURIComponent(pageType)}`;
             console.log('🦆 [HEADERS] Constructed URL:', url);
             console.log('🦆 [HEADERS] Initiating fetch request...');
 

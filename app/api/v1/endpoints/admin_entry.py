@@ -53,7 +53,7 @@ templates = Jinja2Templates(directory="app/templates")
     "/profile/schema/{manufacturing_type_id}",
     response_model=ProfileSchema,
     summary="Get Profile Form Schema (Admin)",
-    description="Get dynamic form schema for profile data entry based on manufacturing type (admin interface)",
+    description="Get dynamic form schema for profile data entry based on manufacturing type and page type (admin interface)",
     response_description="Profile form schema with sections and fields",
     operation_id="getAdminProfileSchema",
     responses={
@@ -70,16 +70,21 @@ async def get_profile_schema(
     manufacturing_type_id: PositiveInt,
     current_superuser: CurrentSuperuser,
     db: DBSession,
+    page_type: Annotated[
+        str,
+        Query(description="Page type: profile, accessories, glazing"),
+    ] = "profile",
 ) -> ProfileSchema:
-    """Get profile form schema for a manufacturing type (admin interface).
+    """Get profile form schema for a manufacturing type and page type (admin interface).
 
     Generates dynamic form schema based on the attribute hierarchy
-    defined for the specified manufacturing type.
+    defined for the specified manufacturing type and page type.
 
     Args:
         manufacturing_type_id (PositiveInt): Manufacturing type ID
         current_superuser (User): Current authenticated superuser
         db (AsyncSession): Database session
+        page_type (str): Page type (profile, accessories, glazing)
 
     Returns:
         ProfileSchema: Generated form schema with sections and conditional logic
@@ -88,19 +93,19 @@ async def get_profile_schema(
         NotFoundException: If manufacturing type not found
 
     Example:
-        GET /api/v1/admin/entry/profile/schema/1
+        GET /api/v1/admin/entry/profile/schema/1?page_type=profile
     """
     from app.services.entry import EntryService
 
     entry_service = EntryService(db)
-    return await entry_service.get_profile_schema(manufacturing_type_id)
+    return await entry_service.get_profile_schema(manufacturing_type_id, page_type)
 
 
 @router.get(
     "/profile/headers/{manufacturing_type_id}",
     response_model=list[str],
     summary="Get Dynamic Preview Headers (Admin)",
-    description="Get dynamic preview headers for a manufacturing type based on attribute nodes",
+    description="Get dynamic preview headers for a manufacturing type and page type based on attribute nodes",
     response_description="List of preview headers in correct order",
     operation_id="getAdminPreviewHeaders",
     responses={
@@ -117,16 +122,21 @@ async def get_preview_headers(
     manufacturing_type_id: PositiveInt,
     current_superuser: CurrentSuperuser,
     db: DBSession,
+    page_type: Annotated[
+        str,
+        Query(description="Page type: profile, accessories, glazing"),
+    ] = "profile",
 ) -> list[str]:
-    """Get dynamic preview headers for a manufacturing type (admin interface).
+    """Get dynamic preview headers for a manufacturing type and page type (admin interface).
 
     Generates dynamic preview headers based on the attribute hierarchy
-    defined for the specified manufacturing type, respecting sort_order.
+    defined for the specified manufacturing type and page type, respecting sort_order.
 
     Args:
         manufacturing_type_id (PositiveInt): Manufacturing type ID
         current_superuser (User): Current authenticated superuser
         db (AsyncSession): Database session
+        page_type (str): Page type (profile, accessories, glazing)
 
     Returns:
         list[str]: Ordered list of preview headers
@@ -135,13 +145,13 @@ async def get_preview_headers(
         NotFoundException: If manufacturing type not found
 
     Example:
-        GET /api/v1/admin/entry/profile/headers/1
+        GET /api/v1/admin/entry/profile/headers/1?page_type=profile
         Response: ["id", "Name", "Type", "Material", "Company", ...]
     """
     from app.services.entry import EntryService
 
     entry_service = EntryService(db)
-    return await entry_service.generate_preview_headers(manufacturing_type_id)
+    return await entry_service.generate_preview_headers(manufacturing_type_id, page_type)
 
 
 @router.post(
@@ -166,6 +176,10 @@ async def save_profile_data(
     profile_data: ProfileEntryData,
     current_superuser: CurrentSuperuser,
     db: DBSession,
+    page_type: Annotated[
+        str,
+        Query(description="Page type: profile, accessories, glazing"),
+    ] = "profile",
 ) -> Configuration:
     """Save profile configuration data (admin interface).
 
@@ -200,7 +214,7 @@ async def save_profile_data(
 
     entry_service = EntryService(db)
     try:
-        return await entry_service.save_profile_configuration(profile_data, current_superuser)
+        return await entry_service.save_profile_configuration(profile_data, current_superuser, page_type)
     except ValidationException as e:
         import logging
         logger = logging.getLogger("uvicorn.error")

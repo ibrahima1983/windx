@@ -1,7 +1,8 @@
 class ConfigurationSaver {
-    static async saveConfiguration(saveData) {
+    static async saveConfiguration(saveData, pageType = 'profile') {
         try {
-            const response = await fetch('/api/v1/admin/entry/profile/save', {
+            const url = `/api/v1/admin/entry/profile/save?page_type=${encodeURIComponent(pageType)}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

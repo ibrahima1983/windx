@@ -220,11 +220,12 @@ class EntryService(BaseService):
         self.condition_evaluator = ConditionEvaluator()
         self.rbac_service = RBACService(db)
 
-    async def get_profile_schema(self, manufacturing_type_id: int) -> ProfileSchema:
-        """Get profile form schema for a manufacturing type.
+    async def get_profile_schema(self, manufacturing_type_id: int, page_type: str = "profile") -> ProfileSchema:
+        """Get profile form schema for a manufacturing type and page type.
 
         Args:
             manufacturing_type_id: Manufacturing type ID
+            page_type: Page type (profile, accessories, glazing)
 
         Returns:
             ProfileSchema: Generated form schema
@@ -240,10 +241,13 @@ class EntryService(BaseService):
         if not manufacturing_type:
             raise NotFoundException(f"Manufacturing type {manufacturing_type_id} not found")
 
-        # Get attribute nodes for this manufacturing type
+        # Get attribute nodes for this manufacturing type and page type
         stmt = (
             select(AttributeNode)
-            .where(AttributeNode.manufacturing_type_id == manufacturing_type_id)
+            .where(
+                AttributeNode.manufacturing_type_id == manufacturing_type_id,
+                AttributeNode.page_type == page_type
+            )
             .order_by(AttributeNode.ltree_path, AttributeNode.sort_order)
         )
         result = await self.db.execute(stmt)
@@ -531,11 +535,12 @@ class EntryService(BaseService):
         # Format the value normally if field is applicable
         return self.format_preview_value(value)
 
-    async def validate_profile_data(self, data: ProfileEntryData) -> dict[str, Any]:
+    async def validate_profile_data(self, data: ProfileEntryData, page_type: str = "profile") -> dict[str, Any]:
         """Validate profile data against schema rules.
 
         Args:
             data: Profile data to validate
+            page_type: Page type (profile, accessories, glazing)
 
         Returns:
             dict[str, Any]: Validation result with errors if any
@@ -547,7 +552,7 @@ class EntryService(BaseService):
 
         # Get schema for validation rules
         try:
-            schema = await self.get_profile_schema(data.manufacturing_type_id)
+            schema = await self.get_profile_schema(data.manufacturing_type_id, page_type)
         except NotFoundException:
             raise ValidationException(
                 "Invalid manufacturing type", field_errors={"manufacturing_type_id": "Not found"}
@@ -810,12 +815,13 @@ class EntryService(BaseService):
 
     # @require(ConfigurationCreator)
     # @require(AdminAccess)  # Allow admins to save configurations
-    async def save_profile_configuration(self, data: ProfileEntryData, user: User) -> Configuration:
+    async def save_profile_configuration(self, data: ProfileEntryData, user: User, page_type: str = "profile") -> Configuration:
         """Save profile configuration data with proper customer relationship.
 
         Args:
             data: Profile data to save
             user: Current user
+            page_type: Page type (profile, accessories, glazing)
 
         Returns:
             Configuration: Created configuration
@@ -825,7 +831,7 @@ class EntryService(BaseService):
             NotFoundException: If manufacturing type not found
         """
         # Validate data first
-        await self.validate_profile_data(data)
+        await self.validate_profile_data(data, page_type)
 
         # Get manufacturing type for base price/weight
         stmt = select(ManufacturingType).where(ManufacturingType.id == data.manufacturing_type_id)
@@ -1008,24 +1014,29 @@ class EntryService(BaseService):
     _mapping_cache: dict[int, dict[str, str]] = {}
     _reverse_mapping_cache: dict[int, dict[str, str]] = {}
 
-    async def generate_preview_headers(self, manufacturing_type_id: int) -> list[str]:
+    async def generate_preview_headers(self, manufacturing_type_id: int, page_type: str = "profile") -> list[str]:
         """Generate dynamic preview headers from attribute nodes.
         
         Args:
             manufacturing_type_id: Manufacturing type ID
+            page_type: Page type (profile, accessories, glazing)
             
         Returns:
             list[str]: Ordered list of preview headers
         """
-        # Check cache first
-        if manufacturing_type_id in self._header_cache:
-            return self._header_cache[manufacturing_type_id]
+        # Create cache key that includes page_type
+        cache_key = f"{manufacturing_type_id}_{page_type}"
         
-        # Get attribute nodes for this manufacturing type, ordered by sort_order
+        # Check cache first
+        if cache_key in self._header_cache:
+            return self._header_cache[cache_key]
+        
+        # Get attribute nodes for this manufacturing type and page type, ordered by sort_order
         stmt = (
             select(AttributeNode)
             .where(
                 AttributeNode.manufacturing_type_id == manufacturing_type_id,
+                AttributeNode.page_type == page_type,
                 AttributeNode.node_type == "attribute"  # Only attributes generate headers
             )
             .order_by(AttributeNode.sort_order, AttributeNode.name)
@@ -1042,7 +1053,7 @@ class EntryService(BaseService):
             headers.append(header)
         
         # Cache the result
-        self._header_cache[manufacturing_type_id] = headers
+        self._header_cache[cache_key] = headers
         return headers
 
     async def generate_header_mapping(self, manufacturing_type_id: int) -> dict[str, str]:

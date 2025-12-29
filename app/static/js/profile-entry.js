@@ -5,6 +5,7 @@ function profileEntryApp(options = {}) {
     return {
         // State
         manufacturingTypeId: window.INITIAL_MANUFACTURING_TYPE_ID || null,
+        pageType: window.INITIAL_PAGE_TYPE || 'profile',
         manufacturingTypes: [],
         schema: null,
         formData: {},
@@ -119,7 +120,7 @@ function profileEntryApp(options = {}) {
                 this.loading = true;
                 try {
                     const [schema, headers, previews] = await Promise.all([
-                        DataLoader.loadSchema(this.manufacturingTypeId),
+                        DataLoader.loadSchema(this.manufacturingTypeId, this.pageType),
                         this.loadDynamicHeaders(),
                         DataLoader.loadPreviews(this.manufacturingTypeId)
                     ]);
@@ -193,7 +194,7 @@ function profileEntryApp(options = {}) {
             this.loading = true;
             this.error = null;
             try {
-                const schema = await DataLoader.loadSchema(this.manufacturingTypeId);
+                const schema = await DataLoader.loadSchema(this.manufacturingTypeId, this.pageType);
                 this.schema = this.processSchema(schema);
             } catch (err) {
                 this.error = err.message;
@@ -228,8 +229,8 @@ function profileEntryApp(options = {}) {
             this.headersError = null;
 
             try {
-                console.log('🦆 [HEADERS] Loading dynamic headers for manufacturing type:', this.manufacturingTypeId);
-                const headers = await DataLoader.loadDynamicHeaders(this.manufacturingTypeId);
+                console.log('🦆 [HEADERS] Loading dynamic headers for manufacturing type:', this.manufacturingTypeId, 'page type:', this.pageType);
+                const headers = await DataLoader.loadDynamicHeaders(this.manufacturingTypeId, this.pageType);
                 
                 this.dynamicHeaders = headers;
                 
@@ -601,7 +602,7 @@ function profileEntryApp(options = {}) {
 
             try {
                 const saveData = this.prepareSaveData();
-                const result = await ConfigurationSaver.saveConfiguration(saveData);
+                const result = await ConfigurationSaver.saveConfiguration(saveData, this.pageType);
 
                 if (result.success) {
                     showToast('Configuration saved successfully!', 'success');
@@ -719,7 +720,7 @@ function profileEntryApp(options = {}) {
                 const saveData = this.prepareSaveData();
                 console.log('🔄 Sending data to server:', saveData);
                 
-                const result = await ConfigurationSaver.saveConfiguration(saveData);
+                const result = await ConfigurationSaver.saveConfiguration(saveData, this.pageType);
                 console.log('📡 Server response:', result);
                 
                 if (result.success) {

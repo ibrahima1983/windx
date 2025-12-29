@@ -660,6 +660,7 @@
 <script>
 // Pass server-side data to JavaScript
 window.INITIAL_MANUFACTURING_TYPE_ID = {{ manufacturing_type_id or 'null' }};
+window.INITIAL_PAGE_TYPE = {{ page_type|tojson if page_type is defined else '"profile"' }};
 
 document.addEventListener('alpine:init', () => {
     // Add a custom directive for tooltips
