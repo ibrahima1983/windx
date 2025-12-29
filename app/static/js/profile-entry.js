@@ -122,11 +122,11 @@ function profileEntryApp(options = {}) {
                     const [schema, headers, previews] = await Promise.all([
                         DataLoader.loadSchema(this.manufacturingTypeId, this.pageType),
                         this.loadDynamicHeaders(),
-                        DataLoader.loadPreviews(this.manufacturingTypeId)
+                        this.loadPreviews()
                     ]);
                     
                     this.schema = this.processSchema(schema);
-                    this.savedConfigurations = previews;
+                    // previews are already loaded by this.loadPreviews()
                     console.log('🦆 [STEP 2] Data loading completed');
                 } catch (err) {
                     console.error('🦆 [ERROR] Failed to load data:', err);
@@ -204,15 +204,31 @@ function profileEntryApp(options = {}) {
         },
 
         async loadPreviews() {
+            console.log('🦆 [PREVIEWS] ========================================');
+            console.log('🦆 [PREVIEWS] 🔥 CACHE BUSTED VERSION 3 - DEBUGGING DATA LOADING 🔥');
+            console.log('🦆 [PREVIEWS] Starting to load previews...');
+            console.log('🦆 [PREVIEWS] Manufacturing type ID:', this.manufacturingTypeId);
+            
             try {
                 this.savedConfigurations = await DataLoader.loadPreviews(this.manufacturingTypeId);
+                
+                console.log('🦆 [PREVIEWS] ✅ Loaded configurations:', this.savedConfigurations);
+                console.log('🦆 [PREVIEWS] Configuration count:', this.savedConfigurations.length);
+                console.log('🦆 [PREVIEWS] First configuration:', this.savedConfigurations[0]);
                 
                 // Initialize search engine with loaded configurations
                 this.searchEngine.initialize(this.savedConfigurations);
                 this.updateSearchState();
                 
+                console.log('🦆 [PREVIEWS] ✅ Search engine initialized');
+                console.log('🦆 [PREVIEWS] Search state:', this.searchEngine.getSearchState());
+                console.log('🦆 [PREVIEWS] 🎯 FINAL CHECK - this.savedConfigurations length:', this.savedConfigurations.length);
+                console.log('🦆 [PREVIEWS] 🎯 FINAL CHECK - this.savedConfigurations:', this.savedConfigurations);
+                
+                return this.savedConfigurations;
+                
             } catch (err) {
-                console.error('Failed to load previews:', err);
+                console.error('🦆 [PREVIEWS] ❌ Failed to load previews:', err);
                 this.savedConfigurations = [];
                 this.searchEngine.initialize([]);
                 this.updateSearchState();

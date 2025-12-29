@@ -33,6 +33,7 @@ class DataLoader {
     static async loadSchema(manufacturingTypeId, pageType = 'profile') {
         console.log('🦆 [SCHEMA] ========================================');
         console.log('🦆 [SCHEMA] Starting schema load process...');
+        console.log('🦆 [SCHEMA] 🔥 CACHE BUSTED VERSION 2 - UPDATED WITH PAGE_TYPE SUPPORT 🔥');
 
         if (!manufacturingTypeId) {
             console.warn('🦆 [SCHEMA] ⚠️ No manufacturing type ID - aborting');
@@ -45,6 +46,7 @@ class DataLoader {
         try {
             const url = `/api/v1/admin/entry/profile/schema/${manufacturingTypeId}?page_type=${encodeURIComponent(pageType)}`;
             console.log('🦆 [SCHEMA] Constructed URL:', url);
+            console.log('🦆 [SCHEMA] 🎯 NOTICE: URL INCLUDES page_type PARAMETER!');
             console.log('🦆 [SCHEMA] Initiating fetch request...');
 
             const response = await fetch(url, {
@@ -81,27 +83,49 @@ class DataLoader {
     }
 
     static async loadPreviews(manufacturingTypeId) {
-        if (!manufacturingTypeId) return [];
+        console.log('🦆 [PREVIEWS] ========================================');
+        console.log('🦆 [PREVIEWS] 🔥 CACHE BUSTED VERSION 3 - DEBUGGING PREVIEWS API 🔥');
+        console.log('🦆 [PREVIEWS] Loading previews for manufacturing type:', manufacturingTypeId);
+        
+        if (!manufacturingTypeId) {
+            console.warn('🦆 [PREVIEWS] ⚠️ No manufacturing type ID - returning empty array');
+            return [];
+        }
 
         try {
-            const response = await fetch(`/api/v1/admin/entry/profile/previews/${manufacturingTypeId}`, {
+            const url = `/api/v1/admin/entry/profile/previews/${manufacturingTypeId}`;
+            console.log('🦆 [PREVIEWS] Constructed URL:', url);
+            console.log('🦆 [PREVIEWS] Making fetch request...');
+            
+            const response = await fetch(url, {
                 credentials: 'include'  // Include cookies for admin authentication
             });
             
+            console.log('🦆 [PREVIEWS] Response status:', response.status);
+            console.log('🦆 [PREVIEWS] Response ok:', response.ok);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🦆 [PREVIEWS] ✨ RAW API RESPONSE:', data);
+                console.log('🦆 [PREVIEWS] ✨ Headers count:', data.headers?.length || 0);
+                console.log('🦆 [PREVIEWS] ✨ Rows count:', data.rows?.length || 0);
+                console.log('🦆 [PREVIEWS] ✨ First row:', data.rows?.[0]);
+                
                 const savedConfigurations = data.rows || [];
-                console.log(`Loaded ${savedConfigurations.length} previews`);
+                console.log(`🦆 [PREVIEWS] ✅ Processed ${savedConfigurations.length} previews`);
                 return savedConfigurations;
             } else if (response.status === 403) {
-                console.warn('🔒 Preview access forbidden - user may not have permission');
+                console.warn('🦆 [PREVIEWS] 🔒 Preview access forbidden - user may not have permission');
                 return [];
             } else {
-                console.warn(`Failed to load previews: ${response.status}`);
+                console.warn(`🦆 [PREVIEWS] ⚠️ Failed to load previews: ${response.status}`);
+                const errorText = await response.text();
+                console.error('🦆 [PREVIEWS] Error response:', errorText);
                 return [];
             }
         } catch (err) {
-            console.error('Failed to load previews:', err);
+            console.error('🦆 [PREVIEWS] ❌ Exception caught:', err);
+            console.error('🦆 [PREVIEWS] Error stack:', err.stack);
             return [];
         }
     }
@@ -109,6 +133,7 @@ class DataLoader {
     static async loadDynamicHeaders(manufacturingTypeId, pageType = 'profile') {
         console.log('🦆 [HEADERS] ========================================');
         console.log('🦆 [HEADERS] Starting dynamic headers load process...');
+        console.log('🦆 [HEADERS] 🔥 CACHE BUSTED VERSION 2 - UPDATED WITH PAGE_TYPE SUPPORT 🔥');
 
         if (!manufacturingTypeId) {
             console.warn('🦆 [HEADERS] ⚠️ No manufacturing type ID - aborting');
@@ -121,6 +146,7 @@ class DataLoader {
         try {
             const url = `/api/v1/admin/entry/profile/headers/${manufacturingTypeId}?page_type=${encodeURIComponent(pageType)}`;
             console.log('🦆 [HEADERS] Constructed URL:', url);
+            console.log('🦆 [HEADERS] 🎯 NOTICE: URL INCLUDES page_type PARAMETER!');
             console.log('🦆 [HEADERS] Initiating fetch request...');
 
             const response = await fetch(url, {
