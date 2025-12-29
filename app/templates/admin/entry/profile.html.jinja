@@ -6,7 +6,7 @@
 {% block title %}Profile Entry - {{ super() }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/profile-entry.css?v=14">
+<link rel="stylesheet" href="/static/css/profile-entry.css?v=16">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/dist/tippy.css">
 {% endblock %}
 
@@ -720,6 +720,45 @@ window.showToast = function(message, type = 'info', duration = 4000) {
         }, 300);
     }, duration);
 };
+</script>
+
+<!-- Sidebar Collapse Handler -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle sidebar collapse state for main content expansion
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+    
+    if (sidebar && mainContent) {
+        // Create a MutationObserver to watch for class changes on the sidebar
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isCollapsed = sidebar.classList.contains('collapsed');
+                    
+                    if (isCollapsed) {
+                        mainContent.classList.add('sidebar-collapsed');
+                        console.log('🔧 Sidebar collapsed - expanding main content');
+                    } else {
+                        mainContent.classList.remove('sidebar-collapsed');
+                        console.log('🔧 Sidebar expanded - restoring main content width');
+                    }
+                }
+            });
+        });
+        
+        // Start observing
+        observer.observe(sidebar, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+        
+        // Check initial state
+        if (sidebar.classList.contains('collapsed')) {
+            mainContent.classList.add('sidebar-collapsed');
+        }
+    }
+});
 </script>
 
 <!-- Load window utility functions -->

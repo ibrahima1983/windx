@@ -17,10 +17,17 @@ body, html {
     max-width: 100vw !important;
 }
 
-/* Ensure main content area is constrained */
+/* Ensure main content area is constrained and responsive to sidebar state */
 .main-content {
     max-width: calc(100vw - 260px) !important;
     overflow-x: hidden !important;
+    transition: max-width 0.3s ease, margin-left 0.3s ease;
+}
+
+/* When sidebar is collapsed, expand main content */
+body:has(.sidebar.collapsed) .main-content,
+.main-content.sidebar-collapsed {
+    max-width: calc(100vw - 70px) !important;
 }
 
 /* For no-sidebar layout */
@@ -35,6 +42,26 @@ body, html {
     margin-left: 0 !important;
     margin-right: auto !important;
     overflow: hidden; /* Prevent content from overflowing */
+}
+
+/* Ensure tables and content expand when sidebar is collapsed */
+.main-content.sidebar-collapsed .tabbed-interface,
+.main-content.sidebar-collapsed .tab-content,
+.main-content.sidebar-collapsed .tab-pane {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* Ensure search and preview sections expand */
+.main-content.sidebar-collapsed .space-y-6 > div {
+    max-width: 100% !important;
+}
+
+/* Ensure table containers expand */
+.main-content.sidebar-collapsed .table-container,
+.main-content.sidebar-collapsed .overflow-x-auto {
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 .tab-buttons {
@@ -560,14 +587,24 @@ body, html {
 /* Responsive Table Container Classes */
 .responsive-table-container {
     max-width: calc(100vw - 320px); /* Account for sidebar */
+    transition: max-width 0.3s ease;
 }
 
 .responsive-table-scroll {
     max-width: calc(100vw - 320px); /* Account for sidebar */
+    transition: max-width 0.3s ease;
 }
 
 .responsive-table {
     min-width: 1200px; /* Base minimum width */
+}
+
+/* When sidebar is collapsed, expand table containers */
+body:has(.sidebar.collapsed) .responsive-table-container,
+body:has(.sidebar.collapsed) .responsive-table-scroll,
+.main-content.sidebar-collapsed .responsive-table-container,
+.main-content.sidebar-collapsed .responsive-table-scroll {
+    max-width: calc(100vw - 130px) !important; /* Account for collapsed sidebar + padding */
 }
 
 /* Responsive breakpoints for different screen sizes */
@@ -579,6 +616,14 @@ body, html {
     .responsive-table {
         min-width: 1000px;
     }
+    
+    /* Collapsed sidebar state for this breakpoint */
+    body:has(.sidebar.collapsed) .responsive-table-container,
+    body:has(.sidebar.collapsed) .responsive-table-scroll,
+    .main-content.sidebar-collapsed .responsive-table-container,
+    .main-content.sidebar-collapsed .responsive-table-scroll {
+        max-width: calc(100vw - 110px) !important;
+    }
 }
 
 @media (max-width: 1400px) {
@@ -589,6 +634,14 @@ body, html {
     .responsive-table {
         min-width: 900px;
     }
+    
+    /* Collapsed sidebar state for this breakpoint */
+    body:has(.sidebar.collapsed) .responsive-table-container,
+    body:has(.sidebar.collapsed) .responsive-table-scroll,
+    .main-content.sidebar-collapsed .responsive-table-container,
+    .main-content.sidebar-collapsed .responsive-table-scroll {
+        max-width: calc(100vw - 100px) !important;
+    }
 }
 
 @media (max-width: 1200px) {
@@ -598,6 +651,14 @@ body, html {
     }
     .responsive-table {
         min-width: 800px;
+    }
+    
+    /* Already collapsed at this breakpoint, so same width */
+    body:has(.sidebar.collapsed) .responsive-table-container,
+    body:has(.sidebar.collapsed) .responsive-table-scroll,
+    .main-content.sidebar-collapsed .responsive-table-container,
+    .main-content.sidebar-collapsed .responsive-table-scroll {
+        max-width: calc(100vw - 80px) !important;
     }
 }
 
