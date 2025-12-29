@@ -51,7 +51,72 @@ function profileEntryApp(options = {}) {
         // Methods
         switchTab(tabName) {
             this.activeTab = tabName;
+            this.updateUrlState();
             console.log('Switched to tab:', tabName);
+        },
+
+        updateUrlState() {
+            // Update URL with current tab state only
+            const url = new URL(window.location);
+            url.searchParams.set('tab', this.activeTab);
+            
+            // Update URL without triggering page reload
+            window.history.replaceState(
+                { 
+                    tab: this.activeTab,
+                    pageType: this.pageType 
+                }, 
+                '', 
+                url
+            );
+            
+            // Store in session storage for persistence
+            sessionStorage.setItem('entryPageState', JSON.stringify({
+                tab: this.activeTab,
+                pageType: this.pageType,
+                timestamp: Date.now()
+            }));
+            
+            console.log('🔗 URL state updated:', { tab: this.activeTab });
+        },
+
+        loadUrlState() {
+            // Load state from URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlTab = urlParams.get('tab');
+            
+            // Load from session storage as fallback
+            const sessionState = sessionStorage.getItem('entryPageState');
+            let sessionData = null;
+            
+            if (sessionState) {
+                try {
+                    sessionData = JSON.parse(sessionState);
+                    // Check if session data is not too old (24 hours)
+                    if (Date.now() - sessionData.timestamp > 24 * 60 * 60 * 1000) {
+                        sessionData = null;
+                        sessionStorage.removeItem('entryPageState');
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse session state:', e);
+                    sessionStorage.removeItem('entryPageState');
+                }
+            }
+            
+            // Apply state with priority: URL > Session > Default
+            if (urlTab && ['input', 'preview'].includes(urlTab)) {
+                this.activeTab = urlTab;
+            } else if (sessionData && sessionData.tab) {
+                this.activeTab = sessionData.tab;
+            }
+            
+            console.log('🔗 Loaded URL state:', { 
+                tab: this.activeTab,
+                source: urlTab ? 'URL' : sessionData ? 'Session' : 'Default'
+            });
+            
+            // Update URL to reflect current state (in case we loaded from session)
+            this.updateUrlState();
         },
 
         async init() {
@@ -137,6 +202,9 @@ function profileEntryApp(options = {}) {
             } else {
                 console.warn('🦆 [WARNING] No manufacturingTypeId provided - cannot load schema');
             }
+
+            // Load URL state for tab and input view
+            this.loadUrlState();
 
             // Setup navigation guards
             SessionManager.setupNavigationGuards(() => this.hasUnsavedData);
