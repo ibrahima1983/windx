@@ -496,7 +496,6 @@ class RBACQueryFilter:
 # Note: Global RBAC service instance removed - use session-specific instances instead
 # Each authorization check creates its own RBACService instance with proper database session
 
-
 def require(*requirements) -> Callable:
     """Advanced decorator supporting multiple authorization patterns.
 
@@ -553,13 +552,13 @@ def require(*requirements) -> Callable:
                 except Exception as e:
                     # Allow certain exceptions to pass through instead of converting to 403
                     from app.core.exceptions import NotFoundException
-                    
+
                     if isinstance(e, (NotFoundException, HTTPException)):
                         # These exceptions should propagate up (404, etc.)
                         # Don't convert them to 403 - let the service handle them
                         logger.debug(f"Allowing exception to pass through: {e}")
                         raise e
-                    
+
                     logger.error(f"Requirement evaluation error: {e}")
                     continue
 
@@ -721,7 +720,7 @@ async def _check_ownership_requirement(
     """
     # Extract resource ID from function parameters
     resource_id = _extract_resource_id(ownership.id_param, func, args, kwargs)
-    
+
     if resource_id is None:
         logger.warning(f"Could not extract {ownership.id_param} from {func.__name__} parameters")
         return False

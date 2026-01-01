@@ -1065,8 +1065,9 @@ class EntryService(BaseService):
         result = await self.db.execute(stmt)
         attribute_nodes = result.scalars().all()
         
-        # Generate headers list starting with id and Name
-        headers = ["id", "Name"]
+        # Generate headers list starting with id only
+        # All attributes including "name" will be processed and get proper labels
+        headers = ["id"]
         
         for node in attribute_nodes:
             # Use the human-readable label as the header
@@ -1104,8 +1105,7 @@ class EntryService(BaseService):
         
         # Generate mapping starting with special cases
         mapping = {
-            "id": "id",
-            "Name": "name"
+            "id": "id"
         }
         
         for node in attribute_nodes:
@@ -1245,7 +1245,10 @@ class EntryService(BaseService):
 
         if isinstance(data, Configuration):
             row_data["id"] = data.id
-            row_data["Name"] = data.name
+            
+            # Use the correct header name for the name field
+            name_header = reverse_mapping.get("name", "Product Name")  # Default to "Product Name" if not found
+            row_data[name_header] = data.name
 
             # Preload attribute nodes for this configuration's manufacturing type
             stmt = select(AttributeNode).where(

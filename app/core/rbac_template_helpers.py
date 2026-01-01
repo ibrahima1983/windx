@@ -133,7 +133,8 @@ class Can:
             logger.error(f"Resource access check failed for {resource_type}:{resource_id}: {e}")
             return False
 
-    def _run_async_check(self, async_func, *args) -> bool:
+    @staticmethod
+    def _run_async_check(async_func, *args) -> bool:
         """Run async function in sync context safely.
 
         This handles the event loop creation needed for async operations
@@ -149,7 +150,7 @@ class Can:
         try:
             # Try to get current event loop
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
                 # If we're in an event loop, we can't use asyncio.run()
                 # Instead, we'll use a thread pool to run the async code
                 import concurrent.futures
@@ -190,6 +191,7 @@ class Can:
 
         # Get database session
         db_gen = get_db()
+        # noinspection PyCompatibility
         db = await anext(db_gen)
 
         try:
@@ -478,7 +480,8 @@ class RBACTemplateMiddleware:
             logger.error(f"RBAC template rendering failed: {e}", exc_info=True)
             raise
 
-    async def _extract_user_from_request(self, request: Request) -> User:
+    @staticmethod
+    async def _extract_user_from_request(request: Request) -> User:
         """Extract authenticated user from request.
 
         Uses the same authentication logic as get_current_user dependency.
@@ -504,11 +507,12 @@ class RBACTemplateMiddleware:
 
         # Get database session
         db_gen = get_db()
+        # noinspection PyCompatibility
         db = await anext(db_gen)
 
         try:
             # Extract credentials
-            security = HTTPBearer(auto_error=False)
+            HTTPBearer(auto_error=False)
             credentials = None
 
             # Check Authorization header

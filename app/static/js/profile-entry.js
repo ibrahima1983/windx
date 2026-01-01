@@ -327,23 +327,8 @@ function profileEntryApp(options = {}) {
                 console.error('🦆 [HEADERS] ❌ Failed to load dynamic headers:', err);
                 this.headersError = err.message;
                 
-                // Fall back to hardcoded headers on error
-                console.log('🦆 [HEADERS] Falling back to hardcoded headers');
-                const fallbackHeaders = [
-                    "Name", "Type", "Company", "Material", "opening system", "system series",
-                    "Code", "Length of Beam\nm", "Renovation\nonly for frame", "width",
-                    "builtin Flyscreen track only for sliding frame", "Total width\nonly for frame with builtin flyscreen",
-                    "flyscreen track height\nonly for frame with builtin flyscreen", "front Height mm", "Rear heightt",
-                    "Glazing height", "Renovation height mm\nonly for frame", "Glazing undercut heigth\nonly for glazing bead",
-                    "Pic", "Sash overlap only for sashs", "flying mullion horizontal clearance",
-                    "flying mullion vertical clearance", "Steel material thickness\nonly for reinforcement",
-                    "Weight/m kg", "Reinforcement steel", "Colours", "Price/m", "Price per/beam", "UPVC Profile Discount%"
-                ];
-                
-                this.dynamicHeaders = fallbackHeaders;
-                FormHelpers.setDynamicHeaders(fallbackHeaders);
-                
-                return fallbackHeaders;
+                // No fallbacks allowed - throw error to prevent bugs
+                throw new Error(`Failed to load dynamic headers: ${err.message}`);
             } finally {
                 this.headersLoading = false;
             }
@@ -688,11 +673,12 @@ function profileEntryApp(options = {}) {
 
         // Enhanced preview headers using dynamic headers from backend
         get previewHeaders() {
-            // Use dynamic headers if available, otherwise fall back to FormHelpers
-            if (this.dynamicHeaders && this.dynamicHeaders.length > 0) {
-                return this.dynamicHeaders;
+            // Require dynamic headers - no fallbacks allowed
+            if (!this.dynamicHeaders || this.dynamicHeaders.length === 0) {
+                console.error('🦆 [PREVIEW HEADERS] ERROR: No dynamic headers available');
+                return ['ERROR: Headers not loaded'];
             }
-            return FormHelpers.getPreviewHeaders();
+            return this.dynamicHeaders;
         },
 
         async saveConfiguration() {

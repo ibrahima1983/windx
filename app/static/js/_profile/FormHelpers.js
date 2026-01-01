@@ -129,41 +129,17 @@ class FormHelpers {
     }
 
     static getPreviewValue(header, formData, fieldVisibility) {
-        // Use dynamic header mapping if available, otherwise fall back to hardcoded mapping
-        const headerMapping = this.dynamicHeaderMapping || {
-            "Name": "name",
-            "Type": "type",
-            "Company": "company",
-            "Material": "material",
-            "Opening System": "opening_system",
-            "System Series": "system_series",
-            "Code": "code",
-            "Length of beam": "length_of_beam",
-            "Renovation": "renovation",
-            "Width": "width",
-            "Builtin Flyscreen Track": "builtin_flyscreen_track",
-            "Total Width": "total_width",
-            "Flyscreen Track Height": "flyscreen_track_height",
-            "Front Height": "front_height",
-            "Rear Height": "rear_height",
-            "Glazing Height": "glazing_height",
-            "Renovation Height": "renovation_height",
-            "Glazing Undercut Height": "glazing_undercut_height",
-            "Pic": "pic",
-            "Sash Overlap": "sash_overlap",
-            "Flying Mullion Horizontal Clearance": "flying_mullion_horizontal_clearance",
-            "Flying Mullion Vertical Clearance": "flying_mullion_vertical_clearance",
-            "Steel Material Thickness": "steel_material_thickness",
-            "Weight per meter": "weight_per_meter",
-            "Reinforcement Steel": "reinforcement_steel",
-            "Colours": "colours",
-            "Price per meter": "price_per_meter",
-            "Price per beam": "price_per_beam",
-            "UPVC Profile Discount": "upvc_profile_discount"
-        };
+        // Require dynamic header mapping - no fallbacks allowed
+        if (!this.dynamicHeaderMapping) {
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend.');
+            return 'ERROR: Headers not loaded';
+        }
 
-        const fieldName = headerMapping[header];
-        if (!fieldName) return 'N/A';
+        const fieldName = this.dynamicHeaderMapping[header];
+        if (!fieldName) {
+            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in mapping:', header);
+            return 'N/A';
+        }
 
         const value = formData[fieldName];
 
@@ -202,58 +178,23 @@ class FormHelpers {
     }
 
     static getHeaderMapping() {
-        // Return the current header mapping (dynamic or fallback)
-        return this.dynamicHeaderMapping || {
-            "Name": "name",
-            "Type": "type",
-            "Company": "company",
-            "Material": "material",
-            "Opening System": "opening_system",
-            "System Series": "system_series",
-            "Code": "code",
-            "Length of beam": "length_of_beam",
-            "Renovation": "renovation",
-            "Width": "width",
-            "Builtin Flyscreen Track": "builtin_flyscreen_track",
-            "Total Width": "total_width",
-            "Flyscreen Track Height": "flyscreen_track_height",
-            "Front Height": "front_height",
-            "Rear Height": "rear_height",
-            "Glazing Height": "glazing_height",
-            "Renovation Height": "renovation_height",
-            "Glazing Undercut Height": "glazing_undercut_height",
-            "Pic": "pic",
-            "Sash Overlap": "sash_overlap",
-            "Flying Mullion Horizontal Clearance": "flying_mullion_horizontal_clearance",
-            "Flying Mullion Vertical Clearance": "flying_mullion_vertical_clearance",
-            "Steel Material Thickness": "steel_material_thickness",
-            "Weight per meter": "weight_per_meter",
-            "Reinforcement Steel": "reinforcement_steel",
-            "Colours": "colours",
-            "Price per meter": "price_per_meter",
-            "Price per beam": "price_per_beam",
-            "UPVC Profile Discount": "upvc_profile_discount"
-        };
+        // Require dynamic header mapping - no fallbacks allowed
+        if (!this.dynamicHeaderMapping) {
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend.');
+            return {};
+        }
+        return this.dynamicHeaderMapping;
     }
 
     static getPreviewHeaders() {
-        // Use dynamic headers if available, otherwise fall back to hardcoded headers
-        if (this.dynamicHeaders && this.dynamicHeaders.length > 0) {
-            console.log('🦆 [FORMHELPERS] Using dynamic headers:', this.dynamicHeaders);
-            return this.dynamicHeaders;
+        // Require dynamic headers - no fallbacks allowed
+        if (!this.dynamicHeaders || this.dynamicHeaders.length === 0) {
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic headers available. Headers must be loaded from backend.');
+            return ['ERROR: Headers not loaded'];
         }
         
-        console.log('🦆 [FORMHELPERS] Falling back to hardcoded headers');
-        return [
-            "Name", "Type", "Company", "Material", "opening system", "system series",
-            "Code", "Length of Beam\nm", "Renovation\nonly for frame", "width",
-            "builtin Flyscreen track only for sliding frame", "Total width\nonly for frame with builtin flyscreen",
-            "flyscreen track height\nonly for frame with builtin flyscreen", "front Height mm", "Rear heightt",
-            "Glazing height", "Renovation height mm\nonly for frame", "Glazing undercut heigth\nonly for glazing bead",
-            "Pic", "Sash overlap only for sashs", "flying mullion horizontal clearance",
-            "flying mullion vertical clearance", "Steel material thickness\nonly for reinforcement",
-            "Weight/m kg", "Reinforcement steel", "Colours", "Price/m", "Price per/beam", "UPVC Profile Discount%"
-        ];
+        console.log('🦆 [FORMHELPERS] Using dynamic headers:', this.dynamicHeaders);
+        return this.dynamicHeaders;
     }
 
     static prepareSaveData(formData, manufacturingTypeId, schema, fieldVisibility) {
@@ -318,41 +259,17 @@ class FormHelpers {
     static isValueChanged(header, formData, lastSavedData) {
         if (!lastSavedData) return false;
 
-        // Use dynamic header mapping if available, otherwise fall back to hardcoded mapping
-        const headerMapping = this.dynamicHeaderMapping || {
-            "Name": "name",
-            "Type": "type",
-            "Company": "company",
-            "Material": "material",
-            "opening system": "opening_system",
-            "system series": "system_series",
-            "Code": "code",
-            "Length of Beam\nm": "length_of_beam",
-            "Renovation\nonly for frame": "renovation",
-            "width": "width",
-            "builtin Flyscreen track only for sliding frame": "builtin_flyscreen_track",
-            "Total width\nonly for frame with builtin flyscreen": "total_width",
-            "flyscreen track height\nonly for frame with builtin flyscreen": "flyscreen_track_height",
-            "front Height mm": "front_height",
-            "Rear heightt": "rear_height",
-            "Glazing height": "glazing_height",
-            "Renovation height mm\nonly for frame": "renovation_height",
-            "Glazing undercut heigth\nonly for glazing bead": "glazing_undercut_height",
-            "Pic": "pic",
-            "Sash overlap only for sashs": "sash_overlap",
-            "flying mullion horizontal clearance": "flying_mullion_horizontal_clearance",
-            "flying mullion vertical clearance": "flying_mullion_vertical_clearance",
-            "Steel material thickness\nonly for reinforcement": "steel_material_thickness",
-            "Weight/m kg": "weight_per_meter",
-            "Reinforcement steel": "reinforcement_steel",
-            "Colours": "colours",
-            "Price/m": "price_per_meter",
-            "Price per/beam": "price_per_beam",
-            "UPVC Profile Discount%": "upvc_profile_discount"
-        };
+        // Require dynamic header mapping - no fallbacks allowed
+        if (!this.dynamicHeaderMapping) {
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available for isValueChanged.');
+            return false;
+        }
 
-        const fieldName = headerMapping[header];
-        if (!fieldName) return false;
+        const fieldName = this.dynamicHeaderMapping[header];
+        if (!fieldName) {
+            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in mapping for isValueChanged:', header);
+            return false;
+        }
 
         return formData[fieldName] !== lastSavedData[fieldName];
     }
