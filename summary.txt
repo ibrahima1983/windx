@@ -1,0 +1,521 @@
+==================================================
+                 PROJECT SUMMARY
+==================================================
++------------+--------+
+| Category   |  Count |
++------------+--------+
+| Folders    |     38 |
+| Files      |    325 |
++------------+--------+
+| JSON       |   1667 |
+| JavaScript |   3284 |
+| Markdown   |  20112 |
+| Markup     |    253 |
+| Python     |  92734 |
+| Styling    |   2867 |
+| YAML       |     55 |
++------------+--------+
+| Total LoC  | 120972 |
++------------+--------+
+
+Language Distribution:
+  JSON                1667 LoC     1.4%
+  JavaScript          3284 LoC  █   2.7%
+  Markdown           20112 LoC  ████████  16.6%
+  Markup               253 LoC     0.2%
+  Python             92734 LoC  ██████████████████████████████████████  76.7%
+  Styling             2867 LoC  █   2.4%
+  YAML                  55 LoC     0.0%
+
+C:\Users\amrmu\Downloads>python loc_counter.py "F:\Projects\Languages\Python\WorkingOnIt\windx"
+Analyzing project: F:\Projects\Languages\Python\WorkingOnIt\windx
+
+Collecting code files...
+
+Processing 325 files...
+
+  docker-compose.yml [YAML]: 55 lines
+  main.py [Python]: 342 lines
+  manage.py [Python]: 2574 lines
+  README.md [Markdown]: 827 lines
+  test_preview_data_fix.py [Python]: 39 lines
+  test_profile_page_fix.py [Python]: 117 lines
+  _manager_factory.py [Python]: 532 lines
+  _manager_utils.py [Python]: 592 lines
+  alembic\env.py [Python]: 131 lines
+  alembic\versions\057e539f7375_add_core_windx_tables.py [Python]: 340 lines
+  alembic\versions\16781a3b6e95_add_model_defined_performance_indexes.py [Python]: 202 lines
+  alembic\versions\6a07301cffee_add_admin_performance_indexes.py [Python]: 111 lines
+  alembic\versions\7895e0d26f10_initial_migration.py [Python]: 83 lines
+  alembic\versions\95aa64961de9_merge_rbac_indexes.py [Python]: 25 lines
+  alembic\versions\9d790dc1c955_clean_migration_with_model_defined_.py [Python]: 72 lines
+  alembic\versions\abc5a9a36c5b_add_unique_constraint_for_manufacturing_.py [Python]: 38 lines
+  alembic\versions\ba0a6a525f3f_add_page_type_field_to_attribute_nodes.py [Python]: 43 lines
+  alembic\versions\c281549c872f_add_role_field_to_users.py [Python]: 45 lines
+  alembic\versions\d7882101cf73_change_timestamps_to_timezone_aware.py [Python]: 89 lines
+  app\__init__.py [Python]: 23 lines
+  app\api\admin_utils.py [Python]: 255 lines
+  app\api\deps.py [Python]: 178 lines
+  app\api\types.py [Python]: 1163 lines
+  app\api\__init__.py [Python]: 18 lines
+  app\api\v1\policy.py [Python]: 486 lines
+  app\api\v1\router.py [Python]: 77 lines
+  app\api\v1\__init__.py [Python]: 11 lines
+  app\api\v1\endpoints\admin_auth.py [Python]: 349 lines
+  app\api\v1\endpoints\admin_customers.py [Python]: 714 lines
+  app\api\v1\endpoints\admin_documentation.py [Python]: 32 lines
+  app\api\v1\endpoints\admin_entry.py [Python]: 994 lines
+  app\api\v1\endpoints\admin_hierarchy.py [Python]: 982 lines
+  app\api\v1\endpoints\admin_manufacturing.py [Python]: 238 lines
+  app\api\v1\endpoints\admin_orders.py [Python]: 284 lines
+  app\api\v1\endpoints\admin_settings.py [Python]: 130 lines
+  app\api\v1\endpoints\attribute_nodes.py [Python]: 524 lines
+  app\api\v1\endpoints\auth.py [Python]: 212 lines
+  app\api\v1\endpoints\configurations.py [Python]: 396 lines
+  app\api\v1\endpoints\customers.py [Python]: 276 lines
+  app\api\v1\endpoints\dashboard.py [Python]: 163 lines
+  app\api\v1\endpoints\entry.py [Python]: 502 lines
+  app\api\v1\endpoints\export.py [Python]: 236 lines
+  app\api\v1\endpoints\manufacturing_types.py [Python]: 458 lines
+  app\api\v1\endpoints\metrics.py [Python]: 99 lines
+  app\api\v1\endpoints\orders.py [Python]: 286 lines
+  app\api\v1\endpoints\quotes.py [Python]: 262 lines
+  app\api\v1\endpoints\templates.py [Python]: 255 lines
+  app\api\v1\endpoints\users.py [Python]: 370 lines
+  app\api\v1\endpoints\__init__.py [Python]: 11 lines
+  app\core\cache.py [Python]: 211 lines
+  app\core\config.py [Python]: 1023 lines
+  app\core\database.py [Python]: 24 lines
+  app\core\exceptions.py [Python]: 484 lines
+  app\core\limiter.py [Python]: 191 lines
+  app\core\manufacturing_type_resolver.py [Python]: 206 lines
+  app\core\middleware.py [Python]: 663 lines
+  app\core\pagination.py [Python]: 108 lines
+  app\core\rbac.py [Python]: 807 lines
+  app\core\rbac_actions.py [Python]: 128 lines
+  app\core\rbac_template_helpers.py [Python]: 540 lines
+  app\core\security.py [Python]: 130 lines
+  app\core\__init__.py [Python]: 12 lines
+  app\database\base.py [Python]: 39 lines
+  app\database\connection.py [Python]: 182 lines
+  app\database\types.py [Python]: 365 lines
+  app\database\utils.py [Python]: 188 lines
+  app\database\__init__.py [Python]: 33 lines
+  app\database\sql\install_triggers.py [Python]: 188 lines
+  app\database\sql\README.md [Markdown]: 237 lines
+  app\database\sql\__init__.py [Python]: 11 lines
+  app\models\attribute_node.py [Python]: 257 lines
+  app\models\configuration.py [Python]: 232 lines
+  app\models\configuration_selection.py [Python]: 209 lines
+  app\models\configuration_template.py [Python]: 235 lines
+  app\models\customer.py [Python]: 198 lines
+  app\models\manufacturing_type.py [Python]: 149 lines
+  app\models\order.py [Python]: 205 lines
+  app\models\order_item.py [Python]: 180 lines
+  app\models\quote.py [Python]: 238 lines
+  app\models\session.py [Python]: 112 lines
+  app\models\template_selection.py [Python]: 182 lines
+  app\models\user.py [Python]: 154 lines
+  app\models\__init__.py [Python]: 53 lines
+  app\repositories\attribute_node.py [Python]: 381 lines
+  app\repositories\base.py [Python]: 215 lines
+  app\repositories\configuration.py [Python]: 188 lines
+  app\repositories\configuration_selection.py [Python]: 152 lines
+  app\repositories\configuration_template.py [Python]: 282 lines
+  app\repositories\customer.py [Python]: 174 lines
+  app\repositories\manufacturing_type.py [Python]: 181 lines
+  app\repositories\order.py [Python]: 198 lines
+  app\repositories\quote.py [Python]: 163 lines
+  app\repositories\session.py [Python]: 113 lines
+  app\repositories\template_selection.py [Python]: 115 lines
+  app\repositories\user.py [Python]: 159 lines
+  app\repositories\windx_base.py [Python]: 178 lines
+  app\repositories\__init__.py [Python]: 55 lines
+  app\schemas\attribute_node.py [Python]: 296 lines
+  app\schemas\auth.py [Python]: 72 lines
+  app\schemas\configuration.py [Python]: 237 lines
+  app\schemas\configuration_selection.py [Python]: 226 lines
+  app\schemas\configuration_template.py [Python]: 298 lines
+  app\schemas\customer.py [Python]: 272 lines
+  app\schemas\entry.py [Python]: 586 lines
+  app\schemas\manufacturing_type.py [Python]: 215 lines
+  app\schemas\order.py [Python]: 350 lines
+  app\schemas\order_item.py [Python]: 218 lines
+  app\schemas\quote.py [Python]: 382 lines
+  app\schemas\responses.py [Python]: 293 lines
+  app\schemas\session.py [Python]: 129 lines
+  app\schemas\template_selection.py [Python]: 234 lines
+  app\schemas\user.py [Python]: 208 lines
+  app\schemas\__init__.py [Python]: 177 lines
+  app\services\auth.py [Python]: 222 lines
+  app\services\base.py [Python]: 71 lines
+  app\services\configuration.py [Python]: 547 lines
+  app\services\dashboard.py [Python]: 111 lines
+  app\services\entry.py [Python]: 1614 lines
+  app\services\hierarchy_builder.py [Python]: 1667 lines
+  app\services\order.py [Python]: 416 lines
+  app\services\policy_manager.py [Python]: 606 lines
+  app\services\pricing.py [Python]: 510 lines
+  app\services\quote.py [Python]: 575 lines
+  app\services\rbac.py [Python]: 648 lines
+  app\services\session.py [Python]: 112 lines
+  app\services\template.py [Python]: 576 lines
+  app\services\user.py [Python]: 444 lines
+  app\services\__init__.py [Python]: 43 lines
+  app\services\storage\base.py [Python]: 102 lines
+  app\services\storage\image_processor.py [Python]: 288 lines
+  app\services\storage\local_provider.py [Python]: 130 lines
+  app\services\storage\service.py [Python]: 351 lines
+  app\services\storage\supabase_provider.py [Python]: 203 lines
+  app\services\storage\__init__.py [Python]: 52 lines
+  app\static\swagger-ui.html [Markup]: 253 lines
+  app\static\css\admin.css [Styling]: 896 lines
+  app\static\css\profile-entry.css [Styling]: 1971 lines
+  app\static\js\profile-entry.js [JavaScript]: 1070 lines
+  app\static\js\_profile\BusinessRulesEngine.js [JavaScript]: 230 lines
+  app\static\js\_profile\ConditionEvaluator.js [JavaScript]: 80 lines
+  app\static\js\_profile\ConfigurationSaver.js [JavaScript]: 111 lines
+  app\static\js\_profile\DataLoader.js [JavaScript]: 182 lines
+  app\static\js\_profile\FormHelpers.js [JavaScript]: 276 lines
+  app\static\js\_profile\FormValidator.js [JavaScript]: 194 lines
+  app\static\js\_profile\ImageHandler.js [JavaScript]: 129 lines
+  app\static\js\_profile\README.md [Markdown]: 236 lines
+  app\static\js\_profile\SearchEngine.js [JavaScript]: 427 lines
+  app\static\js\_profile\SessionManager.js [JavaScript]: 68 lines
+  app\static\js\_profile\TableEditor.js [JavaScript]: 191 lines
+  app\static\js\_profile\_window.js [JavaScript]: 326 lines
+  app\templates\rbac_context.py [Python]: 98 lines
+  app\templates\__init__.py [Python]: 5 lines
+  app\templates\components\README.md [Markdown]: 695 lines
+  docs\ARCHITECTURE.md [Markdown]: 740 lines
+  docs\coding-standards.md [Markdown]: 1585 lines
+  docs\coverage-reports-explained.md [Markdown]: 490 lines
+  docs\MIDDLEWARE_SECURITY.md [Markdown]: 552 lines
+  docs\pricing-error-handling-summary.md [Markdown]: 233 lines
+  docs\production_ready_manufacturing_types.md [Markdown]: 284 lines
+  docs\windx-integration-plan.md [Markdown]: 1507 lines
+  docs\windx-sql-explanations.md [Markdown]: 1369 lines
+  docs\windx-sql-traits.md [Markdown]: 1441 lines
+  docs\new\admin-endpoint-documentation.md [Markdown]: 1000 lines
+  docs\new\repository-pattern-guide.md [Markdown]: 631 lines
+  docs\new\testing-guidelines.md [Markdown]: 842 lines
+  docs\new\type-usage-guide.md [Markdown]: 793 lines
+  docs\reference\Code Outline.md [Markdown]: 1855 lines
+  docs\reference\database patterns.md [Markdown]: 612 lines
+  docs\reference\FastAPI And Starlette.md [Markdown]: 712 lines
+  docs\reference\Practice.md [Markdown]: 146 lines
+  docs\reference\result.md [Markdown]: 584 lines
+  examples\ascii_tree_visualization.py [Python]: 211 lines
+  examples\hierarchy_insertion.py [Python]: 644 lines
+  examples\tree_visualization_example.py [Python]: 141 lines
+  postman\Backend-API.Authentication.postman_collection.json [JSON]: 236 lines
+  postman\Backend-API.Dashboard.postman_collection.json [JSON]: 201 lines
+  postman\Backend-API.Environment.postman_environment.json [JSON]: 30 lines
+  postman\Backend-API.Export.postman_collection.json [JSON]: 207 lines
+  postman\Backend-API.Health.postman_collection.json [JSON]: 144 lines
+  postman\Backend-API.Metrics.postman_collection.json [JSON]: 157 lines
+  postman\Backend-API.Users.postman_collection.json [JSON]: 692 lines
+  postman\COLLECTIONS_SUMMARY.md [Markdown]: 341 lines
+  postman\QUICK_START.md [Markdown]: 286 lines
+  postman\README.md [Markdown]: 405 lines
+  reference\upvc_cost_report.md [Markdown]: 447 lines
+  reference\Villa Mountain View Hyde Park, Fifth Settlement Order.md [Markdown]: 654 lines
+  scripts\analyze_page_structure.py [Python]: 491 lines
+  scripts\openapi_parser.py [Python]: 182 lines
+  scripts\seed_profile_data.py [Python]: 254 lines
+  scripts\setup_accessories_hierarchy.py [Python]: 400 lines
+  scripts\setup_glazing_hierarchy.py [Python]: 479 lines
+  scripts\setup_profile_hierarchy.py [Python]: 634 lines
+  scripts\update_conditions.py [Python]: 146 lines
+  tests\check_stats.py [Python]: 30 lines
+  tests\config.py [Python]: 192 lines
+  tests\conftest.py [Python]: 736 lines
+  tests\README.md [Markdown]: 403 lines
+  tests\__init__.py [Python]: 14 lines
+  tests\e2e\conftest.py [Python]: 277 lines
+  tests\e2e\README.md [Markdown]: 205 lines
+  tests\e2e\test_admin_hierarchy.py [Python]: 465 lines
+  tests\e2e\test_basic_pages.py [Python]: 97 lines
+  tests\e2e\utils.py [Python]: 141 lines
+  tests\e2e\__init__.py [Python]: 5 lines
+  tests\factories\configuration_factory.py [Python]: 269 lines
+  tests\factories\customer_factory.py [Python]: 364 lines
+  tests\factories\order_factory.py [Python]: 296 lines
+  tests\factories\quote_factory.py [Python]: 276 lines
+  tests\factories\user_factory.py [Python]: 130 lines
+  tests\factories\__init__.py [Python]: 41 lines
+  tests\integration\test_admin_auth.py [Python]: 359 lines
+  tests\integration\test_admin_customers.py [Python]: 625 lines
+  tests\integration\test_admin_entry.py [Python]: 911 lines
+  tests\integration\test_admin_hierarchy_dropdowns.py [Python]: 429 lines
+  tests\integration\test_admin_hierarchy_endpoints.py [Python]: 1035 lines
+  tests\integration\test_admin_hierarchy_form_validation.py [Python]: 1054 lines
+  tests\integration\test_admin_hierarchy_parent_selector.py [Python]: 288 lines
+  tests\integration\test_admin_manufacturing_rbac.py [Python]: 216 lines
+  tests\integration\test_admin_orders.py [Python]: 644 lines
+  tests\integration\test_admin_templates.py [Python]: 597 lines
+  tests\integration\test_api_endpoints_page_types.py [Python]: 339 lines
+  tests\integration\test_auth.py [Python]: 363 lines
+  tests\integration\test_bulk_delete_functionality.py [Python]: 360 lines
+  tests\integration\test_bulk_operations.py [Python]: 499 lines
+  tests\integration\test_casbin_rbac_workflows.py [Python]: 677 lines
+  tests\integration\test_customer_order_workflow.py [Python]: 895 lines
+  tests\integration\test_customer_repository.py [Python]: 371 lines
+  tests\integration\test_dashboard_optimized.py [Python]: 386 lines
+  tests\integration\test_duplicate_page_type_setup.py [Python]: 387 lines
+  tests\integration\test_enhanced_error_handling.py [Python]: 511 lines
+  tests\integration\test_entry_api.py [Python]: 937 lines
+  tests\integration\test_entry_frontend.py [Python]: 207 lines
+  tests\integration\test_export.py [Python]: 297 lines
+  tests\integration\test_feature_flags.py [Python]: 480 lines
+  tests\integration\test_health_check_enhanced.py [Python]: 356 lines
+  tests\integration\test_hierarchy_ascii_tree.py [Python]: 549 lines
+  tests\integration\test_hierarchy_batch_creation.py [Python]: 626 lines
+  tests\integration\test_hierarchy_builder.py [Python]: 612 lines
+  tests\integration\test_hierarchy_builder_basic.py [Python]: 266 lines
+  tests\integration\test_hierarchy_pydantify.py [Python]: 428 lines
+  tests\integration\test_hierarchy_tree_plot.py [Python]: 411 lines
+  tests\integration\test_hierarchy_validation.py [Python]: 282 lines
+  tests\integration\test_login.py [Python]: 78 lines
+  tests\integration\test_metrics.py [Python]: 229 lines
+  tests\integration\test_order_repository.py [Python]: 399 lines
+  tests\integration\test_page_type_database.py [Python]: 272 lines
+  tests\integration\test_policy_api.py [Python]: 137 lines
+  tests\integration\test_quotes.py [Python]: 803 lines
+  tests\integration\test_template_service.py [Python]: 368 lines
+  tests\integration\test_unique_constraint_enforcement.py [Python]: 354 lines
+  tests\integration\test_users.py [Python]: 458 lines
+  tests\integration\test_user_filters.py [Python]: 886 lines
+  tests\integration\__init__.py [Python]: 5 lines
+  tests\unit\test_admin_foundation.py [Python]: 438 lines
+  tests\unit\test_advanced_decorator_patterns_properties.py [Python]: 461 lines
+  tests\unit\test_attribute_node_page_types.py [Python]: 321 lines
+  tests\unit\test_backward_compatibility_properties.py [Python]: 458 lines
+  tests\unit\test_casbin_error_handling.py [Python]: 282 lines
+  tests\unit\test_casbin_policy_consistency_properties.py [Python]: 392 lines
+  tests\unit\test_cli_commands.py [Python]: 287 lines
+  tests\unit\test_config.py [Python]: 45 lines
+  tests\unit\test_customer_data_consistency_properties.py [Python]: 316 lines
+  tests\unit\test_customer_decorator.py [Python]: 38 lines
+  tests\unit\test_customer_relationship_properties.py [Python]: 348 lines
+  tests\unit\test_dashboard_service.py [Python]: 324 lines
+  tests\unit\test_entry_authentication_properties.py [Python]: 420 lines
+  tests\unit\test_entry_conditional_visibility.py [Python]: 350 lines
+  tests\unit\test_entry_csv_structure.py [Python]: 560 lines
+  tests\unit\test_entry_data_persistence.py [Python]: 530 lines
+  tests\unit\test_entry_data_persistence_properties.py [Python]: 390 lines
+  tests\unit\test_entry_error_recovery_properties.py [Python]: 478 lines
+  tests\unit\test_entry_integration_comprehensive.py [Python]: 589 lines
+  tests\unit\test_entry_navigation_properties.py [Python]: 331 lines
+  tests\unit\test_entry_null_handling.py [Python]: 392 lines
+  tests\unit\test_entry_null_handling_properties.py [Python]: 405 lines
+  tests\unit\test_entry_preview_sync.py [Python]: 452 lines
+  tests\unit\test_entry_properties.py [Python]: 494 lines
+  tests\unit\test_entry_validation.py [Python]: 500 lines
+  tests\unit\test_entry_validation_properties.py [Python]: 400 lines
+  tests\unit\test_factories.py [Python]: 283 lines
+  tests\unit\test_foreign_key_constraint_properties.py [Python]: 380 lines
+  tests\unit\test_hierarchy_builder_sanitization.py [Python]: 323 lines
+  tests\unit\test_manufacturing_type_resolver.py [Python]: 252 lines
+  tests\unit\test_policy_management.py [Python]: 517 lines
+  tests\unit\test_pooler.py [Python]: 68 lines
+  tests\unit\test_rbac_casbin.py [Python]: 348 lines
+  tests\unit\test_rbac_core.py [Python]: 579 lines
+  tests\unit\test_rbac_decorators_advanced.py [Python]: 543 lines
+  tests\unit\test_rbac_performance.py [Python]: 578 lines
+  tests\unit\test_rbac_properties.py [Python]: 279 lines
+  tests\unit\test_rbac_service.py [Python]: 483 lines
+  tests\unit\test_rbac_template_components.py [Python]: 593 lines
+  tests\unit\test_rbac_template_helpers.py [Python]: 356 lines
+  tests\unit\test_redis_check.py [Python]: 37 lines
+  tests\unit\test_schema_configuration.py [Python]: 121 lines
+  tests\unit\test_search_functionality.py [Python]: 231 lines
+  tests\unit\test_simple_decorator.py [Python]: 39 lines
+  tests\unit\test_simple_property_tests.py [Python]: 346 lines
+  tests\unit\test_stats_monitoring.py [Python]: 159 lines
+  tests\unit\test_storage_configuration.py [Python]: 351 lines
+  tests\unit\test_supabase.py [Python]: 204 lines
+  tests\unit\test_template_rbac_function_consistency_properties.py [Python]: 457 lines
+  tests\unit\test_timeout_middleware.py [Python]: 331 lines
+  tests\unit\test_user_model_rbac.py [Python]: 314 lines
+  tests\unit\test_user_service.py [Python]: 270 lines
+  tests\unit\__init__.py [Python]: 5 lines
+  tests\unit\database\test_ltree_type.py [Python]: 200 lines
+  tests\unit\models\test_attribute_node_model.py [Python]: 236 lines
+  tests\unit\repositories\test_base_repository.py [Python]: 267 lines
+  tests\unit\repositories\test_configuration_template_repository.py [Python]: 275 lines
+  tests\unit\repositories\__init__.py [Python]: 1 lines
+  tests\unit\schemas\test_attribute_node_schema.py [Python]: 332 lines
+  tests\unit\services\test_configuration_service_casbin.py [Python]: 455 lines
+  tests\unit\services\test_entry.py [Python]: 892 lines
+  tests\unit\services\test_entry_properties.py [Python]: 472 lines
+  tests\unit\services\test_entry_schema_generation.py [Python]: 297 lines
+  tests\unit\services\test_entry_service_casbin.py [Python]: 428 lines
+  tests\unit\services\test_entry_unit.py [Python]: 390 lines
+  tests\unit\services\test_image_processor.py [Python]: 409 lines
+  tests\unit\services\test_order_service_casbin.py [Python]: 777 lines
+  tests\unit\services\test_pricing_error_handling.py [Python]: 287 lines
+  tests\unit\services\test_quote_service_casbin.py [Python]: 420 lines
+  tests\unit\services\test_storage_providers.py [Python]: 506 lines
+  tests\unit\services\test_storage_service.py [Python]: 416 lines
+  tests\unit\services\test_template_service_casbin.py [Python]: 491 lines
+
+  Path,Method,Operation ID,Summary,Description,Tags,Security Required
+/,GET,root__get,Root,"Root endpoint.
+
+Returns:
+    dict[str, str]: Welcome message with API information...",,No
+/health,GET,healthCheck,Health Check,"Comprehensive health check endpoint that verifies all system dependencies including database, cache,...",,No
+/api/v1/auth/register,POST,registerUser,Register New User,"Create a new user account with email, username, and password....",Authentication,No
+/api/v1/auth/login,POST,loginUser,User Login,Authenticate user with username/email and password to receive access token....,Authentication,No
+/api/v1/auth/logout,POST,logout_api_v1_auth_logout_post,Logout,"Logout current user (deactivate session).
+
+Args:
+    current_user (User): Current authenticated user...",Authentication,Yes
+/api/v1/auth/me,GET,getCurrentUserProfile,Get Current User Profile,Retrieve the authenticated user's profile information....,Authentication,Yes
+/api/v1/admin/login,GET,adminLoginPage,Admin Login Page,Render the admin login page with authentication form...,Admin Auth,No
+/api/v1/admin/login,POST,adminLogin,Admin Login,Authenticate admin user and create session with cookie...,Admin Auth,No
+/api/v1/admin/logout,GET,adminLogout,Admin Logout,Log out admin user by clearing authentication cookie...,Admin Auth,No
+/api/v1/admin/dashboard,GET,adminDashboard,Admin Dashboard,Render the main admin dashboard with navigation and overview...,Admin Auth,No
+/api/v1/admin/manufacturing-types,GET,list_manufacturing_types_api_v1_admin_manufacturing_types_get,List Manufacturing Types,List all manufacturing types....,Admin Manufacturing,Yes
+/api/v1/admin/manufacturing-types/create,GET,create_manufacturing_type_form_api_v1_admin_manufacturing_types_create_get,Create Manufacturing Type Form,Render create manufacturing type form....,Admin Manufacturing,Yes
+/api/v1/admin/manufacturing-types/create,POST,create_manufacturing_type_api_v1_admin_manufacturing_types_create_post,Create Manufacturing Type,Handle create manufacturing type submission....,Admin Manufacturing,Yes
+/api/v1/admin/manufacturing-types/{id}/edit,GET,edit_manufacturing_type_form_api_v1_admin_manufacturing_types__id__edit_get,Edit Manufacturing Type Form,Render edit manufacturing type form....,Admin Manufacturing,Yes
+/api/v1/admin/manufacturing-types/{id}/edit,POST,edit_manufacturing_type_api_v1_admin_manufacturing_types__id__edit_post,Edit Manufacturing Type,Handle edit manufacturing type submission....,Admin Manufacturing,Yes
+/api/v1/admin/manufacturing-types/{id}/delete,POST,delete_manufacturing_type_api_v1_admin_manufacturing_types__id__delete_post,Delete Manufacturing Type,Handle delete manufacturing type....,Admin Manufacturing,Yes
+/api/v1/admin/orders,GET,adminListOrders,List Orders,List all orders with optional filtering by status and search term. Supports pagination....,Admin Orders,Yes
+/api/v1/admin/orders/{id},GET,viewOrder,View Order,"Display detailed order information including customer, items, and quote...",Admin Orders,Yes
+/api/v1/admin/orders/{id}/status,POST,updateOrderStatus,Update Order Status,"Update the status of an order (confirmed, production, shipped, installed)...",Admin Orders,Yes
+/api/v1/admin/customers,GET,adminListCustomers,List Customers,"List all customers with optional filtering by status, type, and search term. Supports pagination....",Admin Customers,Yes
+/api/v1/admin/customers,POST,adminCreateCustomer,Create Customer,Create a new customer from form submission...,Admin Customers,Yes
+/api/v1/admin/customers/new,GET,newCustomerForm,New Customer Form,Display form for creating a new customer...,Admin Customers,Yes
+/api/v1/admin/customers/{id},GET,viewCustomer,View Customer,Display detailed customer information...,Admin Customers,Yes
+/api/v1/admin/customers/{id}/edit,GET,editCustomerForm,Edit Customer Form,Display form for editing an existing customer...,Admin Customers,Yes
+/api/v1/admin/customers/{id}/edit,POST,adminUpdateCustomer,Update Customer,Update an existing customer from form submission...,Admin Customers,Yes
+/api/v1/admin/customers/{id}/delete,POST,deleteCustomer,Delete Customer,Delete a customer record...,Admin Customers,Yes
+/api/v1/admin/documentation,GET,documentation_api_v1_admin_documentation_get,Documentation,Display system documentation....,Admin Documentation,Yes
+/api/v1/admin/entry/profile/schema/{manufacturing_type_id},GET,getAdminProfileSchema,Get Profile Form Schema (Admin),Get dynamic form schema for profile data entry based on manufacturing type and page type (admin inte...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/headers/{manufacturing_type_id},GET,getAdminPreviewHeaders,Get Dynamic Preview Headers (Admin),Get dynamic preview headers for a manufacturing type and page type based on attribute nodes...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/save,POST,saveAdminProfileData,Save Profile Data (Admin),Save profile configuration data and create configuration record (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/load/{configuration_id},GET,loadAdminProfileData,Load Profile Data (Admin),Load profile configuration data and populate form fields (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/preview/{configuration_id},GET,getAdminProfilePreview,Get Profile Preview (Admin),Get preview table data for a configuration (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/previews/{manufacturing_type_id},GET,listAdminProfilePreviews,List Profile Previews (Admin),List all profile configurations for a manufacturing type (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/preview/{configuration_id}/update-cell,PATCH,updateAdminPreviewCell,Update Preview Cell (Admin),Update a single field in a configuration from the table preview (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/configuration/{configuration_id},DELETE,deleteAdminConfiguration,Delete Configuration (Admin),Delete a profile configuration (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/configurations/bulk,DELETE,bulkDeleteAdminConfigurations,Bulk Delete Configurations (Admin),Delete multiple profile configurations in bulk (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/upload-image,POST,uploadAdminImage,Upload Image File (Admin),Upload an image file for profile entry fields (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/evaluate-conditions,POST,evaluateAdminDisplayConditions,Evaluate Display Conditions (Admin),Evaluate conditional field visibility based on form data (admin interface)...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile/validate-business-rules,POST,validateAdminBusinessRules,Validate Business Rules (Admin),Validate business rules for profile data and return field-specific errors...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/profile,GET,adminProfileEntryPage,Admin Profile Entry Page,Render the admin profile data entry page...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/accessories,GET,adminAccessoriesEntryPage,Admin Accessories Entry Page,Render the admin accessories data entry page...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/entry/glazing,GET,adminGlazingEntryPage,Admin Glazing Entry Page,Render the admin glazing data entry page...,"Admin Entry, Admin Entry",Yes
+/api/v1/admin/settings,GET,settings_page_api_v1_admin_settings_get,Settings Page,Render settings page with shared admin context....,Admin Settings,Yes
+/api/v1/admin/settings/update-username,POST,update_username_api_v1_admin_settings_update_username_post,Update Username,Handle username update form submission....,Admin Settings,Yes
+/api/v1/admin/settings/update-password,POST,update_password_api_v1_admin_settings_update_password_post,Update Password,Handle password update form submission....,Admin Settings,Yes
+/api/v1/users/,GET,listUsers,List Users with Filters,"List all users with optional filtering by active status, superuser status, and search term. Supports...",Users,Yes
+/api/v1/users/{user_id},GET,get_user_api_v1_users__user_id__get,Get User,"Get user by ID with caching.
+
+Rate limit: 20 requests per minute.
+Cache TTL: 5 minutes.
+
+Args:
+    u...",Users,Yes
+/api/v1/users/{user_id},PATCH,update_user_api_v1_users__user_id__patch,Update User,"Update user information.
+
+Args:
+    user_id (PositiveInt): User ID
+    user_update (UserUpdate): Use...",Users,Yes
+/api/v1/users/{user_id},DELETE,delete_user_api_v1_users__user_id__delete,Delete User,"Delete user (superuser only).
+
+Args:
+    user_id (PositiveInt): User ID
+    current_superuser (User)...",Users,Yes
+/api/v1/users/bulk,POST,createUsersBulk,Create Multiple Users in Bulk,"Create multiple users in a single atomic transaction. If any user creation fails, the entire transac...",Users,Yes
+/api/v1/export/my-data,GET,exportMyData,Export My Data,Export the authenticated user's data in JSON format (GDPR compliance)....,Export,Yes
+/api/v1/export/users/json,GET,exportUsersJson,Export All Users (JSON),Export all users data in JSON format (superuser only)....,Export,Yes
+/api/v1/export/users/csv,GET,exportUsersCsv,Export All Users (CSV),Export all users data in CSV format (superuser only)....,Export,Yes
+/api/v1/dashboard/,GET,getDashboard,Admin Dashboard,Main admin dashboard with statistics and data entry forms....,Dashboard,Yes
+/api/v1/dashboard/data-entry,GET,getDataEntryForm,Data Entry Form,Form for entering new data into the system....,Dashboard,Yes
+/api/v1/dashboard/stats,GET,getDashboardStats,Dashboard Statistics,Get real-time dashboard statistics with 1-minute caching for optimal performance....,Dashboard,Yes
+/api/v1/metrics/database,GET,getDatabaseMetrics,Get Database Connection Pool Metrics,"Retrieve real-time database connection pool statistics including pool size, checked in/out connectio...",Metrics,Yes
+/api/v1/manufacturing-types/,GET,listManufacturingTypes,List Manufacturing Types,List all manufacturing types with optional filtering by active status and category. Supports paginat...,Manufacturing Types,Yes
+/api/v1/manufacturing-types/,POST,createManufacturingType,Create Manufacturing Type,Create a new manufacturing type (superuser only)...,Manufacturing Types,Yes
+/api/v1/manufacturing-types/{type_id},GET,getManufacturingType,Get Manufacturing Type,Get a single manufacturing type by ID...,Manufacturing Types,Yes
+/api/v1/manufacturing-types/{type_id},PATCH,updateManufacturingType,Update Manufacturing Type,Update an existing manufacturing type (superuser only)...,Manufacturing Types,Yes
+/api/v1/manufacturing-types/{type_id},DELETE,deleteManufacturingType,Delete Manufacturing Type,Deactivate a manufacturing type (superuser only). This is a soft delete that sets is_active to false...,Manufacturing Types,Yes
+/api/v1/attribute-nodes/,GET,listAttributeNodes,List Attribute Nodes,List attribute nodes with optional filtering by manufacturing type...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/,POST,createAttributeNode,Create Attribute Node,Create a new attribute node (superuser only)...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/{node_id},GET,getAttributeNode,Get Attribute Node,Get a single attribute node by ID...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/{node_id},PATCH,updateAttributeNode,Update Attribute Node,Update an existing attribute node (superuser only)...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/{node_id},DELETE,deleteAttributeNode,Delete Attribute Node,Delete an attribute node and all its descendants (superuser only)...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/{node_id}/children,GET,getAttributeNodeChildren,Get Child Nodes,Get direct children of an attribute node...,Attribute Nodes,Yes
+/api/v1/attribute-nodes/{node_id}/tree,GET,getAttributeNodeTree,Get Node Subtree,Get full subtree of descendants for an attribute node using LTREE...,Attribute Nodes,Yes
+/api/v1/configurations/,GET,listConfigurations,List Configurations,List user's configurations with pagination. Superusers can see all configurations....,Configurations,Yes
+/api/v1/configurations/,POST,createConfiguration,Create Configuration,Create a new product configuration...,Configurations,Yes
+/api/v1/configurations/{config_id},GET,getConfiguration,Get Configuration,Get a configuration with all its selections...,Configurations,Yes
+/api/v1/configurations/{config_id},PATCH,updateConfiguration,Update Configuration,Update configuration name and description...,Configurations,Yes
+/api/v1/configurations/{config_id},DELETE,deleteConfiguration,Delete Configuration,Delete a configuration and all its selections...,Configurations,Yes
+/api/v1/configurations/{config_id}/selections,PATCH,updateConfigurationSelections,Update Configuration Selections,Update attribute selections for a configuration...,Configurations,Yes
+/api/v1/quotes/,GET,listQuotes,List Quotes,List user's quotes with pagination. Superusers can see all quotes....,Quotes,Yes
+/api/v1/quotes/,POST,createQuote,Generate Quote,Generate a quote from a configuration with automatic price calculation...,Quotes,Yes
+/api/v1/quotes/{quote_id},GET,getQuote,Get Quote,Get a single quote by ID...,Quotes,Yes
+/api/v1/templates/,GET,listTemplates,List Templates,List public templates with pagination...,Templates,Yes
+/api/v1/templates/,POST,createTemplate,Create Template,Create a new template from a configuration (superuser only)...,Templates,Yes
+/api/v1/templates/{template_id},GET,getTemplate,Get Template,Get a template with all its selections...,Templates,Yes
+/api/v1/templates/{template_id}/apply,POST,applyTemplate,Apply Template,Apply a template to create a new configuration...,Templates,Yes
+/api/v1/customers/,GET,listCustomers,List Customers,List all customers with pagination (superuser only)...,Customers,Yes
+/api/v1/customers/,POST,createCustomer,Create Customer,Create a new customer (superuser only)...,Customers,Yes
+/api/v1/customers/{customer_id},GET,getCustomer,Get Customer,Get a single customer by ID (superuser only)...,Customers,Yes
+/api/v1/customers/{customer_id},PATCH,updateCustomer,Update Customer,Update an existing customer (superuser only)...,Customers,Yes
+/api/v1/orders/,GET,listOrders,List Orders,List user's orders with pagination. Superusers can see all orders....,Orders,Yes
+/api/v1/orders/,POST,createOrder,Create Order,Create an order from an accepted quote...,Orders,Yes
+/api/v1/orders/{order_id},GET,getOrder,Get Order,Get a single order by ID with all items...,Orders,Yes
+/api/v1/admin/hierarchy/,GET,hierarchyDashboard,Hierarchy Management Dashboard,View and manage hierarchical attribute trees for manufacturing types...,Admin Hierarchy,Yes
+/api/v1/admin/hierarchy/node/create,GET,createNodeForm,Create Node Form,Display form for creating a new attribute node...,Admin Hierarchy,Yes
+/api/v1/admin/hierarchy/node/save,POST,saveNode,Save Node,Create or update an attribute node with validation...,Admin Hierarchy,Yes
+/api/v1/admin/hierarchy/node/{node_id}/edit,GET,editNodeForm,Edit Node Form,Display form for editing an existing attribute node...,Admin Hierarchy,Yes
+/api/v1/admin/hierarchy/node/{node_id}/delete,POST,deleteNode,Delete Node,Delete an attribute node (must not have children)...,Admin Hierarchy,Yes
+/api/v1/admin/policies/,POST,add_policy_api_v1_admin_policies__post,Add Policy,"Add a new policy rule.
+
+Requires superadmin privileges. Creates a new policy rule in the Casbin
+poli...",Policy Management,Yes
+/api/v1/admin/policies/,DELETE,remove_policy_api_v1_admin_policies__delete,Remove Policy,"Remove a policy rule.
+
+Requires superadmin privileges. Removes an existing policy rule from the
+Casb...",Policy Management,Yes
+/api/v1/admin/policies/assign-customer,POST,assign_customer_to_user_api_v1_admin_policies_assign_customer_post,Assign Customer To User,"Assign customer access to a user.
+
+Requires superadmin privileges. Assigns customer access to a user...",Policy Management,Yes
+/api/v1/admin/policies/assign-customer,DELETE,remove_customer_assignment_api_v1_admin_policies_assign_customer_delete,Remove Customer Assignment,"Remove customer assignment from a user.
+
+Requires superadmin privileges. Removes customer access fro...",Policy Management,Yes
+/api/v1/admin/policies/assign-role,POST,assign_role_to_user_api_v1_admin_policies_assign_role_post,Assign Role To User,"Assign role to a user.
+
+Requires superadmin privileges. Assigns a role to a user and updates
+both th...",Policy Management,Yes
+/api/v1/admin/policies/summary,GET,get_policy_summary_api_v1_admin_policies_summary_get,Get Policy Summary,"Get a summary of current policies and assignments.
+
+Requires superadmin privileges. Returns a compre...",Policy Management,Yes
+/api/v1/admin/policies/backup,POST,backup_policies_api_v1_admin_policies_backup_post,Backup Policies,"Create a backup of all current policies.
+
+Requires superadmin privileges. Creates a complete backup ...",Policy Management,Yes
+/api/v1/admin/policies/restore,POST,restore_policies_api_v1_admin_policies_restore_post,Restore Policies,"Restore policies from a backup.
+
+Requires superadmin privileges. Restores all policies from a backup...",Policy Management,Yes
+/api/v1/admin/policies/validate,POST,validate_policies_api_v1_admin_policies_validate_post,Validate Policies,"Validate current policies for conflicts and issues.
+
+Requires superadmin privileges. Performs compre...",Policy Management,Yes
+/api/v1/admin/policies/seed,POST,seed_initial_policies_api_v1_admin_policies_seed_post,Seed Initial Policies,"Seed initial policies for default roles.
+
+Requires superadmin privileges. Creates the initial policy...",Policy Management,Yes
+/api/v1/admin/policies/user-assignments/{user_email},GET,get_user_assignments_api_v1_admin_policies_user_assignments__user_email__get,Get User Assignments,"Get all assignments for a specific user.
+
+Requires superadmin privileges. Returns all customer assig...",Policy Management,Yes
+/api/v1/entry/profile/schema/{manufacturing_type_id},GET,getProfileSchema,Get Profile Form Schema,Get dynamic form schema for profile data entry based on manufacturing type...,Entry Pages,Yes
+/api/v1/entry/profile/save,POST,saveProfileData,Save Profile Data,Save profile configuration data and create configuration record...,Entry Pages,Yes
+/api/v1/entry/profile/load/{configuration_id},GET,loadProfileData,Load Profile Data,Load profile configuration data and populate form fields...,Entry Pages,Yes
+/api/v1/entry/profile/preview/{configuration_id},GET,getProfilePreview,Get Profile Preview,Get preview table data for a configuration...,Entry Pages,Yes
+/api/v1/entry/profile/evaluate-conditions,POST,evaluateDisplayConditions,Evaluate Display Conditions,Evaluate conditional field visibility based on form data...,Entry Pages,Yes
+/api/v1/entry/profile,GET,profileEntryPage,Profile Entry Page,Render the profile data entry page...,Entry Pages,Yes
+/api/v1/entry/accessories,GET,accessoriesEntryPage,Accessories Entry Page,Render the accessories data entry page (scaffold)...,Entry Pages,Yes
+/api/v1/entry/glazing,GET,glazingEntryPage,Glazing Entry Page,Render the glazing data entry page (scaffold)...,Entry Pages,Yes
