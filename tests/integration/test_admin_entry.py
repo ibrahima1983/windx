@@ -713,3 +713,199 @@ class TestAdminEntry:
             assert response.status_code == 200
             # Check that the page title is correctly set
             assert expected_title in response.text
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_requires_auth(
+        self,
+        client: AsyncClient,
+    ):
+        """Test that bulk delete configurations requires authentication."""
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=[1, 2, 3]
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_requires_superuser(
+        self,
+        client: AsyncClient,
+        test_user_with_rbac: User,
+    ):
+        """Test that bulk delete configurations requires superuser privileges."""
+        from tests.config import get_test_settings
+        test_settings = get_test_settings()
+        
+        # Login as regular user
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": test_user_with_rbac.username,
+                "password": test_settings.test_user_password,
+            },
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+        
+        # Try to bulk delete configurations
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=[1, 2, 3],
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_empty_list(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+    ):
+        """Test that bulk delete with empty list returns 400."""
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=[],
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert "No configuration IDs provided" in data["detail"]
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_success(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+    ):
+        """Test successful bulk delete of configurations."""
+        # First create some configurations to delete
+        configurations = []
+        for i in range(3):
+            profile_data = {
+                "manufacturing_type_id": simple_manufacturing_type.id,
+                "name": f"Test Configuration {i+1}",
+                "type": "Frame",
+                "material": "Aluminum",
+            }
+            
+            response = await client.post(
+                "/api/v1/admin/entry/profile/save",
+                json=profile_data,
+                headers=superuser_auth_headers,
+            )
+            assert response.status_code == 201
+            configurations.append(response.json())
+        
+        # Extract configuration IDs
+        config_ids = [config["id"] for config in configurations]
+        
+        # Bulk delete the configurations
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=config_ids,
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 200
+        
+        result = response.json()
+        assert result["success_count"] == 3
+        assert result["error_count"] == 0
+        assert result["total_requested"] == 3
+        assert result["errors"] == []
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_partial_success(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+    ):
+        """Test bulk delete with mix of existing and non-existing configurations."""
+        # Create one configuration
+        profile_data = {
+            "manufacturing_type_id": simple_manufacturing_type.id,
+            "name": "Test Configuration",
+            "type": "Frame",
+            "material": "Aluminum",
+        }
+        
+        response = await client.post(
+            "/api/v1/admin/entry/profile/save",
+            json=profile_data,
+            headers=superuser_auth_headers,
+        )
+        assert response.status_code == 201
+        existing_config = response.json()
+        
+        # Try to delete existing config + non-existing configs
+        config_ids = [existing_config["id"], 99999, 99998]
+        
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=config_ids,
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 200
+        
+        result = response.json()
+        assert result["success_count"] == 1
+        assert result["error_count"] == 2
+        assert result["total_requested"] == 3
+        assert len(result["errors"]) == 2
+        assert "Configuration 99999 not found" in result["errors"]
+        assert "Configuration 99998 not found" in result["errors"]
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_all_missing(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+    ):
+        """Test bulk delete with all non-existing configurations."""
+        config_ids = [99999, 99998, 99997]
+        
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=config_ids,
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 200
+        
+        result = response.json()
+        assert result["success_count"] == 0
+        assert result["error_count"] == 3
+        assert result["total_requested"] == 3
+        assert len(result["errors"]) == 3
+        for config_id in config_ids:
+            assert f"Configuration {config_id} not found" in result["errors"]
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_invalid_json(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+    ):
+        """Test bulk delete with invalid JSON payload."""
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            content="invalid json",
+            headers={**superuser_auth_headers, "Content-Type": "application/json"}
+        )
+        assert response.status_code == 422  # Validation error
+
+    @pytest.mark.asyncio
+    async def test_bulk_delete_configurations_invalid_ids(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+    ):
+        """Test bulk delete with invalid configuration IDs (negative numbers)."""
+        config_ids = [-1, 0, -5]
+        
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/configurations/bulk",
+            json=config_ids,
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 422  # Validation error for PositiveInt
