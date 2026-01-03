@@ -279,6 +279,23 @@ async def version_info() -> dict[str, str | dict[str, str]]:
     }
 
 
+@app.get("/debug/env", include_in_schema=False)
+async def debug_env() -> dict[str, str]:
+    """Debug endpoint to check Azure environment variables."""
+    import os
+    
+    azure_vars = {
+        "WEBSITE_SITE_NAME": os.getenv("WEBSITE_SITE_NAME", "NOT_SET"),
+        "WEBSITE_HOSTNAME": os.getenv("WEBSITE_HOSTNAME", "NOT_SET"),
+        "WEBSITE_RESOURCE_GROUP": os.getenv("WEBSITE_RESOURCE_GROUP", "NOT_SET"),
+        "WEBSITE_OWNER_NAME": os.getenv("WEBSITE_OWNER_NAME", "NOT_SET"),
+        "HTTP_X_FORWARDED_PROTO": os.getenv("HTTP_X_FORWARDED_PROTO", "NOT_SET"),
+        "HTTP_X_FORWARDED_FOR": os.getenv("HTTP_X_FORWARDED_FOR", "NOT_SET"),
+    }
+    
+    return azure_vars
+
+
 @app.get(
     "/health",
     summary="Health Check",

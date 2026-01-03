@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from collections import defaultdict
@@ -617,9 +618,16 @@ def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
             allowed_hosts=allowed_hosts,
         )
 
-    # 4. HTTPS redirect (production only)
-    if not settings.debug:
+    # 4. HTTPS redirect (production only, but not on Azure App Service)
+    # Azure App Service handles HTTPS termination, so we don't need this middleware
+    website_site_name = os.getenv("WEBSITE_SITE_NAME")
+    logger.info(f"Azure detection: WEBSITE_SITE_NAME = {website_site_name}")
+    
+    if not settings.debug and not website_site_name:
+        logger.info("Adding HTTPSRedirectMiddleware (not on Azure)")
         app.add_middleware(HTTPSRedirectMiddleware)
+    else:
+        logger.info("Skipping HTTPSRedirectMiddleware (Azure App Service or debug mode)")
 
     # 5. CORS (before security headers to handle preflight)
     if settings.backend_cors_origins:
