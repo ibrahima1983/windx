@@ -66,8 +66,43 @@ echo ""
 echo "📦 Installing Dependencies..."
 cd /home/site/wwwroot
 
-# Install production dependencies only
-uv sync --no-dev --frozen
+# Check if pyproject.toml exists
+if [ ! -f "pyproject.toml" ]; then
+    echo "❌ pyproject.toml not found in $(pwd)"
+    echo "📁 Contents of current directory:"
+    ls -la
+    echo ""
+    echo "🔍 Searching for pyproject.toml..."
+    find . -name "pyproject.toml" -type f 2>/dev/null || echo "No pyproject.toml found anywhere"
+    echo ""
+    echo "⚠️  Falling back to requirements.txt installation..."
+    
+    if [ -f "requirements.txt" ]; then
+        echo "📦 Installing from requirements.txt..."
+        uv pip install --system -r requirements.txt
+        echo "✅ Dependencies installed from requirements.txt"
+    else
+        echo "❌ Neither pyproject.toml nor requirements.txt found!"
+        echo "📁 Available files:"
+        ls -la
+        exit 1
+    fi
+else
+    echo "✅ Found pyproject.toml, installing with uv sync..."
+    # Try UV sync first, fall back to pip if it fails
+    if uv sync --no-dev --frozen; then
+        echo "✅ Dependencies installed with uv sync"
+    else
+        echo "⚠️  uv sync failed, falling back to requirements.txt..."
+        if [ -f "requirements.txt" ]; then
+            uv pip install --system -r requirements.txt
+            echo "✅ Dependencies installed from requirements.txt"
+        else
+            echo "❌ No fallback available!"
+            exit 1
+        fi
+    fi
+fi
 
 echo "✅ Dependencies installed"
 echo "   Core packages:"
