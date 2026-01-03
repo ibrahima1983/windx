@@ -49,7 +49,6 @@ build/
 
 # Local development
 .pre-commit-config.yaml
-uv.lock
 
 # Temporary files
 *.log
