@@ -566,99 +566,34 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
 # noinspection PyTypeChecker
 def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
-    """Configure all middleware for the application.
-
-    Middleware is applied in reverse order (last added = first executed).
-    Order matters for security and functionality.
-
-    Args:
-        app (FastAPI): FastAPI application instance
-        settings (Settings | None): Application settings
-
-    Note:
-        Execution order (first to last):
-        1. RequestSizeLimitMiddleware - Check request size first
-        2. TimeoutMiddleware - Prevent hanging requests
-        3. TrustedHostMiddleware - Validate host headers (prod)
-        4. CORSMiddleware - Handle CORS preflight
-        5. SecurityHeadersMiddleware - Add security headers
-        6. GZipMiddleware - Compress responses
-        7. RequestIDMiddleware - Add request tracking
-        8. LoggingMiddleware - Log everything
+    """Configure MINIMAL middleware for Azure deployment.
+    
+    FUCK ALL THE FANCY SHIT - JUST MAKE IT WORK
     """
     if settings is None:
         settings = get_settings()
 
-    # 1. Request size limit (first check - prevent large payloads)
-    app.add_middleware(
-        RequestSizeLimitMiddleware,
-        max_size=16 * 1024 * 1024,  # 16MB
-    )
-
-    # 2. Request timeout (prevent hanging requests)
-    app.add_middleware(
-        TimeoutMiddleware,
-        timeout=30.0,  # 30 seconds
-    )
-
-    # 3. Trusted host validation (security - production only)
-    if not settings.debug:
-        # In production, validate host headers
-        allowed_hosts = ["*"]  # Configure based on your domains
-        if settings.backend_cors_origins:
-            # Extract hosts from CORS origins
-            allowed_hosts = [
-                str(origin).replace("https://", "").replace("http://", "").split(":")[0]
-                for origin in settings.backend_cors_origins
-            ]
-
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=allowed_hosts,
-        )
-
-    # 4. HTTPS redirect - DISABLED
-    # Azure App Service handles HTTPS termination at the load balancer level
-    # Adding HTTPSRedirectMiddleware causes redirect loops in cloud environments
-    logger.info("HTTPSRedirectMiddleware disabled - cloud deployment handles HTTPS termination")
-
-    # 4. CORS (before security headers to handle preflight)
+    logger.info("Setting up MINIMAL middleware for Azure - no bullshit")
+    
+    # ONLY CORS - nothing else that can cause redirects
     if settings.backend_cors_origins:
+        logger.info(f"Adding CORS for origins: {settings.backend_cors_origins}")
         app.add_middleware(
             CORSMiddleware,
             allow_origins=[str(origin) for origin in settings.backend_cors_origins],
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            allow_headers=[
-                "Accept",
-                "Accept-Language",
-                "Content-Language",
-                "Content-Type",
-                "Authorization",
-                "X-Request-ID",
-                "X-CSRF-Token",
-            ],
-            expose_headers=["X-Request-ID"],
-            max_age=86400,  # 24 hours
+            allow_headers=["*"],
+            expose_headers=["*"],
+        )
+    else:
+        logger.info("Adding CORS for all origins - development mode")
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            allow_headers=["*"],
         )
 
-    # 5. Security headers
-    app.add_middleware(
-        SecurityHeadersMiddleware,
-        hsts_max_age=31536000,  # 1 year
-    )
-
-    # 6. Gzip compression
-    app.add_middleware(
-        GZipMiddleware,
-        minimum_size=1000,  # Only compress responses > 1KB
-        compresslevel=6,  # Balance between speed and compression (1-9)
-    )
-
-    # 7. Request ID (early for logging)
-    app.add_middleware(RequestIDMiddleware)
-
-    # 8. Logging (last, to capture all request/response data)
-    app.add_middleware(LoggingMiddleware)
-
-    logger.info("[OK] Middleware configured successfully")
+    logger.info("[OK] MINIMAL middleware configured - no redirects possible")
