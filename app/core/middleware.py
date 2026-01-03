@@ -580,12 +580,11 @@ def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
         1. RequestSizeLimitMiddleware - Check request size first
         2. TimeoutMiddleware - Prevent hanging requests
         3. TrustedHostMiddleware - Validate host headers (prod)
-        4. HTTPSRedirectMiddleware - Redirect to HTTPS (prod)
-        5. CORSMiddleware - Handle CORS preflight
-        6. SecurityHeadersMiddleware - Add security headers
-        7. GZipMiddleware - Compress responses
-        8. RequestIDMiddleware - Add request tracking
-        9. LoggingMiddleware - Log everything
+        4. CORSMiddleware - Handle CORS preflight
+        5. SecurityHeadersMiddleware - Add security headers
+        6. GZipMiddleware - Compress responses
+        7. RequestIDMiddleware - Add request tracking
+        8. LoggingMiddleware - Log everything
     """
     if settings is None:
         settings = get_settings()
@@ -618,18 +617,12 @@ def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
             allowed_hosts=allowed_hosts,
         )
 
-    # 4. HTTPS redirect (production only, but not on Azure App Service)
-    # Azure App Service handles HTTPS termination, so we don't need this middleware
-    website_site_name = os.getenv("WEBSITE_SITE_NAME")
-    logger.info(f"Azure detection: WEBSITE_SITE_NAME = {website_site_name}")
-    
-    if not settings.debug and not website_site_name:
-        logger.info("Adding HTTPSRedirectMiddleware (not on Azure)")
-        app.add_middleware(HTTPSRedirectMiddleware)
-    else:
-        logger.info("Skipping HTTPSRedirectMiddleware (Azure App Service or debug mode)")
+    # 4. HTTPS redirect - DISABLED
+    # Azure App Service handles HTTPS termination at the load balancer level
+    # Adding HTTPSRedirectMiddleware causes redirect loops in cloud environments
+    logger.info("HTTPSRedirectMiddleware disabled - cloud deployment handles HTTPS termination")
 
-    # 5. CORS (before security headers to handle preflight)
+    # 4. CORS (before security headers to handle preflight)
     if settings.backend_cors_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -649,23 +642,23 @@ def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
             max_age=86400,  # 24 hours
         )
 
-    # 6. Security headers
+    # 5. Security headers
     app.add_middleware(
         SecurityHeadersMiddleware,
         hsts_max_age=31536000,  # 1 year
     )
 
-    # 7. Gzip compression
+    # 6. Gzip compression
     app.add_middleware(
         GZipMiddleware,
         minimum_size=1000,  # Only compress responses > 1KB
         compresslevel=6,  # Balance between speed and compression (1-9)
     )
 
-    # 8. Request ID (early for logging)
+    # 7. Request ID (early for logging)
     app.add_middleware(RequestIDMiddleware)
 
-    # 9. Logging (last, to capture all request/response data)
+    # 8. Logging (last, to capture all request/response data)
     app.add_middleware(LoggingMiddleware)
 
     logger.info("[OK] Middleware configured successfully")
