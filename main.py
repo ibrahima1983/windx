@@ -205,6 +205,77 @@ async def root() -> dict[str, str]:
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
+        "version_info": "/version",
+    }
+
+
+@app.get(
+    "/version",
+    summary="Version Information",
+    description="Get detailed version and deployment information including commit hash, deployment time, and script version.",
+    response_description="Version and deployment details",
+    operation_id="getVersionInfo",
+)
+async def version_info() -> dict[str, str | dict[str, str]]:
+    """Version and deployment information endpoint.
+
+    Returns detailed information about the current deployment including:
+    - Application version
+    - Deployment script version  
+    - Git commit information (if available)
+    - Deployment timestamp
+
+    Returns:
+        dict: Version and deployment information
+
+    Example Response:
+        {
+            "app_name": "WindX Product Configurator",
+            "app_version": "1.0.1",
+            "script_version": "v1.0.1",
+            "deployment_info": {
+                "commit_hash": "abc123...",
+                "short_hash": "abc123",
+                "commit_message": "Fix deployment script",
+                "deployment_time": "2026-01-03T14:30:00Z"
+            }
+        }
+    """
+    import json
+    from pathlib import Path
+    
+    # Read app version from VERSION file
+    app_version = "1.0.0"  # fallback
+    version_file = Path("VERSION")
+    if version_file.exists():
+        try:
+            app_version = version_file.read_text().strip()
+        except Exception:
+            pass
+    
+    # Try to read deployment info created by startup script
+    deployment_info = {}
+    deployment_file = Path("/tmp/deployment-info.json")
+    
+    if deployment_file.exists():
+        try:
+            with open(deployment_file, "r") as f:
+                deployment_info = json.load(f)
+        except Exception:
+            deployment_info = {"error": "Could not read deployment info"}
+    else:
+        deployment_info = {"status": "No deployment info available"}
+    
+    return {
+        "app_name": "WindX Product Configurator",
+        "app_version": app_version,
+        "script_version": "v1.0.1",
+        "deployment_info": deployment_info,
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/health",
+            "api": "/api/v1"
+        }
     }
 
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 # Azure App Service startup script for WindX Product Configurator
+# Deployment Version: v1.0.1
+# Last Updated: 2026-01-03
 
 set -e  # Exit on error
 
@@ -19,8 +21,18 @@ echo ""
 
 # Application Metadata
 echo "🏷️  Application Metadata:"
+APP_VERSION="1.0.0"
+SCRIPT_VERSION="v1.0.1"
+
+# Try to read version from VERSION file
+if [ -f "VERSION" ]; then
+    APP_VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
+    echo "   📄 Version read from VERSION file: ${APP_VERSION}"
+fi
+
 echo "   Name: WindX Product Configurator"
-echo "   Version: 1.0.0"
+echo "   App Version: ${APP_VERSION}"
+echo "   Deployment Script Version: ${SCRIPT_VERSION}"
 echo "   Description: Automated product configurator for custom manufacturing"
 echo "   Author: alaamer12 <ahmedmuhmmed239@gmail.com>"
 echo "   License: MIT"
@@ -34,14 +46,57 @@ echo "   Python Path: $(which python3 || which python)"
 echo "   Pip Version: $(pip3 --version || pip --version)"
 echo ""
 
-# Git Information
-echo "� Depl oyment Information:"
+# Git Information & Deployment Tracking
+echo "🚀 Deployment Information:"
 if [ -d .git ]; then
-    echo "   Last Commit: $(git log -1 --pretty=format:'%h - %s (%cr)' 2>/dev/null || echo 'N/A')"
-    echo "   Branch: $(git branch --show-current 2>/dev/null || echo 'N/A')"
-    echo "   Author: $(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'N/A')"
+    COMMIT_HASH=$(git log -1 --pretty=format:'%H' 2>/dev/null || echo 'N/A')
+    SHORT_HASH=$(git log -1 --pretty=format:'%h' 2>/dev/null || echo 'N/A')
+    COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s' 2>/dev/null || echo 'N/A')
+    COMMIT_DATE=$(git log -1 --pretty=format:'%ci' 2>/dev/null || echo 'N/A')
+    COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'N/A')
+    BRANCH_NAME=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'N/A')
+    
+    echo "   📝 Last Commit Hash: ${COMMIT_HASH}"
+    echo "   🔗 Short Hash: ${SHORT_HASH}"
+    echo "   💬 Commit Message: ${COMMIT_MESSAGE}"
+    echo "   📅 Commit Date: ${COMMIT_DATE}"
+    echo "   👤 Commit Author: ${COMMIT_AUTHOR}"
+    echo "   🌿 Branch: ${BRANCH_NAME}"
+    
+    # Create deployment info file for runtime access
+    cat > /tmp/deployment-info.json << EOF
+{
+    "deployment_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "app_version": "${APP_VERSION}",
+    "commit_hash": "${COMMIT_HASH}",
+    "short_hash": "${SHORT_HASH}",
+    "commit_message": "${COMMIT_MESSAGE}",
+    "commit_date": "${COMMIT_DATE}",
+    "commit_author": "${COMMIT_AUTHOR}",
+    "branch": "${BRANCH_NAME}",
+    "script_version": "${SCRIPT_VERSION}"
+}
+EOF
+    echo "   📄 Deployment info saved to /tmp/deployment-info.json"
 else
-    echo "   Git: Not a git repository"
+    echo "   ⚠️  Git: Not a git repository (deployed from archive)"
+    echo "   📦 Deployment Method: Archive/ZIP upload"
+    
+    # Create basic deployment info
+    cat > /tmp/deployment-info.json << EOF
+{
+    "deployment_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "app_version": "${APP_VERSION}",
+    "commit_hash": "N/A",
+    "short_hash": "N/A", 
+    "commit_message": "Deployed from archive",
+    "commit_date": "N/A",
+    "commit_author": "N/A",
+    "branch": "N/A",
+    "script_version": "${SCRIPT_VERSION}",
+    "deployment_method": "archive"
+}
+EOF
 fi
 echo ""
 
@@ -66,8 +121,43 @@ echo ""
 echo "📦 Installing Dependencies..."
 cd /home/site/wwwroot
 
-# Install production dependencies only
-uv sync --no-dev --frozen
+# Check if pyproject.toml exists
+if [ ! -f "pyproject.toml" ]; then
+    echo "❌ pyproject.toml not found in $(pwd)"
+    echo "📁 Contents of current directory:"
+    ls -la
+    echo ""
+    echo "🔍 Searching for pyproject.toml..."
+    find . -name "pyproject.toml" -type f 2>/dev/null || echo "No pyproject.toml found anywhere"
+    echo ""
+    echo "⚠️  Falling back to requirements.txt installation..."
+    
+    if [ -f "requirements.txt" ]; then
+        echo "📦 Installing from requirements.txt..."
+        uv pip install --system -r requirements.txt
+        echo "✅ Dependencies installed from requirements.txt"
+    else
+        echo "❌ Neither pyproject.toml nor requirements.txt found!"
+        echo "📁 Available files:"
+        ls -la
+        exit 1
+    fi
+else
+    echo "✅ Found pyproject.toml, installing with uv sync..."
+    # Try UV sync first, fall back to pip if it fails
+    if uv sync --no-dev --frozen; then
+        echo "✅ Dependencies installed with uv sync"
+    else
+        echo "⚠️  uv sync failed, falling back to requirements.txt..."
+        if [ -f "requirements.txt" ]; then
+            uv pip install --system -r requirements.txt
+            echo "✅ Dependencies installed from requirements.txt"
+        else
+            echo "❌ No fallback available!"
+            exit 1
+        fi
+    fi
+fi
 
 echo "✅ Dependencies installed"
 echo "   Core packages:"

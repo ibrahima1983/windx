@@ -153,10 +153,11 @@ class ManufacturingTypeResolver:
     ) -> Optional[ManufacturingType]:
         """Get the default manufacturing type for profile entry.
         
-        This method provides a fallback chain:
-        1. Try "Window Profile Entry" (primary)
+        This method provides a robust fallback chain:
+        1. Try "Window Profile Entry" (primary - has rich CSV structure)
         2. Try first active window type
         3. Try any active manufacturing type
+        4. If none exist, log warning about setup
         
         Args:
             db: Database session
@@ -164,10 +165,19 @@ class ManufacturingTypeResolver:
         Returns:
             ManufacturingType or None if no types exist
         """
-        # Try primary profile entry type
+        # Try primary profile entry type (has the rich 29-field CSV structure)
         mfg_type = await cls.get_by_name(db, cls.WINDOW_PROFILE_ENTRY)
         if mfg_type:
             return mfg_type
+        
+        # Log warning if primary type is missing
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            f"Primary manufacturing type '{cls.WINDOW_PROFILE_ENTRY}' not found. "
+            "This type contains the rich profile structure with 29 CSV fields. "
+            "Run 'python scripts/setup_profile_hierarchy.py' to create it."
+        )
         
         # Fallback: Try any window type
         stmt = select(ManufacturingType).where(
@@ -177,6 +187,11 @@ class ManufacturingTypeResolver:
         result = await db.execute(stmt)
         mfg_type = result.scalar_one_or_none()
         if mfg_type:
+            logger.warning(
+                f"Using fallback manufacturing type '{mfg_type.name}' (ID: {mfg_type.id}). "
+                "This may not have the full profile structure. "
+                "Consider running the profile hierarchy setup script."
+            )
             return mfg_type
         
         # Last resort: Any active type
@@ -184,7 +199,21 @@ class ManufacturingTypeResolver:
             ManufacturingType.is_active == True
         ).limit(1)
         result = await db.execute(stmt)
-        return result.scalar_one_or_none()
+        fallback_type = result.scalar_one_or_none()
+        
+        if fallback_type:
+            logger.warning(
+                f"Using last resort manufacturing type '{fallback_type.name}' (ID: {fallback_type.id}). "
+                "This likely does not have the profile structure. "
+                "Run 'python manage.py setup_fresh_db' to set up the system properly."
+            )
+        else:
+            logger.error(
+                "No manufacturing types found in database! "
+                "Run 'python manage.py setup_fresh_db' to initialize the system."
+            )
+        
+        return fallback_type
     
     @classmethod
     def validate_page_type(cls, page_type: str | None) -> bool:
@@ -199,6 +228,130 @@ class ManufacturingTypeResolver:
         if page_type is None:
             return False
         return page_type in cls.VALID_PAGE_TYPES
+    
+    @classmethod
+    async def verify_profile_setup(
+        cls,
+        db: AsyncSession,
+    ) -> dict[str, any]:
+        """Verify that the profile system is properly set up.
+        
+        Args:
+            db: Database session
+            
+        Returns:
+            dict: Verification results with status and details
+        """
+        from app.models.attribute_node import AttributeNode
+        
+        results = {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "manufacturing_type": None,
+            "attribute_count": 0,
+            "has_rich_structure": False,
+        }
+        
+        # Check if Window Profile Entry exists
+        mfg_type = await cls.get_by_name(db, cls.WINDOW_PROFILE_ENTRY)
+        if not mfg_type:
+            results["status"] = "error"
+            results["errors"].append(
+                f"Primary manufacturing type '{cls.WINDOW_PROFILE_ENTRY}' not found. "
+                "Run 'python scripts/setup_profile_hierarchy.py' to create it."
+            )
+            return results
+        
+        results["manufacturing_type"] = {
+            "id": mfg_type.id,
+            "name": mfg_type.name,
+            "base_category": mfg_type.base_category,
+        }
+        
+        # Check attribute nodes count and structure
+        stmt = select(AttributeNode).where(
+            AttributeNode.manufacturing_type_id == mfg_type.id,
+            AttributeNode.page_type == "profile"
+        )
+        result = await db.execute(stmt)
+        attribute_nodes = result.scalars().all()
+        
+        results["attribute_count"] = len(attribute_nodes)
+        
+        # Check for meaningful structure (schema-driven approach)
+        # Instead of hardcoding fields, check for structural indicators
+        actual_fields = {node.name for node in attribute_nodes}
+        
+        # Check for minimum viable structure (essential for any profile system)
+        critical_indicators = {
+            "has_basic_info": any(field in actual_fields for field in ["name", "title", "product_name"]),
+            "has_type_info": any(field in actual_fields for field in ["type", "category", "product_type"]),
+            "has_material_info": any(field in actual_fields for field in ["material", "materials"]),
+            "has_dimensions": any(field in actual_fields for field in ["width", "height", "length", "size"]),
+            "has_pricing": any(field in actual_fields for field in ["price", "cost", "price_per_meter", "price_per_unit"]),
+        }
+        
+        missing_critical = [key for key, present in critical_indicators.items() if not present]
+        
+        if missing_critical:
+            results["status"] = "error"
+            results["errors"].append(
+                f"Missing critical profile capabilities: {', '.join(missing_critical)}. "
+                "Profile page may not work correctly. Consider running setup scripts."
+            )
+        
+        # Determine if we have a rich structure based on attribute count and diversity
+        # A rich structure should have multiple sections and various field types
+        sections = set()
+        field_types = set()
+        ui_components = set()
+        
+        for node in attribute_nodes:
+            # Extract section from ltree_path (first part)
+            if node.ltree_path and "." in node.ltree_path:
+                sections.add(node.ltree_path.split(".")[0])
+            
+            if node.data_type:
+                field_types.add(node.data_type)
+            
+            if node.ui_component:
+                ui_components.add(node.ui_component)
+        
+        # Rich structure indicators
+        rich_indicators = {
+            "multiple_sections": len(sections) >= 3,  # At least 3 logical sections
+            "diverse_field_types": len(field_types) >= 3,  # At least 3 different data types
+            "varied_ui_components": len(ui_components) >= 3,  # At least 3 different UI components
+            "sufficient_fields": len(attribute_nodes) >= 10,  # At least 10 fields for meaningful configuration
+        }
+        
+        rich_score = sum(rich_indicators.values())
+        results["has_rich_structure"] = rich_score >= 3  # At least 3 out of 4 indicators
+        
+        results["structure_details"] = {
+            "sections": len(sections),
+            "field_types": len(field_types),
+            "ui_components": len(ui_components),
+            "rich_score": f"{rich_score}/4",
+            "section_names": sorted(sections) if sections else [],
+        }
+        
+        # Provide helpful feedback without being prescriptive
+        if not results["has_rich_structure"] and results["status"] == "ok":
+            results["status"] = "warning"
+            if len(attribute_nodes) < 10:
+                results["warnings"].append(
+                    f"Profile has only {len(attribute_nodes)} fields. "
+                    "Consider adding more attributes for richer product configuration."
+                )
+            if len(sections) < 3:
+                results["warnings"].append(
+                    f"Profile has only {len(sections)} logical sections. "
+                    "Consider organizing attributes into more sections (e.g., basic info, dimensions, pricing)."
+                )
+        
+        return results
     
     @classmethod
     def clear_cache(cls):
