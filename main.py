@@ -133,7 +133,7 @@ app = FastAPI(
     title="WindX Product Configurator API",
     summary="Automated Product Configurator for Custom Manufacturing",
     description="API for dynamic product configuration with real-time pricing, templates, quotes, and order management.",
-    version="1.0.0",
+    version="1.0.2",
     lifespan=lifespan,
     docs_url=None,
     redoc_url="/redoc",
@@ -202,7 +202,7 @@ async def root() -> dict[str, str]:
     """
     return {
         "message": "Welcome to WindX Product Configurator API",
-        "version": "1.0.0",
+        "version": "1.0.2",
         "docs": "/docs",
         "health": "/health",
         "version_info": "/version",
@@ -245,7 +245,7 @@ async def version_info() -> dict[str, str | dict[str, str]]:
     from pathlib import Path
     
     # Read app version from VERSION file
-    app_version = "1.0.0"  # fallback
+    app_version = "1.0.2"  # fallback
     version_file = Path("VERSION")
     if version_file.exists():
         try:
@@ -269,7 +269,7 @@ async def version_info() -> dict[str, str | dict[str, str]]:
     return {
         "app_name": "WindX Product Configurator",
         "app_version": app_version,
-        "script_version": "v1.0.1",
+        "script_version": "v1.0.2",
         "deployment_info": deployment_info,
         "endpoints": {
             "docs": "/docs",
