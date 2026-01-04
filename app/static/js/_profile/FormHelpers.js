@@ -58,6 +58,12 @@ class FormHelpers {
     }
 
     static getUIComponent(field) {
+        // First, check if the backend has already specified a ui_component
+        if (field.ui_component) {
+            return field.ui_component;
+        }
+        
+        // Fallback to client-side logic if no ui_component is specified
         // Determine UI component based on field name and data type
         if (field.data_type === 'boolean') return 'checkbox';
         if (field.data_type === 'number' || field.data_type === 'float') return 'number';

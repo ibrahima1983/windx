@@ -113,7 +113,7 @@ async def create_attribute_nodes(
             "ltree_path": "basic_information.company",
             "depth": 1,
             "sort_order": 3,
-            "ui_component": "input",
+            "ui_component": "dropdown",
             "help_text": "Company or manufacturer name",
             "validation_rules": {"max_length": 100},
         },
@@ -430,7 +430,7 @@ async def create_attribute_nodes(
             "ltree_path": "technical_specs.reinforcement_steel",
             "depth": 1,
             "sort_order": 25,
-            "ui_component": "text",
+            "ui_component": "dropdown",
             "help_text": "Select reinforcement steel options",
         },
         {
@@ -442,7 +442,7 @@ async def create_attribute_nodes(
             "ltree_path": "technical_specs.colours",
             "depth": 1,
             "sort_order": 26,
-            "ui_component": "text",
+            "ui_component": "dropdown",
             "help_text": "Select available colors",
         },
         # Pricing Section
