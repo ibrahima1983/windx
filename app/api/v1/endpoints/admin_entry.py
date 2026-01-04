@@ -750,6 +750,71 @@ async def remove_field_option(
     return await entry_service.remove_field_option(option_id)
 
 
+@router.delete(
+    "/profile/remove-option-by-name",
+    response_model=dict[str, Any],
+    summary="Remove Option by Name (Admin)",
+    description="Remove an option from an attribute field by name (admin interface)",
+    response_description="Result of removing the option",
+    operation_id="removeAdminFieldOptionByName",
+    responses={
+        200: {
+            "description": "Option removed successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "message": "Option 'Steel' removed successfully from field 'material'",
+                        "option_id": 123,
+                        "field_name": "material",
+                        "option_value": "Steel"
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "Invalid request or option not found",
+        },
+        **get_common_responses(401, 403, 500),
+    },
+)
+async def remove_field_option_by_name(
+    manufacturing_type_id: PositiveInt,
+    field_name: str,
+    option_value: str,
+    current_superuser: CurrentSuperuser,
+    db: DBSession,
+    page_type: Annotated[
+        str,
+        Query(description="Page type: profile, accessories, glazing"),
+    ] = "profile",
+) -> dict[str, Any]:
+    """Remove an option from an attribute field by name (admin interface).
+
+    Finds and deletes the attribute node of type 'option' with the specified name.
+
+    Args:
+        manufacturing_type_id (PositiveInt): Manufacturing type ID
+        field_name (str): Name of the field to remove option from
+        option_value (str): Value of the option to remove
+        current_superuser (User): Current authenticated superuser
+        db (AsyncSession): Database session
+        page_type (str): Page type (profile, accessories, glazing)
+
+    Returns:
+        dict: Result with success status and details
+
+    Example:
+        DELETE /api/v1/admin/entry/profile/remove-option-by-name?manufacturing_type_id=1&field_name=material&option_value=Steel&page_type=profile
+    """
+    from app.services.entry import EntryService
+
+    entry_service = EntryService(db)
+    return await entry_service.remove_field_option_by_name(
+        manufacturing_type_id, field_name, option_value, page_type
+    )
+
+
 # HTML Page Endpoints
 
 

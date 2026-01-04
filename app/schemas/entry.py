@@ -133,6 +133,14 @@ class FieldDefinition(BaseModel):
             examples=[["Frame", "Flying mullion"], ["Aluminum", "Vinyl", "Wood"]],
         ),
     ] = None
+    options_data: Annotated[
+        list[dict[str, Any]] | None,
+        Field(
+            default=None,
+            description="Detailed option data with IDs and metadata for select/radio fields",
+            examples=[[{"id": 1, "name": "Frame", "price_impact_value": 50.0}]],
+        ),
+    ] = None
     sort_order: Annotated[
         int,
         Field(

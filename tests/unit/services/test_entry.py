@@ -279,6 +279,134 @@ class TestEntryServiceBusinessRules:
         
         assert "Option 99999 not found" in str(exc_info.value)
 
+    async def test_remove_field_option_by_name_success(self):
+        """Test successful field option removal by name."""
+        from app.models.attribute_node import AttributeNode
+        from decimal import Decimal
+        
+        # Create a manufacturing type
+        mfg_type = ManufacturingType(
+            name="Test Window",
+            description="Test window type",
+            base_price=Decimal("200.00"),
+            base_weight=Decimal("25.00"),
+            is_active=True
+        )
+        self.db.add(mfg_type)
+        await self.db.commit()
+        await self.db.refresh(mfg_type)
+        
+        # Create parent field and option to remove
+        parent_field = AttributeNode(
+            manufacturing_type_id=mfg_type.id,
+            name="material",
+            node_type="attribute",
+            page_type="profile",
+            ltree_path=f"mfg_{mfg_type.id}.material",
+            depth=1,
+            data_type="string",
+            is_required=False,
+            is_active=True
+        )
+        self.db.add(parent_field)
+        await self.db.commit()
+        await self.db.refresh(parent_field)
+        
+        option_to_remove = AttributeNode(
+            manufacturing_type_id=mfg_type.id,
+            parent_node_id=parent_field.id,
+            name="Steel",
+            node_type="option",
+            page_type="profile",
+            ltree_path=f"mfg_{mfg_type.id}.material.steel",
+            depth=2,
+            data_type="string",
+            price_impact_type="fixed",
+            price_impact_value=Decimal("0.00"),
+            is_required=False,
+            is_active=True
+        )
+        self.db.add(option_to_remove)
+        await self.db.commit()
+        await self.db.refresh(option_to_remove)
+        
+        # Remove the option by name
+        result = await self.service.remove_field_option_by_name(
+            mfg_type.id, "material", "Steel", "profile"
+        )
+        
+        assert result["success"] is True
+        assert "Steel" in result["message"]
+        assert result["option_id"] == option_to_remove.id
+        assert result["field_name"] == "material"
+        assert result["option_value"] == "Steel"
+        assert result["manufacturing_type_id"] == mfg_type.id
+
+    async def test_remove_field_option_by_name_field_not_found(self):
+        """Test remove field option by name with non-existent field."""
+        from app.core.exceptions import NotFoundException
+        from decimal import Decimal
+        
+        # Create a manufacturing type
+        mfg_type = ManufacturingType(
+            name="Test Window",
+            description="Test window type",
+            base_price=Decimal("200.00"),
+            base_weight=Decimal("25.00"),
+            is_active=True
+        )
+        self.db.add(mfg_type)
+        await self.db.commit()
+        await self.db.refresh(mfg_type)
+        
+        with pytest.raises(NotFoundException) as exc_info:
+            await self.service.remove_field_option_by_name(
+                mfg_type.id, "nonexistent_field", "Steel", "profile"
+            )
+        
+        assert "Field 'nonexistent_field' not found" in str(exc_info.value)
+
+    async def test_remove_field_option_by_name_option_not_found(self):
+        """Test remove field option by name with non-existent option."""
+        from app.models.attribute_node import AttributeNode
+        from decimal import Decimal
+        
+        # Create a manufacturing type
+        mfg_type = ManufacturingType(
+            name="Test Window",
+            description="Test window type",
+            base_price=Decimal("200.00"),
+            base_weight=Decimal("25.00"),
+            is_active=True
+        )
+        self.db.add(mfg_type)
+        await self.db.commit()
+        await self.db.refresh(mfg_type)
+        
+        # Create parent field but no option
+        parent_field = AttributeNode(
+            manufacturing_type_id=mfg_type.id,
+            name="material",
+            node_type="attribute",
+            page_type="profile",
+            ltree_path=f"mfg_{mfg_type.id}.material",
+            depth=1,
+            data_type="string",
+            is_required=False,
+            is_active=True
+        )
+        self.db.add(parent_field)
+        await self.db.commit()
+        await self.db.refresh(parent_field)
+        
+        # Try to remove non-existent option
+        result = await self.service.remove_field_option_by_name(
+            mfg_type.id, "material", "NonexistentOption", "profile"
+        )
+        
+        assert result["success"] is False
+        assert "Option 'NonexistentOption' not found in field 'material'" in result["error"]
+
     def test_get_field_display_value_with_business_rules(self):
         """Test field display value with business rules applied."""
         form_data = {

@@ -52,6 +52,11 @@ function profileEntryApp(options = {}) {
         showAddInput: {},  // Track which fields have add input visible: { fieldName: boolean }
         newOptionValue: {}, // Track new option values: { fieldName: string }
         addingOption: {},   // Track which fields are currently adding: { fieldName: boolean }
+        
+        // Remove options state
+        showRemoveInput: {},  // Track which fields have remove input visible: { fieldName: boolean }
+        removeOptionValue: {}, // Track remove option values: { fieldName: string }
+        removingOption: {},   // Track which fields are currently removing: { fieldName: boolean }
 
         // Computed
         get isFormValid() {
@@ -610,6 +615,56 @@ function profileEntryApp(options = {}) {
             } catch (error) {
                 console.error('🦆 [PROFILE-ENTRY] Error adding option:', error);
                 showToast(`Error adding option: ${error.message}`, 'error');
+            }
+        },
+
+        async removeExistingOption(fieldName, optionValue) {
+            if (!optionValue || optionValue.trim() === '') {
+                showToast('Please enter a valid option value to remove', 'warning');
+                return;
+            }
+
+            if (!this.manufacturingTypeId) {
+                showToast('No manufacturing type selected', 'error');
+                return;
+            }
+
+            const trimmedValue = optionValue.trim();
+            
+            // Confirm removal
+            if (!confirm(`Are you sure you want to remove "${trimmedValue}" from ${fieldName} options?`)) {
+                return;
+            }
+            
+            try {
+                const result = await FormHelpers.removeFieldOptionByName(
+                    fieldName, 
+                    trimmedValue, 
+                    this.manufacturingTypeId, 
+                    this.pageType
+                );
+                
+                if (result.success) {
+                    showToast(result.message || `Removed "${trimmedValue}" from ${fieldName} options`, 'success');
+                    
+                    // If the removed option was selected, clear the field value
+                    if (this.formData[fieldName] === trimmedValue) {
+                        this.updateField(fieldName, '');
+                    }
+                    
+                    // Reload the schema to get updated options
+                    await this.loadSchema();
+                    
+                    // Force Alpine.js to re-render
+                    this.$nextTick(() => {
+                        this.fieldErrors = { ...this.fieldErrors };
+                    });
+                } else {
+                    showToast(result.error || `Failed to remove "${trimmedValue}"`, 'error');
+                }
+            } catch (error) {
+                console.error('🦆 [PROFILE-ENTRY] Error removing option:', error);
+                showToast(`Error removing option: ${error.message}`, 'error');
             }
         },
 

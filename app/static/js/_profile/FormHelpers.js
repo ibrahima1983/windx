@@ -242,6 +242,55 @@ class FormHelpers {
         }
     }
 
+    static async removeFieldOptionByName(fieldName, optionValue, manufacturingTypeId, pageType = 'profile') {
+        try {
+            // Try to get JWT token from localStorage/sessionStorage
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Add Authorization header only if token is available
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            // If no token, rely on cookie-based authentication (browser will send cookies automatically)
+
+            // Call API to remove option by name
+            const response = await fetch(
+                `/api/v1/admin/entry/profile/remove-option-by-name?manufacturing_type_id=${manufacturingTypeId}&field_name=${fieldName}&option_value=${encodeURIComponent(optionValue)}&page_type=${pageType}`,
+                {
+                    method: 'DELETE',
+                    headers: headers,
+                    credentials: 'include'  // Include cookies for authentication
+                }
+            );
+
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.detail?.message || result.message || 'Failed to remove option');
+            }
+
+            if (result.success) {
+                // Clear cache for this field
+                const cacheKey = `${manufacturingTypeId}_${pageType}_${fieldName}`;
+                this.fieldOptionsCache.delete(cacheKey);
+                
+                console.log(`🦆 [FORMHELPERS] Successfully removed option: ${optionValue}`);
+                return { success: true, message: result.message };
+            } else {
+                throw new Error(result.error || 'Failed to remove option');
+            }
+
+        } catch (error) {
+            console.error(`🦆 [FORMHELPERS] Error removing option:`, error);
+            return { success: false, error: error.message };
+        }
+    }
+
     static getFieldUnit(fieldName) {
         // Return appropriate unit based on field name
         const unitMap = {

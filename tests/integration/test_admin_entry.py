@@ -1220,6 +1220,184 @@ class TestAdminEntryFieldOptions:
         assert data["field_name"] == "material"
 
     @pytest.mark.asyncio
+    async def test_remove_field_option_by_name_requires_auth(
+        self,
+        client: AsyncClient,
+    ):
+        """Test that remove field option by name requires authentication."""
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/remove-option-by-name",
+            params={
+                "manufacturing_type_id": 1,
+                "field_name": "material",
+                "option_value": "Steel"
+            }
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_remove_field_option_by_name_requires_superuser(
+        self,
+        client: AsyncClient,
+        test_user_with_rbac: User,
+    ):
+        """Test that remove field option by name requires superuser privileges."""
+        from tests.config import get_test_settings
+        test_settings = get_test_settings()
+        
+        # Login as regular user
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": test_user_with_rbac.username,
+                "password": test_settings.test_user_password,
+            },
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+        
+        # Try to remove field option by name
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/remove-option-by-name",
+            params={
+                "manufacturing_type_id": 1,
+                "field_name": "material",
+                "option_value": "Steel"
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_remove_field_option_by_name_field_not_found(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+    ):
+        """Test remove field option by name with non-existent field."""
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/remove-option-by-name",
+            params={
+                "manufacturing_type_id": simple_manufacturing_type.id,
+                "field_name": "nonexistent_field",
+                "option_value": "Steel"
+            },
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 404
+        data = response.json()
+        assert "Field 'nonexistent_field' not found" in data["detail"]
+
+    @pytest.mark.asyncio
+    async def test_remove_field_option_by_name_option_not_found(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+        db_session: AsyncSession,
+    ):
+        """Test remove field option by name with non-existent option."""
+        from app.models.attribute_node import AttributeNode
+        
+        # Create parent field but no option
+        parent_field = AttributeNode(
+            manufacturing_type_id=simple_manufacturing_type.id,
+            name="material",
+            node_type="attribute",
+            page_type="profile",
+            ltree_path=f"mfg_{simple_manufacturing_type.id}.material",
+            depth=1,
+            data_type="string",
+            is_required=False,
+            is_active=True
+        )
+        db_session.add(parent_field)
+        await db_session.commit()
+        await db_session.refresh(parent_field)
+        
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/remove-option-by-name",
+            params={
+                "manufacturing_type_id": simple_manufacturing_type.id,
+                "field_name": "material",
+                "option_value": "NonexistentOption"
+            },
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 200  # Returns 200 with success: false
+        data = response.json()
+        assert data["success"] is False
+        assert "Option 'NonexistentOption' not found in field 'material'" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_remove_field_option_by_name_success(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+        db_session: AsyncSession,
+    ):
+        """Test successful field option removal by name."""
+        from app.models.attribute_node import AttributeNode
+        from decimal import Decimal
+        
+        # Create parent field and option to remove
+        parent_field = AttributeNode(
+            manufacturing_type_id=simple_manufacturing_type.id,
+            name="material",
+            node_type="attribute",
+            page_type="profile",
+            ltree_path=f"mfg_{simple_manufacturing_type.id}.material",
+            depth=1,
+            data_type="string",
+            is_required=False,
+            is_active=True
+        )
+        db_session.add(parent_field)
+        await db_session.commit()
+        await db_session.refresh(parent_field)
+        
+        option_to_remove = AttributeNode(
+            manufacturing_type_id=simple_manufacturing_type.id,
+            parent_node_id=parent_field.id,
+            name="Steel",
+            node_type="option",
+            page_type="profile",
+            ltree_path=f"mfg_{simple_manufacturing_type.id}.material.steel",
+            depth=2,
+            data_type="string",
+            price_impact_type="fixed",
+            price_impact_value=Decimal("0.00"),
+            is_required=False,
+            is_active=True
+        )
+        db_session.add(option_to_remove)
+        await db_session.commit()
+        await db_session.refresh(option_to_remove)
+        
+        # Remove the option by name
+        response = await client.delete(
+            "/api/v1/admin/entry/profile/remove-option-by-name",
+            params={
+                "manufacturing_type_id": simple_manufacturing_type.id,
+                "field_name": "material",
+                "option_value": "Steel",
+                "page_type": "profile"
+            },
+            headers=superuser_auth_headers
+        )
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data["success"] is True
+        assert "Steel" in data["message"]
+        assert data["option_id"] == option_to_remove.id
+        assert data["field_name"] == "material"
+        assert data["option_value"] == "Steel"
+        assert data["manufacturing_type_id"] == simple_manufacturing_type.id
+
+    @pytest.mark.asyncio
     async def test_add_field_option_with_different_page_types(
         self,
         client: AsyncClient,

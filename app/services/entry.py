@@ -369,8 +369,10 @@ class EntryService(BaseService):
         
         # Extract options from child nodes if this is a dropdown/radio/multi-select field
         options = None
+        options_data = None
         if ui_component in ["dropdown", "radio", "multi-select"]:
             options = await self._extract_options_from_children(node)
+            options_data = await self._extract_options_with_metadata(node)
         
         return FieldDefinition(
             name=node.name,
@@ -383,6 +385,7 @@ class EntryService(BaseService):
             description=node.description,  # Contains HTML for tooltips
             help_text=node.help_text,  # Short subtitle below field
             options=options,
+            options_data=options_data,
             sort_order=node.sort_order or 0,
         )
 
@@ -407,6 +410,37 @@ class EntryService(BaseService):
         option_nodes = result.scalars().all()
         
         return [node.name for node in option_nodes]
+    
+    async def _extract_options_with_metadata(self, parent_node: AttributeNode) -> list[dict[str, Any]]:
+        """Extract option values and metadata from child nodes.
+
+        Args:
+            parent_node: Parent attribute node
+
+        Returns:
+            list[dict]: List of option dictionaries with id, name, and other metadata
+        """
+        stmt = (
+            select(AttributeNode)
+            .where(
+                AttributeNode.parent_node_id == parent_node.id,
+                AttributeNode.node_type == "option"
+            )
+            .order_by(AttributeNode.sort_order, AttributeNode.name)
+        )
+        result = await self.db.execute(stmt)
+        option_nodes = result.scalars().all()
+        
+        return [
+            {
+                "id": node.id,
+                "name": node.name,
+                "description": node.description,
+                "price_impact_value": float(node.price_impact_value) if node.price_impact_value else None,
+                "sort_order": node.sort_order
+            }
+            for node in option_nodes
+        ]
     
     def _generate_label_from_name(self, name: str) -> str:
         """Generate a human-readable label from a field name.
@@ -1551,152 +1585,7 @@ class EntryService(BaseService):
             "total_requested": len(configuration_ids)
         }
 
-    async def add_field_option(
-        self, manufacturing_type_id: int, field_name: str, option_value: str, page_type: str = "profile"
-    ) -> dict[str, Any]:
-        """Add a new option to an attribute field.
 
-        Args:
-            manufacturing_type_id: Manufacturing type ID
-            field_name: Name of the field to add option to
-            option_value: Value of the new option
-            page_type: Page type (profile, accessories, glazing)
-
-        Returns:
-            dict: Result with success status and details
-
-        Raises:
-            NotFoundException: If field not found
-            ValidationException: If option already exists
-        """
-        # Find the parent attribute node
-        stmt = (
-            select(AttributeNode)
-            .where(
-                AttributeNode.manufacturing_type_id == manufacturing_type_id,
-                AttributeNode.name == field_name,
-                AttributeNode.page_type == page_type,
-                AttributeNode.node_type == "attribute"
-            )
-        )
-        result = await self.db.execute(stmt)
-        parent_node = result.scalar_one_or_none()
-
-        if not parent_node:
-            raise NotFoundException(f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}")
-
-        # Check if option already exists
-        stmt = (
-            select(AttributeNode)
-            .where(
-                AttributeNode.parent_node_id == parent_node.id,
-                AttributeNode.name == option_value,
-                AttributeNode.node_type == "option"
-            )
-        )
-        result = await self.db.execute(stmt)
-        existing_option = result.scalar_one_or_none()
-
-        if existing_option:
-            return {
-                "success": False,
-                "error": f"Option '{option_value}' already exists for field '{field_name}'"
-            }
-
-        # Get the next sort order
-        stmt = (
-            select(func.max(AttributeNode.sort_order))
-            .where(
-                AttributeNode.parent_node_id == parent_node.id,
-                AttributeNode.node_type == "option"
-            )
-        )
-        result = await self.db.execute(stmt)
-        max_sort_order = result.scalar() or 0
-
-        # Create new option node
-        new_option = AttributeNode(
-            manufacturing_type_id=manufacturing_type_id,
-            parent_node_id=parent_node.id,
-            page_type=page_type,
-            name=option_value,
-            node_type="option",
-            data_type="selection",
-            ltree_path=f"{parent_node.ltree_path}.{option_value.lower().replace(' ', '_')}",
-            depth=parent_node.depth + 1,
-            sort_order=max_sort_order + 1,
-            price_impact_type="fixed",
-            price_impact_value=Decimal("0.00"),
-            weight_impact=Decimal("0.00"),
-        )
-
-        self.db.add(new_option)
-        await self.commit()
-        await self.refresh(new_option)
-
-        return {
-            "success": True,
-            "message": f"Option '{option_value}' added successfully to field '{field_name}'",
-            "option_id": new_option.id,
-            "field_name": field_name,
-            "option_value": option_value
-        }
-
-    async def remove_field_option(self, option_id: int) -> dict[str, Any]:
-        """Remove an option from an attribute field.
-
-        Args:
-            option_id: ID of the option to remove
-
-        Returns:
-            dict: Result with success status and details
-
-        Raises:
-            NotFoundException: If option not found
-        """
-        # Find the option node
-        stmt = (
-            select(AttributeNode)
-            .where(
-                AttributeNode.id == option_id,
-                AttributeNode.node_type == "option"
-            )
-        )
-        result = await self.db.execute(stmt)
-        option_node = result.scalar_one_or_none()
-
-        if not option_node:
-            raise NotFoundException(f"Option with ID {option_id} not found")
-
-        option_value = option_node.name
-        
-        # Get parent field name for response
-        parent_field_name = "unknown"
-        if option_node.parent_node_id:
-            stmt = select(AttributeNode).where(AttributeNode.id == option_node.parent_node_id)
-            result = await self.db.execute(stmt)
-            parent_node = result.scalar_one_or_none()
-            if parent_node:
-                parent_field_name = parent_node.name
-
-        # Delete any configuration selections that reference this option
-        from app.models.configuration_selection import ConfigurationSelection
-        stmt = delete(ConfigurationSelection).where(
-            ConfigurationSelection.attribute_node_id == option_id
-        )
-        await self.db.execute(stmt)
-
-        # Delete the option node
-        await self.db.delete(option_node)
-        await self.commit()
-
-        return {
-            "success": True,
-            "message": f"Option '{option_value}' removed successfully from field '{parent_field_name}'",
-            "option_id": option_id,
-            "field_name": parent_field_name,
-            "option_value": option_value
-        }
 
     async def add_field_option(
         self, 
@@ -1838,6 +1727,78 @@ class EntryService(BaseService):
             "option_id": option_id,
             "option_name": option_name,
             "field_name": parent_field_name
+        }
+
+    async def remove_field_option_by_name(
+        self, manufacturing_type_id: int, field_name: str, option_value: str, page_type: str = "profile"
+    ) -> dict[str, Any]:
+        """Remove an option from an attribute field by name.
+
+        Finds and deletes the attribute node of type 'option' with the specified name.
+
+        Args:
+            manufacturing_type_id: Manufacturing type ID
+            field_name: Name of the field to remove option from
+            option_value: Value of the option to remove
+            page_type: Page type (profile, accessories, glazing)
+
+        Returns:
+            dict: Result with success status and details
+
+        Raises:
+            NotFoundException: If field or option not found
+        """
+        from app.models.attribute_node import AttributeNode
+
+        # Find the parent attribute node
+        parent_stmt = select(AttributeNode).where(
+            AttributeNode.manufacturing_type_id == manufacturing_type_id,
+            AttributeNode.name == field_name,
+            AttributeNode.page_type == page_type,
+            AttributeNode.node_type == "attribute"
+        )
+        parent_result = await self.db.execute(parent_stmt)
+        parent_node = parent_result.scalar_one_or_none()
+
+        if not parent_node:
+            raise NotFoundException(f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}")
+
+        # Find the option node
+        option_stmt = select(AttributeNode).where(
+            AttributeNode.parent_node_id == parent_node.id,
+            AttributeNode.name == option_value,
+            AttributeNode.node_type == "option"
+        )
+        option_result = await self.db.execute(option_stmt)
+        option_node = option_result.scalar_one_or_none()
+
+        if not option_node:
+            return {
+                "success": False,
+                "error": f"Option '{option_value}' not found in field '{field_name}'"
+            }
+
+        # Store details for response
+        option_id = option_node.id
+        
+        # Delete any configuration selections that reference this option
+        from app.models.configuration_selection import ConfigurationSelection
+        stmt = delete(ConfigurationSelection).where(
+            ConfigurationSelection.attribute_node_id == option_id
+        )
+        await self.db.execute(stmt)
+
+        # Delete the option node
+        await self.db.delete(option_node)
+        await self.commit()
+
+        return {
+            "success": True,
+            "message": f"Option '{option_value}' removed successfully from field '{field_name}'",
+            "option_id": option_id,
+            "field_name": field_name,
+            "option_value": option_value,
+            "manufacturing_type_id": manufacturing_type_id
         }
 
 
