@@ -1615,6 +1615,13 @@ class EntryService(BaseService):
         from sqlalchemy import func
         from decimal import Decimal
 
+        # Check if this is a protected field that shouldn't be modified
+        if field_name.lower() == 'type':
+            return {
+                "success": False,
+                "error": "Type options cannot be modified here. Please edit in Node Hierarchy."
+            }
+
         # Find the parent attribute node
         parent_stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type_id,

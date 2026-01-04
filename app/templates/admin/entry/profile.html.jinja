@@ -158,6 +158,11 @@
                                                         :value="formData[field.name] || ''"
                                                         @change="
                                                             if ($event.target.value === '__ADD_NEW__') {
+                                                                if (field.name === 'type') {
+                                                                    showToast('Type options cannot be modified here. Please edit in Node Hierarchy.', 'warning');
+                                                                    $event.target.value = formData[field.name] || '';
+                                                                    return;
+                                                                }
                                                                 showAddInput[field.name] = true;
                                                                 $event.target.value = formData[field.name] || '';
                                                                 $nextTick(() => {
@@ -165,6 +170,11 @@
                                                                     if (input) input.focus();
                                                                 });
                                                             } else if ($event.target.value === '__REMOVE__') {
+                                                                if (field.name === 'type') {
+                                                                    showToast('Type options cannot be modified here. Please edit in Node Hierarchy.', 'warning');
+                                                                    $event.target.value = formData[field.name] || '';
+                                                                    return;
+                                                                }
                                                                 showRemoveInput[field.name] = true;
                                                                 $event.target.value = formData[field.name] || '';
                                                                 $nextTick(() => {
@@ -182,16 +192,22 @@
                                                                 :selected="formData[field.name] === opt"></option>
                                                     </template>
                                                     <!-- Enhanced Add New Option -->
-                                                    <option value="__ADD_NEW__" 
+                                                    <option x-show="field.name !== 'type'" value="__ADD_NEW__" 
                                                             class="add-new-option-item"
                                                             style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important; color: #0369a1 !important; font-weight: 600 !important; border-top: 1px solid #bae6fd !important; padding: 8px 12px !important;">
                                                         ➕ Add New Option
                                                     </option>
                                                     <!-- Enhanced Remove Option -->
-                                                    <option value="__REMOVE__" 
+                                                    <option x-show="field.name !== 'type'" value="__REMOVE__" 
                                                             class="remove-option-item"
                                                             style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important; color: #dc2626 !important; font-weight: 600 !important; border-top: 1px solid #fecaca !important; padding: 8px 12px !important;">
                                                         🗑️ Remove Option
+                                                    </option>
+                                                    <!-- Special message for type field -->
+                                                    <option x-show="field.name === 'type'" disabled 
+                                                            class="type-field-message"
+                                                            style="background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important; color: #6b7280 !important; font-weight: 600 !important; border-top: 1px solid #d1d5db !important; padding: 8px 12px !important; font-style: italic;">
+                                                        ⚙️ Edit in Node Hierarchy
                                                     </option>
                                                 </select>
                                                 
@@ -1069,39 +1085,7 @@ document.addEventListener('alpine:init', () => {
 
 <!-- Global utility functions -->
 <script>
-// Simple toast notification function
-window.showToast = function(message, type = 'info', duration = 4000) {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 transform translate-x-full`;
-    
-    // Set background color based on type
-    const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500', 
-        warning: 'bg-yellow-500',
-        info: 'bg-blue-500'
-    };
-    toast.classList.add(colors[type] || colors.info);
-    
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    // Animate in
-    setTimeout(() => {
-        toast.classList.remove('translate-x-full');
-    }, 10);
-    
-    // Auto remove
-    setTimeout(() => {
-        toast.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-        }, 300);
-    }, duration);
-};
+// Toast function is provided by base template - no need to override
 </script>
 
 <!-- Sidebar Collapse Handler -->
