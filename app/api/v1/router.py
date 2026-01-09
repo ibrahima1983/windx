@@ -23,6 +23,7 @@ from app.api.v1.endpoints import (
     admin_hierarchy,
     admin_manufacturing,
     admin_orders,
+    admin_relations,
     admin_settings,
     attribute_nodes,
     auth,
@@ -70,6 +71,9 @@ api_router.include_router(customers.router, prefix="/customers")
 api_router.include_router(orders.router, prefix="/orders")
 api_router.include_router(
     admin_hierarchy.router, prefix="/admin/hierarchy", tags=["Admin Hierarchy"]
+)
+api_router.include_router(
+    admin_relations.router, prefix="/admin", tags=["Admin Relations"]
 )
 api_router.include_router(policy.router, prefix="/admin")
 api_router.include_router(entry.router)

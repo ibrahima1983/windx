@@ -188,6 +188,11 @@ class AttributeNode(Base):
         nullable=True,
         comment="Additional guidance for users",
     )
+    image_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="Image/logo URL for the entity (used in Relations management)",
+    )
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

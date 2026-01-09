@@ -1,0 +1,404 @@
+/**
+ * Relations Page Styles
+ * 
+ * Enhanced styling with life and personality while matching WindX Admin system.
+ */
+
+/* Page Layout */
+.relations-page {
+    max-width: 900px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+/* Relations Form */
+.relations-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* Entity Card */
+.entity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.entity-card:hover {
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.entity-card:focus-within {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 8px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Header */
+.entity-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #eef4ff 0%, #f0f7ff 50%, #f5f9ff 100%);
+    border-bottom: 1px solid #e0e9f5;
+    position: relative;
+}
+
+.entity-card .card-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary) 0%, #60a5fa 100%);
+    border-radius: 0 2px 2px 0;
+}
+
+.entity-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e3a5f;
+    margin: 0;
+    padding-left: 0.5rem;
+}
+
+.badge {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-secondary {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: white;
+}
+
+/* Card Body */
+.entity-card .card-body {
+    padding: 1.75rem;
+    background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);
+}
+
+
+/* Form Row - Fields + Image */
+.form-row {
+    display: flex;
+    gap: 2.5rem;
+    align-items: flex-start;
+}
+
+/* Form Fields - Vertical Stack */
+.form-fields {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text);
+    transition: color 0.2s ease;
+}
+
+.form-group:focus-within .form-label {
+    color: var(--primary);
+}
+
+.form-label .required {
+    color: #ef4444;
+    margin-left: 0.25rem;
+    font-weight: 600;
+}
+
+/* Form Controls */
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text);
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.form-control:hover {
+    border-color: #cbd5e1;
+    background-color: #fafbfc;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.form-control::placeholder {
+    color: #9ca3af;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+/* Checkbox */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-wrapper:hover {
+    border-color: var(--primary);
+    background: #f0f7ff;
+}
+
+.form-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.checkbox-label-text {
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+}
+
+
+/* Image Upload */
+.form-image {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-upload-box {
+    width: 140px;
+    height: 140px;
+    border: 2px dashed #c7d2e0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.image-upload-box:hover {
+    border-color: var(--primary);
+    border-style: solid;
+    background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.15);
+}
+
+.image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s ease;
+}
+
+.image-upload-box:hover .image-placeholder {
+    transform: scale(1.05);
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: var(--primary);
+    font-weight: 300;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.image-upload-box:hover .upload-icon {
+    transform: scale(1.1);
+}
+
+.upload-text {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.upload-hint {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    transition: transform 0.3s ease;
+}
+
+.image-upload-box:hover .preview-image {
+    transform: scale(1.05);
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.8) 0%, rgba(59, 130, 246, 0.8) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-upload-box:hover .image-overlay:not(.hidden) {
+    opacity: 1;
+}
+
+.change-text {
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+}
+
+.image-label {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* Bottom Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+}
+
+.form-actions .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.form-actions .btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+    box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.3);
+}
+
+.form-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -2px rgba(37, 99, 235, 0.4);
+}
+
+.form-actions .btn-outline:hover {
+    background: #f8fafc;
+}
+
+/* Stagger animation for cards */
+.entity-card:nth-child(1) { animation: slideUp 0.4s ease-out 0.0s both; }
+.entity-card:nth-child(2) { animation: slideUp 0.4s ease-out 0.05s both; }
+.entity-card:nth-child(3) { animation: slideUp 0.4s ease-out 0.1s both; }
+.entity-card:nth-child(4) { animation: slideUp 0.4s ease-out 0.15s both; }
+.entity-card:nth-child(5) { animation: slideUp 0.4s ease-out 0.2s both; }
+.entity-card:nth-child(6) { animation: slideUp 0.4s ease-out 0.25s both; }
+
+@keyframes slideUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .form-row {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .form-image {
+        align-self: center;
+    }
+    
+    .entity-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,109 @@
+{% extends "admin/base.html.jinja" %}
+{% import "components/buttons.html.jinja" as btn %}
+{% import "admin/relations/macros.html.jinja" as rel %}
+
+{% block title %}Relations - WindX Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/relations.css">
+{% endblock %}
+
+{% block content %}
+<div class="relations-page">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Relations</h1>
+            <p class="page-subtitle">Create and manage entities for hierarchical option dependencies</p>
+        </div>
+    </div>
+
+    <!-- Entity Cards -->
+    <form id="relationsForm" class="relations-form">
+        <!-- Company Card -->
+        {{ rel.entity_card(
+            title="Company",
+            entity_type="company",
+            entities=entities.get('company', []),
+            fields=[
+                {"name": "name", "label": "Company Name", "type": "text", "required": true},
+                {"name": "price_from", "label": "Price From (€)", "type": "number", "step": "0.01"}
+            ]
+        ) }}
+
+        <!-- Material Card -->
+        {{ rel.entity_card(
+            title="Material",
+            entity_type="material",
+            entities=entities.get('material', []),
+            fields=[
+                {"name": "name", "label": "Material Name", "type": "text", "required": true},
+                {"name": "price_from", "label": "Price From (€)", "type": "number", "step": "0.01"},
+                {"name": "metadata.density", "label": "Density", "type": "number", "step": "0.01"}
+            ]
+        ) }}
+
+        <!-- Opening System Card -->
+        {{ rel.entity_card(
+            title="Opening System",
+            entity_type="opening_system",
+            entities=entities.get('opening_system', []),
+            fields=[
+                {"name": "name", "label": "System Name", "type": "text", "required": true},
+                {"name": "description", "label": "Description", "type": "textarea"},
+                {"name": "price_from", "label": "Price From (€)", "type": "number", "step": "0.01"}
+            ]
+        ) }}
+
+        <!-- System Series Card -->
+        {{ rel.entity_card(
+            title="System Series",
+            entity_type="system_series",
+            entities=entities.get('system_series', []),
+            fields=[
+                {"name": "name", "label": "Series Name", "type": "text", "required": true},
+                {"name": "metadata.width", "label": "Width (mm)", "type": "number", "step": "0.01"},
+                {"name": "metadata.number_of_chambers", "label": "Chambers", "type": "number"},
+                {"name": "metadata.u_value", "label": "U-Value", "type": "number", "step": "0.01"},
+                {"name": "metadata.number_of_seals", "label": "Seals", "type": "number"},
+                {"name": "metadata.characteristics", "label": "Characteristics", "type": "text"},
+                {"name": "price_from", "label": "Price From (€)", "type": "number", "step": "0.01"}
+            ]
+        ) }}
+
+        <!-- Colors Card -->
+        {{ rel.entity_card(
+            title="Color",
+            entity_type="color",
+            entities=entities.get('color', []),
+            fields=[
+                {"name": "name", "label": "Color Name", "type": "text", "required": true},
+                {"name": "metadata.code", "label": "Color Code", "type": "text"},
+                {"name": "metadata.has_lamination", "label": "Has Lamination", "type": "checkbox"}
+            ]
+        ) }}
+
+        <!-- Unit Types Card (Independent) -->
+        {{ rel.entity_card(
+            title="Unit Type",
+            entity_type="unit_type",
+            entities=entities.get('unit_type', []),
+            fields=[
+                {"name": "name", "label": "Unit Type Name", "type": "text", "required": true},
+                {"name": "description", "label": "Description", "type": "textarea"}
+            ],
+            independent=true
+        ) }}
+
+        <!-- Bottom Actions -->
+        <div class="form-actions">
+            {{ btn.button("Record", type="button", variant="primary", id="recordBtn", onclick="RelationsManager.recordAll()") }}
+            {{ btn.button("Go to Profile Page", href="/api/v1/admin/entry", variant="outline") }}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/relations.js"></script>
+{% endblock %}
