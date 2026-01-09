@@ -50,7 +50,7 @@ class TestTemplateServiceUserParameter:
         """Test template application raises error for inactive template."""
         # Arrange
         from app.core.security import get_password_hash
-        
+
         user = User(
             email="test@example.com",
             username="testuser",
@@ -99,7 +99,7 @@ async def create_user_with_customer(
     This helper creates both and ensures they can work together.
     """
     from app.core.security import get_password_hash
-    
+
     # Create customer first
     customer = Customer(
         email=email,

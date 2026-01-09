@@ -22,6 +22,7 @@ async def test_save_node_with_invalid_name_shows_validation_error(
     """Test that invalid node name triggers Pydantic validation error."""
     # Create manufacturing type with unique name
     import uuid
+
     service = HierarchyBuilderService(db_session)
     unique_name = f"Test Window {uuid.uuid4().hex[:8]}"
     mfg_type = await service.create_manufacturing_type(
@@ -51,9 +52,9 @@ async def test_save_node_with_invalid_name_shows_validation_error(
 
     # Verify response contains validation error information
     content = response.text
-    
+
     # Handle both HTML and JSON responses (CI vs local environment differences)
-    if content.startswith('{"') or content.startswith('[{'):
+    if content.startswith('{"') or content.startswith("[{"):
         # JSON response (FastAPI automatic validation)
         data = response.json()
         if "detail" in data:
@@ -66,10 +67,12 @@ async def test_save_node_with_invalid_name_shows_validation_error(
         # HTML response (custom form validation)
         assert "<!DOCTYPE html>" in content or "<html" in content
         # Verify validation error is shown in the form
-        assert ("validation_errors" in content or 
-                "error" in content.lower() or 
-                "field required" in content.lower() or
-                "name" in content.lower())
+        assert (
+            "validation_errors" in content
+            or "error" in content.lower()
+            or "field required" in content.lower()
+            or "name" in content.lower()
+        )
 
 
 @pytest.mark.asyncio

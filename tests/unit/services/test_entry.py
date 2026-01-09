@@ -29,21 +29,19 @@ class TestEntryServiceBusinessRules:
 
     def test_evaluate_business_rules_frame_type(self):
         """Test business rules for frame type."""
-        form_data = {
-            "type": "Frame",
-            "opening_system": "sliding",
-            "builtin_flyscreen_track": True
-        }
-        
+        form_data = {"type": "Frame", "opening_system": "sliding", "builtin_flyscreen_track": True}
+
         visibility = self.service.evaluate_business_rules(form_data)
-        
+
         # Frame-specific fields should be visible
         assert visibility["renovation"] is True
         assert visibility["renovation_height"] is True
         assert visibility["builtin_flyscreen_track"] is True
         assert visibility["total_width"] is True  # Because builtin_flyscreen_track is True
-        assert visibility["flyscreen_track_height"] is True  # Because builtin_flyscreen_track is True
-        
+        assert (
+            visibility["flyscreen_track_height"] is True
+        )  # Because builtin_flyscreen_track is True
+
         # Non-frame fields should be hidden
         assert visibility["sash_overlap"] is False
         assert visibility["flying_mullion_horizontal_clearance"] is False
@@ -51,16 +49,13 @@ class TestEntryServiceBusinessRules:
 
     def test_evaluate_business_rules_sash_type(self):
         """Test business rules for sash type."""
-        form_data = {
-            "type": "sash",
-            "opening_system": "casement"
-        }
-        
+        form_data = {"type": "sash", "opening_system": "casement"}
+
         visibility = self.service.evaluate_business_rules(form_data)
-        
+
         # Sash-specific fields should be visible
         assert visibility["sash_overlap"] is True
-        
+
         # Non-sash fields should be hidden
         assert visibility["renovation"] is False
         assert visibility["flying_mullion_horizontal_clearance"] is False
@@ -69,17 +64,14 @@ class TestEntryServiceBusinessRules:
 
     def test_evaluate_business_rules_flying_mullion_type(self):
         """Test business rules for flying mullion type."""
-        form_data = {
-            "type": "Flying mullion",
-            "opening_system": "casement"
-        }
-        
+        form_data = {"type": "Flying mullion", "opening_system": "casement"}
+
         visibility = self.service.evaluate_business_rules(form_data)
-        
+
         # Flying mullion-specific fields should be visible
         assert visibility["flying_mullion_horizontal_clearance"] is True
         assert visibility["flying_mullion_vertical_clearance"] is True
-        
+
         # Non-flying mullion fields should be hidden
         assert visibility["renovation"] is False
         assert visibility["sash_overlap"] is False
@@ -89,19 +81,19 @@ class TestEntryServiceBusinessRules:
         """Test successful field option addition."""
         from app.models.attribute_node import AttributeNode
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         self.db.add(mfg_type)
         await self.db.commit()
         await self.db.refresh(mfg_type)
-        
+
         # Create parent field
         parent_field = AttributeNode(
             manufacturing_type_id=mfg_type.id,
@@ -111,17 +103,15 @@ class TestEntryServiceBusinessRules:
             depth=1,
             data_type="string",
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(parent_field)
         await self.db.commit()
         await self.db.refresh(parent_field)
-        
+
         # Add new option
-        result = await self.service.add_field_option(
-            mfg_type.id, "material", "Steel", "profile"
-        )
-        
+        result = await self.service.add_field_option(mfg_type.id, "material", "Steel", "profile")
+
         assert result["success"] is True
         assert "Steel" in result["message"]
         assert result["field_name"] == "material"
@@ -131,32 +121,34 @@ class TestEntryServiceBusinessRules:
     async def test_add_field_option_manufacturing_type_not_found(self):
         """Test add field option with non-existent manufacturing type."""
         from app.core.exceptions import NotFoundException
-        
+
         with pytest.raises(NotFoundException) as exc_info:
             await self.service.add_field_option(99999, "material", "Steel", "profile")
-        
+
         assert "Manufacturing type 99999 not found" in str(exc_info.value)
 
     async def test_add_field_option_field_not_found(self):
         """Test add field option with non-existent field."""
         from app.core.exceptions import NotFoundException
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         self.db.add(mfg_type)
         await self.db.commit()
         await self.db.refresh(mfg_type)
-        
+
         with pytest.raises(NotFoundException) as exc_info:
-            await self.service.add_field_option(mfg_type.id, "nonexistent_field", "Steel", "profile")
-        
+            await self.service.add_field_option(
+                mfg_type.id, "nonexistent_field", "Steel", "profile"
+            )
+
         assert "Field 'nonexistent_field' not found" in str(exc_info.value)
 
     async def test_add_field_option_duplicate(self):
@@ -164,19 +156,19 @@ class TestEntryServiceBusinessRules:
         from app.models.attribute_node import AttributeNode
         from app.core.exceptions import ValidationException
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         self.db.add(mfg_type)
         await self.db.commit()
         await self.db.refresh(mfg_type)
-        
+
         # Create parent field and existing option
         parent_field = AttributeNode(
             manufacturing_type_id=mfg_type.id,
@@ -186,12 +178,12 @@ class TestEntryServiceBusinessRules:
             depth=1,
             data_type="string",
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(parent_field)
         await self.db.commit()
         await self.db.refresh(parent_field)
-        
+
         existing_option = AttributeNode(
             manufacturing_type_id=mfg_type.id,
             parent_node_id=parent_field.id,
@@ -203,34 +195,34 @@ class TestEntryServiceBusinessRules:
             price_impact_type="fixed",
             price_impact_value=Decimal("0.00"),
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(existing_option)
         await self.db.commit()
-        
+
         # Try to add duplicate option
         with pytest.raises(ValidationException) as exc_info:
             await self.service.add_field_option(mfg_type.id, "material", "Steel", "profile")
-        
+
         assert "Option 'Steel' already exists" in str(exc_info.value)
 
     async def test_remove_field_option_success(self):
         """Test successful field option removal."""
         from app.models.attribute_node import AttributeNode
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         self.db.add(mfg_type)
         await self.db.commit()
         await self.db.refresh(mfg_type)
-        
+
         # Create parent field and option to remove
         parent_field = AttributeNode(
             manufacturing_type_id=mfg_type.id,
@@ -240,12 +232,12 @@ class TestEntryServiceBusinessRules:
             depth=1,
             data_type="string",
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(parent_field)
         await self.db.commit()
         await self.db.refresh(parent_field)
-        
+
         option_to_remove = AttributeNode(
             manufacturing_type_id=mfg_type.id,
             parent_node_id=parent_field.id,
@@ -257,15 +249,15 @@ class TestEntryServiceBusinessRules:
             price_impact_type="fixed",
             price_impact_value=Decimal("0.00"),
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         self.db.add(option_to_remove)
         await self.db.commit()
         await self.db.refresh(option_to_remove)
-        
+
         # Remove the option
         result = await self.service.remove_field_option(option_to_remove.id)
-        
+
         assert result["success"] is True
         assert "Steel" in result["message"]
         assert result["option_id"] == option_to_remove.id
@@ -275,10 +267,10 @@ class TestEntryServiceBusinessRules:
     async def test_remove_field_option_not_found(self):
         """Test remove field option with non-existent option."""
         from app.core.exceptions import NotFoundException
-        
+
         with pytest.raises(NotFoundException) as exc_info:
             await self.service.remove_field_option(99999)
-        
+
         assert "Option 99999 not found" in str(exc_info.value)
 
     def test_get_field_display_value_with_business_rules(self):
@@ -286,13 +278,13 @@ class TestEntryServiceBusinessRules:
         form_data = {
             "type": "sash",
             "sash_overlap": "8",
-            "renovation": "yes"  # Not applicable for sash
+            "renovation": "yes",  # Not applicable for sash
         }
-        
+
         # Field that applies to current type should show value
         display_value = self.service.get_field_display_value("sash_overlap", "8", form_data)
         assert display_value == "8"
-        
+
         # Field that doesn't apply to current type should show N/A
         display_value = self.service.get_field_display_value("renovation", "yes", form_data)
         assert display_value == "N/A"
@@ -629,58 +621,66 @@ class TestEntryService:
         assert field.validation_rules == {"min": 10, "max": 100}
         assert field.ui_component == "text"  # Updated to match new implementation
 
-    async def test_generate_preview_headers(self, entry_service, sample_manufacturing_type, sample_attribute_nodes):
+    async def test_generate_preview_headers(
+        self, entry_service, sample_manufacturing_type, sample_attribute_nodes
+    ):
         """Test dynamic preview header generation."""
         # Mock database query
         entry_service.db.execute = AsyncMock()
         attr_result = MagicMock()
         attr_result.scalars.return_value.all.return_value = sample_attribute_nodes
         entry_service.db.execute.return_value = attr_result
-        
+
         headers = await entry_service.generate_preview_headers(sample_manufacturing_type.id)
-        
+
         # Should start with id and Name
         assert headers[0] == "id"
         assert headers[1] == "Name"
-        
+
         # Should include headers for attribute nodes (not categories)
         assert "Product Type" in headers
         assert "Material" in headers
         assert "Width (mm)" in headers
-        
+
         # The actual order based on the test output
         expected_order = ["id", "Name", "Product Type", "Material", "Width (mm)"]
         assert headers == expected_order
 
-    async def test_generate_header_mapping(self, entry_service, sample_manufacturing_type, sample_attribute_nodes):
+    async def test_generate_header_mapping(
+        self, entry_service, sample_manufacturing_type, sample_attribute_nodes
+    ):
         """Test dynamic header mapping generation."""
         # Mock database query
         entry_service.db.execute = AsyncMock()
         attr_result = MagicMock()
         attr_result.scalars.return_value.all.return_value = sample_attribute_nodes
         entry_service.db.execute.return_value = attr_result
-        
+
         mapping = await entry_service.generate_header_mapping(sample_manufacturing_type.id)
-        
+
         # Should include special cases
         assert mapping["id"] == "id"
         assert mapping["Name"] == "name"
-        
+
         # Should map headers to field names
         assert mapping["Product Type"] == "type"  # Updated to match actual implementation
         assert mapping["Material"] == "material"
         assert mapping["Width (mm)"] == "width"
 
-    async def test_get_reverse_header_mapping(self, entry_service, sample_manufacturing_type, sample_attribute_nodes):
+    async def test_get_reverse_header_mapping(
+        self, entry_service, sample_manufacturing_type, sample_attribute_nodes
+    ):
         """Test reverse header mapping generation."""
         # Mock database query
         entry_service.db.execute = AsyncMock()
         attr_result = MagicMock()
         attr_result.scalars.return_value.all.return_value = sample_attribute_nodes
         entry_service.db.execute.return_value = attr_result
-        
-        reverse_mapping = await entry_service.get_reverse_header_mapping(sample_manufacturing_type.id)
-        
+
+        reverse_mapping = await entry_service.get_reverse_header_mapping(
+            sample_manufacturing_type.id
+        )
+
         # Should map field names to headers
         assert reverse_mapping["id"] == "id"
         assert reverse_mapping["name"] == "Name"
@@ -694,17 +694,17 @@ class TestEntryService:
         entry_service._header_cache[1] = ["test"]
         entry_service._mapping_cache[1] = {"test": "test"}
         entry_service._reverse_mapping_cache[1] = {"test": "test"}
-        
+
         # Clear specific manufacturing type
         entry_service.clear_header_cache(1)
         assert 1 not in entry_service._header_cache
         assert 1 not in entry_service._mapping_cache
         assert 1 not in entry_service._reverse_mapping_cache
-        
+
         # Add test data again
         entry_service._header_cache[1] = ["test"]
         entry_service._mapping_cache[1] = {"test": "test"}
-        
+
         # Clear all
         entry_service.clear_header_cache()
         assert len(entry_service._header_cache) == 0
@@ -900,19 +900,19 @@ class TestEntryServiceWithDatabase:
         """Test successful field option removal by name."""
         from app.models.attribute_node import AttributeNode
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
         await db_session.refresh(mfg_type)
-        
+
         # Create parent field and option to remove
         parent_field = AttributeNode(
             manufacturing_type_id=mfg_type.id,
@@ -923,12 +923,12 @@ class TestEntryServiceWithDatabase:
             depth=1,
             data_type="string",
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         db_session.add(parent_field)
         await db_session.commit()
         await db_session.refresh(parent_field)
-        
+
         option_to_remove = AttributeNode(
             manufacturing_type_id=mfg_type.id,
             parent_node_id=parent_field.id,
@@ -941,17 +941,17 @@ class TestEntryServiceWithDatabase:
             price_impact_type="fixed",
             price_impact_value=Decimal("0.00"),
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         db_session.add(option_to_remove)
         await db_session.commit()
         await db_session.refresh(option_to_remove)
-        
+
         # Remove the option by name
         result = await entry_service.remove_field_option_by_name(
             mfg_type.id, "material", "Steel", "profile"
         )
-        
+
         assert result["success"] is True
         assert "Steel" in result["message"]
         assert result["option_id"] == option_to_remove.id
@@ -966,24 +966,24 @@ class TestEntryServiceWithDatabase:
         """Test remove field option by name with non-existent field."""
         from app.core.exceptions import NotFoundException
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
         await db_session.refresh(mfg_type)
-        
+
         with pytest.raises(NotFoundException) as exc_info:
             await entry_service.remove_field_option_by_name(
                 mfg_type.id, "nonexistent_field", "Steel", "profile"
             )
-        
+
         assert "Field 'nonexistent_field' not found" in str(exc_info.value)
 
     @pytest.mark.asyncio
@@ -993,19 +993,19 @@ class TestEntryServiceWithDatabase:
         """Test remove field option by name with non-existent option."""
         from app.models.attribute_node import AttributeNode
         from decimal import Decimal
-        
+
         # Create a manufacturing type
         mfg_type = ManufacturingType(
             name="Test Window",
             description="Test window type",
             base_price=Decimal("200.00"),
             base_weight=Decimal("25.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
         await db_session.refresh(mfg_type)
-        
+
         # Create parent field but no option
         parent_field = AttributeNode(
             manufacturing_type_id=mfg_type.id,
@@ -1016,17 +1016,17 @@ class TestEntryServiceWithDatabase:
             depth=1,
             data_type="string",
             is_required=False,
-            is_active=True
+            is_active=True,
         )
         db_session.add(parent_field)
         await db_session.commit()
         await db_session.refresh(parent_field)
-        
+
         # Try to remove non-existent option
         result = await entry_service.remove_field_option_by_name(
             mfg_type.id, "material", "NonexistentOption", "profile"
         )
-        
+
         assert result["success"] is False
         assert "Option 'NonexistentOption' not found in field 'material'" in result["error"]
 

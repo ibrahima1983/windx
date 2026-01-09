@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # Shared Casbin enforcer instance to ensure policy consistency across all RBAC service instances
 _shared_enforcer = None
 
+
 def get_shared_enforcer():
     """Get or create the shared Casbin enforcer instance."""
     global _shared_enforcer
@@ -166,7 +167,7 @@ class RBACService(BaseService):
 
         Returns:
             True if user owns or has access to resource, False otherwise
-            
+
         Raises:
             NotFoundException: If the resource doesn't exist (to allow proper 404 handling)
         """
@@ -177,6 +178,7 @@ class RBACService(BaseService):
             resource_exists = await self._check_resource_exists(resource_type, resource_id)
             if not resource_exists:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException(f"{resource_type.title()} not found")
             return True
 
@@ -187,12 +189,14 @@ class RBACService(BaseService):
         if resource_type == "customer":
             # Check if customer exists first
             from app.models.customer import Customer
+
             stmt = select(Customer.id).where(Customer.id == resource_id)
             result = await self.db.execute(stmt)
             if result.scalar_one_or_none() is None:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException("Customer not found")
-            
+
             return resource_id in accessible_customers
 
         # For configuration resources, check through customer relationship
@@ -205,6 +209,7 @@ class RBACService(BaseService):
 
             if customer_id is None:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException("Configuration not found")
 
             return customer_id in accessible_customers
@@ -219,6 +224,7 @@ class RBACService(BaseService):
 
             if customer_id is None:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException("Quote not found")
 
             return customer_id in accessible_customers
@@ -239,6 +245,7 @@ class RBACService(BaseService):
 
             if customer_id is None:
                 from app.core.exceptions import NotFoundException
+
                 raise NotFoundException("Order not found")
 
             return customer_id in accessible_customers
@@ -249,38 +256,42 @@ class RBACService(BaseService):
 
     async def _check_resource_exists(self, resource_type: str, resource_id: int) -> bool:
         """Check if a resource exists without checking ownership.
-        
+
         Args:
             resource_type: Type of resource to check
             resource_id: ID of the resource
-            
+
         Returns:
             True if resource exists, False otherwise
         """
         if resource_type == "configuration":
             from app.models.configuration import Configuration
+
             stmt = select(Configuration.id).where(Configuration.id == resource_id)
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none() is not None
-            
+
         elif resource_type == "quote":
             from app.models.quote import Quote
+
             stmt = select(Quote.id).where(Quote.id == resource_id)
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none() is not None
-            
+
         elif resource_type == "order":
             from app.models.order import Order
+
             stmt = select(Order.id).where(Order.id == resource_id)
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none() is not None
-            
+
         elif resource_type == "customer":
             from app.models.customer import Customer
+
             stmt = select(Customer.id).where(Customer.id == resource_id)
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none() is not None
-            
+
         # Unknown resource type
         return False
 
@@ -295,7 +306,9 @@ class RBACService(BaseService):
         """
         # Cache for performance
         if user.id in self._customer_cache:
-            logger.debug(f"Customer cache hit for user {user.email}: {self._customer_cache[user.id]}")
+            logger.debug(
+                f"Customer cache hit for user {user.email}: {self._customer_cache[user.id]}"
+            )
             return self._customer_cache[user.id]
 
         accessible = []
@@ -638,7 +651,9 @@ class RBACService(BaseService):
         if user.role == Role.CUSTOMER.value:
             customer = await self.get_or_create_customer_for_user(user)
             logger.info(f"Adding customer assignment: {user.email} -> customer -> {customer.id}")
-            customer_result = self.enforcer.add_grouping_policy(user.email, "customer", str(customer.id))
+            customer_result = self.enforcer.add_grouping_policy(
+                user.email, "customer", str(customer.id)
+            )
             logger.info(f"Customer assignment result: {customer_result}")
 
         # Log current grouping policies for debugging

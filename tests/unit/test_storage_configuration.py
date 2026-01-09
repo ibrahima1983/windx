@@ -22,7 +22,7 @@ class TestFileStorageSettings:
     def test_default_settings(self):
         """Test default file storage settings."""
         settings = FileStorageSettings()
-        
+
         assert settings.provider == "local"
         assert settings.supabase_bucket == "windx-uploads"
         assert settings.local_dir == "app/static/uploads"
@@ -43,7 +43,7 @@ class TestFileStorageSettings:
             max_size=10485760,  # 10MB
             min_size=2048,  # 2KB
         )
-        
+
         assert settings.max_size_mb == 10.0
         assert settings.min_size_kb == 2.0
         assert settings.is_image_processing_enabled is True
@@ -54,21 +54,17 @@ class TestFileStorageSettings:
             enable_compression=False,
             auto_resize=False,
         )
-        
+
         assert settings.is_image_processing_enabled is False
 
     def test_allowed_extensions_validation(self):
         """Test allowed extensions validation."""
         # Valid extensions
-        settings = FileStorageSettings(
-            allowed_extensions=["jpg", "png", "gif"]
-        )
+        settings = FileStorageSettings(allowed_extensions=["jpg", "png", "gif"])
         assert settings.allowed_extensions == ["jpg", "png", "gif"]
-        
+
         # Extensions with dots (should be normalized)
-        settings = FileStorageSettings(
-            allowed_extensions=[".jpg", ".PNG", " gif "]
-        )
+        settings = FileStorageSettings(allowed_extensions=[".jpg", ".PNG", " gif "])
         assert settings.allowed_extensions == ["jpg", "png", "gif"]
 
     def test_allowed_extensions_empty_validation(self):
@@ -108,11 +104,11 @@ class TestFileStorageSettings:
         # Valid quality
         settings = FileStorageSettings(compression_quality=85)
         assert settings.compression_quality == 85
-        
+
         # Invalid quality (too low)
         with pytest.raises(ValidationError):
             FileStorageSettings(compression_quality=0)
-        
+
         # Invalid quality (too high)
         with pytest.raises(ValidationError):
             FileStorageSettings(compression_quality=101)
@@ -122,7 +118,7 @@ class TestFileStorageSettings:
         # Valid max size
         settings = FileStorageSettings(max_size=50 * 1024 * 1024)  # 50MB
         assert settings.max_size == 50 * 1024 * 1024
-        
+
         # Invalid max size (too large)
         with pytest.raises(ValidationError):
             FileStorageSettings(max_size=100 * 1024 * 1024)  # 100MB
@@ -136,11 +132,11 @@ class TestFileStorageSettings:
         )
         assert settings.max_width == 8192
         assert settings.max_height == 8192
-        
+
         # Invalid max dimensions (too large)
         with pytest.raises(ValidationError):
             FileStorageSettings(max_width=10000)
-        
+
         with pytest.raises(ValidationError):
             FileStorageSettings(max_height=10000)
 
@@ -154,10 +150,10 @@ class TestSupabaseValidation:
         # Should not raise any validation errors
         assert settings.provider == "local"
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': 'https://test.supabase.co',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key'
-    })
+    @patch.dict(
+        os.environ,
+        {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "test-key"},
+    )
     def test_supabase_provider_valid_config(self):
         """Test Supabase provider with valid configuration."""
         settings = FileStorageSettings(provider="supabase")
@@ -169,73 +165,64 @@ class TestSupabaseValidation:
         with pytest.raises(ValidationError, match="SUPABASE_URL is required"):
             FileStorageSettings(provider="supabase")
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': 'https://test.supabase.co'
-    })
+    @patch.dict(os.environ, {"SUPABASE_URL": "https://test.supabase.co"})
     def test_supabase_provider_missing_key(self):
         """Test Supabase provider with missing service key."""
         with pytest.raises(ValidationError, match="SUPABASE_SERVICE_ROLE_KEY is required"):
             FileStorageSettings(provider="supabase")
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': '',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key'
-    })
+    @patch.dict(os.environ, {"SUPABASE_URL": "", "SUPABASE_SERVICE_ROLE_KEY": "test-key"})
     def test_supabase_provider_empty_url(self):
         """Test Supabase provider with empty URL."""
         with pytest.raises(ValidationError, match="SUPABASE_URL is required"):
             FileStorageSettings(provider="supabase")
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': 'https://test.supabase.co',
-        'SUPABASE_SERVICE_ROLE_KEY': ''
-    })
+    @patch.dict(
+        os.environ, {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": ""}
+    )
     def test_supabase_provider_empty_key(self):
         """Test Supabase provider with empty service key."""
         with pytest.raises(ValidationError, match="SUPABASE_SERVICE_ROLE_KEY is required"):
             FileStorageSettings(provider="supabase")
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': 'https://test.supabase.co',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key'
-    })
+    @patch.dict(
+        os.environ,
+        {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "test-key"},
+    )
     def test_supabase_provider_default_bucket_warning(self):
         """Test Supabase provider with default bucket shows warning."""
         import warnings
-        
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            
+
             settings = FileStorageSettings(provider="supabase")
-            
+
             # Should create settings successfully
             assert settings.provider == "supabase"
             assert settings.supabase_bucket == "windx-uploads"
-            
+
             # Should have issued a warning about default bucket
             assert len(w) == 1
             assert "default Supabase bucket name" in str(w[0].message)
 
-    @patch.dict(os.environ, {
-        'SUPABASE_URL': 'https://test.supabase.co',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key'
-    })
+    @patch.dict(
+        os.environ,
+        {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "test-key"},
+    )
     def test_supabase_provider_custom_bucket_no_warning(self):
         """Test Supabase provider with custom bucket doesn't warn."""
         import warnings
-        
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            
-            settings = FileStorageSettings(
-                provider="supabase",
-                supabase_bucket="custom-bucket"
-            )
-            
+
+            settings = FileStorageSettings(provider="supabase", supabase_bucket="custom-bucket")
+
             # Should create settings successfully
             assert settings.provider == "supabase"
             assert settings.supabase_bucket == "custom-bucket"
-            
+
             # Should not have issued any warnings
             assert len(w) == 0
 
@@ -243,49 +230,58 @@ class TestSupabaseValidation:
 class TestEnvironmentVariableHandling:
     """Test cases for environment variable handling."""
 
-    @patch.dict(os.environ, {
-        'FILE_STORAGE_PROVIDER': 'supabase',
-        'FILE_STORAGE_MAX_SIZE': '10485760',
-        'FILE_STORAGE_ALLOWED_EXTENSIONS': '["jpg","png","gif"]',  # JSON format
-        'FILE_STORAGE_ENABLE_COMPRESSION': 'False',
-        'FILE_STORAGE_COMPRESSION_QUALITY': '95',
-        'SUPABASE_URL': 'https://test.supabase.co',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key',
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "FILE_STORAGE_PROVIDER": "supabase",
+            "FILE_STORAGE_MAX_SIZE": "10485760",
+            "FILE_STORAGE_ALLOWED_EXTENSIONS": '["jpg","png","gif"]',  # JSON format
+            "FILE_STORAGE_ENABLE_COMPRESSION": "False",
+            "FILE_STORAGE_COMPRESSION_QUALITY": "95",
+            "SUPABASE_URL": "https://test.supabase.co",
+            "SUPABASE_SERVICE_ROLE_KEY": "test-key",
+        },
+    )
     def test_environment_variable_override(self):
         """Test that environment variables override defaults."""
         settings = FileStorageSettings()
-        
+
         assert settings.provider == "supabase"
         assert settings.max_size == 10485760
         assert settings.allowed_extensions == ["jpg", "png", "gif"]
         assert settings.enable_compression is False
         assert settings.compression_quality == 95
 
-    @patch.dict(os.environ, {
-        'FILE_STORAGE_MAX_WIDTH': '2048',
-        'FILE_STORAGE_MAX_HEIGHT': '1536',
-        'FILE_STORAGE_MIN_WIDTH': '64',
-        'FILE_STORAGE_MIN_HEIGHT': '48',
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "FILE_STORAGE_MAX_WIDTH": "2048",
+            "FILE_STORAGE_MAX_HEIGHT": "1536",
+            "FILE_STORAGE_MIN_WIDTH": "64",
+            "FILE_STORAGE_MIN_HEIGHT": "48",
+        },
+    )
     def test_dimension_environment_variables(self):
         """Test dimension settings from environment variables."""
         settings = FileStorageSettings()
-        
+
         assert settings.max_width == 2048
         assert settings.max_height == 1536
         assert settings.min_width == 64
         assert settings.min_height == 48
 
-    @patch.dict(os.environ, {
-        'FILE_STORAGE_SUPABASE_BUCKET': 'production-uploads',
-        'FILE_STORAGE_LOCAL_DIR': '/var/uploads',
-        'FILE_STORAGE_BASE_URL': 'https://cdn.example.com/uploads',
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "FILE_STORAGE_SUPABASE_BUCKET": "production-uploads",
+            "FILE_STORAGE_LOCAL_DIR": "/var/uploads",
+            "FILE_STORAGE_BASE_URL": "https://cdn.example.com/uploads",
+        },
+    )
     def test_storage_path_environment_variables(self):
         """Test storage path settings from environment variables."""
         settings = FileStorageSettings()
-        
+
         assert settings.supabase_bucket == "production-uploads"
         assert settings.local_dir == "/var/uploads"
         assert settings.base_url == "https://cdn.example.com/uploads"
@@ -299,7 +295,7 @@ class TestConfigurationEdgeCases:
         # Test different cases - Pydantic Literal is case-sensitive, so this should fail
         with pytest.raises(ValidationError):
             FileStorageSettings(provider="LOCAL")
-        
+
         # Valid lowercase should work
         settings = FileStorageSettings(provider="local")
         assert settings.provider == "local"
@@ -307,9 +303,7 @@ class TestConfigurationEdgeCases:
     def test_extension_normalization_edge_cases(self):
         """Test edge cases in extension normalization."""
         # Mixed case and whitespace
-        settings = FileStorageSettings(
-            allowed_extensions=["  .JPG  ", "png", ".GIF.", "webp"]
-        )
+        settings = FileStorageSettings(allowed_extensions=["  .JPG  ", "png", ".GIF.", "webp"])
         # Check that normalization worked correctly
         assert "jpg" in settings.allowed_extensions
         assert "png" in settings.allowed_extensions
@@ -321,7 +315,7 @@ class TestConfigurationEdgeCases:
         # Min size of 1 should be allowed
         settings = FileStorageSettings(min_size=1)
         assert settings.min_size == 1
-        
+
         # Zero min size should fail
         with pytest.raises(ValidationError):
             FileStorageSettings(min_size=0)
@@ -335,7 +329,7 @@ class TestConfigurationEdgeCases:
             max_height=8192,  # Max allowed
             compression_quality=100,  # Max allowed
         )
-        
+
         assert settings.max_size == 50 * 1024 * 1024
         assert settings.max_width == 8192
         assert settings.max_height == 8192

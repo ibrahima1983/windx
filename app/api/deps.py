@@ -82,7 +82,7 @@ async def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     user_id = decode_access_token(token)
 
     if user_id is None:

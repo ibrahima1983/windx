@@ -43,19 +43,20 @@ class TestTemplateServiceCasbin:
         self, db_session, test_superuser_with_rbac
     ):
         """Test that apply_template_to_configuration uses proper customer relationship.
-        
+
         Note: Using superuser since customers cannot access templates per RBAC policy.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -63,6 +64,7 @@ class TestTemplateServiceCasbin:
 
         # Create a customer for the template
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -75,6 +77,7 @@ class TestTemplateServiceCasbin:
 
         # Create a template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",
@@ -95,7 +98,9 @@ class TestTemplateServiceCasbin:
 
         # Execute - superuser can apply templates
         result = await template_service.apply_template_to_configuration(
-            template_id=template.id, user=test_superuser_with_rbac, config_name="Custom Configuration"
+            template_id=template.id,
+            user=test_superuser_with_rbac,
+            config_name="Custom Configuration",
         )
 
         # Verify configuration was created
@@ -108,20 +113,21 @@ class TestTemplateServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test Casbin decorator authorization on apply_template_to_configuration.
-        
+
         Tests that customers CANNOT apply templates (per RBAC policy),
         but staff members CAN apply templates.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -129,6 +135,7 @@ class TestTemplateServiceCasbin:
 
         # Create a template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",
@@ -167,15 +174,16 @@ class TestTemplateServiceCasbin:
     ):
         """Test template usage tracking with proper customer associations."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -183,6 +191,7 @@ class TestTemplateServiceCasbin:
 
         # Create a customer
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -195,13 +204,14 @@ class TestTemplateServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -209,6 +219,7 @@ class TestTemplateServiceCasbin:
 
         # Create a template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",
@@ -242,20 +253,21 @@ class TestTemplateServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test get_template with multiple @require decorators (OR logic).
-        
+
         Tests that customers CANNOT read templates (per RBAC policy),
         but staff members CAN read templates.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -263,6 +275,7 @@ class TestTemplateServiceCasbin:
 
         # Create a template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",
@@ -297,20 +310,21 @@ class TestTemplateServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test create_template with Casbin authorization.
-        
+
         Tests that customers CANNOT create templates (per RBAC policy),
         but staff members CAN create templates.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -322,7 +336,7 @@ class TestTemplateServiceCasbin:
         template_data = ConfigurationTemplateCreate(
             name=f"New Template {uuid.uuid4().hex[:8]}",
             manufacturing_type_id=mfg_type.id,
-            template_type="standard"
+            template_type="standard",
         )
 
         # Test 1: Customer CANNOT create templates (per RBAC policy)
@@ -363,19 +377,20 @@ class TestTemplateServiceCasbin:
         self, db_session, test_superuser_with_rbac
     ):
         """Test complete template application with selections and customer tracking.
-        
+
         Note: Using superuser since customers cannot access templates per RBAC policy.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -383,6 +398,7 @@ class TestTemplateServiceCasbin:
 
         # Create a template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",
@@ -403,7 +419,9 @@ class TestTemplateServiceCasbin:
 
         # Execute
         result = await template_service.apply_template_to_configuration(
-            template_id=template.id, user=test_superuser_with_rbac, config_name="Applied Template Configuration"
+            template_id=template.id,
+            user=test_superuser_with_rbac,
+            config_name="Applied Template Configuration",
         )
 
         # Verify configuration was created
@@ -414,7 +432,7 @@ class TestTemplateServiceCasbin:
     @pytest.mark.asyncio
     async def test_template_not_found_error_handling(self, db_session, test_superuser_with_rbac):
         """Test error handling when template is not found.
-        
+
         Note: Using superuser since customers cannot access templates per RBAC policy.
         """
         # Setup
@@ -430,15 +448,16 @@ class TestTemplateServiceCasbin:
     async def test_template_not_active_validation(self, db_session, test_superuser_with_rbac):
         """Test validation that template must be active to apply."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -446,6 +465,7 @@ class TestTemplateServiceCasbin:
 
         # Create an inactive template
         from app.models.configuration_template import ConfigurationTemplate
+
         template = ConfigurationTemplate(
             name=f"Test Template {uuid.uuid4().hex[:8]}",
             description="Test template",

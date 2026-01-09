@@ -130,13 +130,13 @@ class TestCustomerRelationshipProperties:
             # Mock manufacturing type query (first call)
             mock_result_1 = AsyncMock()
             mock_result_1.scalar_one_or_none = MagicMock(return_value=manufacturing_type)
-            
+
             # Mock attribute nodes query (second call)
             mock_result_2 = AsyncMock()
             mock_scalars = MagicMock()
             mock_scalars.all = MagicMock(return_value=[])  # Empty list of attribute nodes
             mock_result_2.scalars = MagicMock(return_value=mock_scalars)
-            
+
             # Set up side_effect for multiple database calls
             mock_db.execute.side_effect = [mock_result_1, mock_result_2]
 

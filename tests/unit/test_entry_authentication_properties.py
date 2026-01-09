@@ -96,7 +96,9 @@ class TestEntryAuthenticationIntegration:
         def mock_execute_side_effect(stmt):
             mock_result = AsyncMock()
             if "manufacturing_types" in str(stmt):
-                mock_result.scalar_one_or_none = MagicMock(return_value=mock_manufacturing_type)  # Use MagicMock
+                mock_result.scalar_one_or_none = MagicMock(
+                    return_value=mock_manufacturing_type
+                )  # Use MagicMock
             elif "attribute_nodes" in str(stmt):
                 mock_scalars = MagicMock()
                 mock_scalars.all = MagicMock(return_value=mock_attribute_nodes)  # Use MagicMock
@@ -172,7 +174,7 @@ class TestEntryAuthenticationIntegration:
             selection.boolean_value = None
             selection.json_value = None
             mock_selections.append(selection)
-        
+
         mock_config.selections = mock_selections
 
         # Mock database queries
@@ -190,7 +192,9 @@ class TestEntryAuthenticationIntegration:
                 mock_require.return_value = lambda func: func
 
                 # Mock RBAC authorization
-                with patch("app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock) as mock_ownership:
+                with patch(
+                    "app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock
+                ) as mock_ownership:
                     mock_ownership.return_value = True
 
                     result = await entry_service.load_profile_configuration(configuration_id, user)
@@ -232,7 +236,9 @@ class TestEntryAuthenticationIntegration:
         mock_db.execute = AsyncMock(return_value=mock_result)
 
         # Mock RBAC authorization
-        with patch("app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock) as mock_ownership:
+        with patch(
+            "app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock
+        ) as mock_ownership:
             mock_ownership.return_value = True
 
         # Act - Attempt to generate preview
@@ -242,7 +248,9 @@ class TestEntryAuthenticationIntegration:
                 mock_require.return_value = lambda func: func
 
                 # Mock RBAC authorization
-                with patch("app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock) as mock_ownership:
+                with patch(
+                    "app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock
+                ) as mock_ownership:
                     mock_ownership.return_value = True
 
                     result = await entry_service.generate_preview_data(configuration_id, user)
@@ -338,7 +346,9 @@ class TestEntryAuthenticationIntegration:
         def mock_execute_side_effect(stmt):
             mock_result = AsyncMock()
             if "manufacturing_types" in str(stmt):
-                mock_result.scalar_one_or_none = MagicMock(return_value=mock_manufacturing_type)  # Use MagicMock
+                mock_result.scalar_one_or_none = MagicMock(
+                    return_value=mock_manufacturing_type
+                )  # Use MagicMock
             elif "attribute_nodes" in str(stmt):
                 mock_scalars = MagicMock()
                 mock_scalars.all = MagicMock(return_value=[])  # Use MagicMock
@@ -394,7 +404,9 @@ class TestEntryAuthenticationIntegration:
         def mock_execute_side_effect(stmt):
             mock_result = AsyncMock()
             if "manufacturing_types" in str(stmt):
-                mock_result.scalar_one_or_none = MagicMock(return_value=mock_manufacturing_type)  # Use MagicMock
+                mock_result.scalar_one_or_none = MagicMock(
+                    return_value=mock_manufacturing_type
+                )  # Use MagicMock
             elif "attribute_nodes" in str(stmt):
                 mock_scalars = MagicMock()
                 mock_scalars.all = MagicMock(return_value=mock_attribute_nodes)  # Use MagicMock

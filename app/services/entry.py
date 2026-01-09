@@ -24,7 +24,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -83,15 +83,14 @@ ConfigurationDeleter = Privilege(
 )
 
 
-
 def _safe_numeric_compare(a: Any, b: Any, compare_fn) -> bool:
     """Safely compare two values numerically, handling type conversions.
-    
+
     Args:
         a: First value
         b: Second value
         compare_fn: Comparison function (e.g., lambda x, y: x > y)
-        
+
     Returns:
         bool: Result of comparison, False if types are incompatible
     """
@@ -182,7 +181,8 @@ class ConditionEvaluator:
 
         return self.OPERATORS[operator](field_value, expected_value)
 
-    def get_field_value(self, field_path: str | int, form_data: dict[str, Any]) -> Any:
+    @staticmethod
+    def get_field_value(field_path: str | int, form_data: dict[str, Any]) -> Any:
         """Get field value supporting dot notation for nested fields.
 
         Args:
@@ -209,6 +209,7 @@ class ConditionEvaluator:
         return value
 
 
+# noinspection PyTypeChecker
 class EntryService(BaseService):
     """Service class for entry page operations.
 
@@ -226,7 +227,9 @@ class EntryService(BaseService):
         self.condition_evaluator = ConditionEvaluator()
         self.rbac_service = RBACService(db)
 
-    async def get_profile_schema(self, manufacturing_type_id: int, page_type: str = "profile") -> ProfileSchema:
+    async def get_profile_schema(
+        self, manufacturing_type_id: int, page_type: str = "profile"
+    ) -> ProfileSchema:
         """Get profile form schema for a manufacturing type and page type.
 
         Args:
@@ -252,7 +255,7 @@ class EntryService(BaseService):
             select(AttributeNode)
             .where(
                 AttributeNode.manufacturing_type_id == manufacturing_type_id,
-                AttributeNode.page_type == page_type
+                AttributeNode.page_type == page_type,
             )
             .order_by(AttributeNode.ltree_path, AttributeNode.sort_order)
         )
@@ -301,11 +304,11 @@ class EntryService(BaseService):
 
         # Convert to list and sort by sort_order
         sections = list(sections_dict.values())
-        
+
         # Sort fields within each section first
         for section in sections:
             section.fields.sort(key=lambda f: f.sort_order)
-            
+
             if section.fields:
                 section.sort_order = section.fields[0].sort_order
 
@@ -318,7 +321,8 @@ class EntryService(BaseService):
             conditional_logic=conditional_logic,
         )
 
-    def get_section_name(self, ltree_path: str) -> str:
+    @staticmethod
+    def get_section_name(ltree_path: str) -> str:
         """Get section name from LTREE path.
 
         Args:
@@ -350,7 +354,7 @@ class EntryService(BaseService):
         # Convert field name to human-readable label
         # e.g., "product_type" -> "Product Type", "opening_system" -> "Opening System"
         label = self._generate_label_from_name(node.name)
-        
+
         # Map ui_component values to match template expectations
         # Handle variations like 'input', 'string', etc. to ensure they map to 'text'
         ui_component = (node.ui_component or "").lower()
@@ -366,14 +370,14 @@ class EntryService(BaseService):
                 ui_component = "number"
             else:
                 ui_component = "text"
-        
+
         # Extract options from child nodes if this is a dropdown/radio/multi-select field
         options = None
         options_data = None
         if ui_component in ["dropdown", "radio", "multi-select"]:
             options = await self._extract_options_from_children(node)
             options_data = await self._extract_options_with_metadata(node)
-        
+
         return FieldDefinition(
             name=node.name,
             label=label,
@@ -401,17 +405,18 @@ class EntryService(BaseService):
         stmt = (
             select(AttributeNode)
             .where(
-                AttributeNode.parent_node_id == parent_node.id,
-                AttributeNode.node_type == "option"
+                AttributeNode.parent_node_id == parent_node.id, AttributeNode.node_type == "option"
             )
             .order_by(AttributeNode.sort_order, AttributeNode.name)
         )
         result = await self.db.execute(stmt)
         option_nodes = result.scalars().all()
-        
+
         return [node.name for node in option_nodes]
-    
-    async def _extract_options_with_metadata(self, parent_node: AttributeNode) -> list[dict[str, Any]]:
+
+    async def _extract_options_with_metadata(
+        self, parent_node: AttributeNode
+    ) -> list[dict[str, Any]]:
         """Extract option values and metadata from child nodes.
 
         Args:
@@ -423,31 +428,33 @@ class EntryService(BaseService):
         stmt = (
             select(AttributeNode)
             .where(
-                AttributeNode.parent_node_id == parent_node.id,
-                AttributeNode.node_type == "option"
+                AttributeNode.parent_node_id == parent_node.id, AttributeNode.node_type == "option"
             )
             .order_by(AttributeNode.sort_order, AttributeNode.name)
         )
         result = await self.db.execute(stmt)
         option_nodes = result.scalars().all()
-        
+
         return [
             {
                 "id": node.id,
                 "name": node.name,
                 "description": node.description,
-                "price_impact_value": float(node.price_impact_value) if node.price_impact_value else None,
-                "sort_order": node.sort_order
+                "price_impact_value": float(node.price_impact_value)
+                if node.price_impact_value
+                else None,
+                "sort_order": node.sort_order,
             }
             for node in option_nodes
         ]
-    
-    def _generate_label_from_name(self, name: str) -> str:
+
+    @staticmethod
+    def _generate_label_from_name(name: str) -> str:
         """Generate a human-readable label from a field name.
-        
+
         Args:
             name: Field name (e.g., "product_type", "opening_system")
-            
+
         Returns:
             str: Human-readable label (e.g., "Product Type", "Opening System")
         """
@@ -483,11 +490,11 @@ class EntryService(BaseService):
             "price_per_beam": "Price per Beam",
             "upvc_profile_discount": "UPVC Profile Discount %",
         }
-        
+
         # Check if we have a special case mapping
         if name.lower() in special_cases:
             return special_cases[name.lower()]
-        
+
         # Otherwise, convert snake_case to Title Case
         # e.g., "some_field_name" -> "Some Field Name"
         return name.replace("_", " ").title()
@@ -523,7 +530,8 @@ class EntryService(BaseService):
 
         return visibility
 
-    def evaluate_business_rules(self, form_data: dict[str, Any]) -> dict[str, bool]:
+    @staticmethod
+    def evaluate_business_rules(form_data: dict[str, Any]) -> dict[str, bool]:
         """Evaluate business rules for field availability based on Type selection.
 
         Args:
@@ -542,9 +550,7 @@ class EntryService(BaseService):
 
         # Business Rule 2: "builtin Flyscreen track only for sliding frame" → Only for sliding frames
         flyscreen_field = "builtin_flyscreen_track"
-        visibility[flyscreen_field] = (
-            product_type == "frame" and "sliding" in opening_system
-        )
+        visibility[flyscreen_field] = product_type == "frame" and "sliding" in opening_system
 
         # Business Rule 3: "Total width only for frame with builtin flyscreen"
         total_width_field = "total_width"
@@ -582,7 +588,9 @@ class EntryService(BaseService):
 
         return visibility
 
-    def get_field_display_value(self, field_name: str, value: Any, form_data: dict[str, Any]) -> str:
+    def get_field_display_value(
+        self, field_name: str, value: Any, form_data: dict[str, Any]
+    ) -> str:
         """Get display value for a field, showing 'N/A' for fields that don't apply to current type.
 
         Args:
@@ -595,14 +603,16 @@ class EntryService(BaseService):
         """
         # Check if field should be visible based on business rules
         business_rules_visibility = self.evaluate_business_rules(form_data)
-        
+
         if field_name in business_rules_visibility and not business_rules_visibility[field_name]:
             return "N/A"
-        
+
         # Format the value normally if field is applicable
         return self.format_preview_value(value)
 
-    async def validate_profile_data(self, data: ProfileEntryData, page_type: str = "profile") -> dict[str, Any]:
+    async def validate_profile_data(
+        self, data: ProfileEntryData, page_type: str = "profile"
+    ) -> dict[str, Any]:
         """Validate profile data against schema rules.
 
         Args:
@@ -620,10 +630,10 @@ class EntryService(BaseService):
         # Get schema for validation rules
         try:
             schema = await self.get_profile_schema(data.manufacturing_type_id, page_type)
-        except NotFoundException:
+        except NotFoundException as nfe:
             raise ValidationException(
                 "Invalid manufacturing type", field_errors={"manufacturing_type_id": "Not found"}
-            )
+            ) from nfe
 
         # Validate each field against its rules
         form_data = data.model_dump()
@@ -658,8 +668,9 @@ class EntryService(BaseService):
 
         return {"valid": True}
 
+    @staticmethod
     def validate_field_value(
-        self, value: Any, rules: dict[str, Any], field_label: str
+            value: Any, rules: dict[str, Any], field_label: str
     ) -> str | None:
         """Validate a field value against validation rules.
 
@@ -673,25 +684,33 @@ class EntryService(BaseService):
         """
         try:
             # Handle Decimal and ensure numeric types for comparison
-            # Import Decimal inside function to avoid circular imports if needed, 
+            # Import Decimal inside function to avoid circular imports if needed,
             # but usually top-level is fine. Assuming simple float conversion for range check.
             from decimal import Decimal
-            
+
             is_numeric = isinstance(value, (int, float, Decimal))
             if is_numeric:
                 try:
                     num_value = float(value)
                 except (ValueError, TypeError):
-                    return None # Cannot convert to float for comparison
+                    return None  # Cannot convert to float for comparison
 
             # Range validation for numbers
             if "min" in rules and is_numeric:
-                min_val = float(rules["min"]) if isinstance(rules["min"], (int, float, Decimal)) else rules["min"]
+                min_val = (
+                    float(rules["min"])
+                    if isinstance(rules["min"], (int, float, Decimal))
+                    else rules["min"]
+                )
                 if num_value < min_val:
                     return f"{field_label} must be at least {rules['min']}"
-            
+
             if "max" in rules and is_numeric:
-                max_val = float(rules["max"]) if isinstance(rules["max"], (int, float, Decimal)) else rules["max"]
+                max_val = (
+                    float(rules["max"])
+                    if isinstance(rules["max"], (int, float, Decimal))
+                    else rules["max"]
+                )
                 if num_value > max_val:
                     return f"{field_label} must be at most {rules['max']}"
 
@@ -702,9 +721,19 @@ class EntryService(BaseService):
                     return custom_message
 
             # Length validation for strings
-            if "min_length" in rules and isinstance(value, str) and isinstance(rules["min_length"], (int, float)) and len(value) < rules["min_length"]:
+            if (
+                "min_length" in rules
+                and isinstance(value, str)
+                and isinstance(rules["min_length"], (int, float))
+                and len(value) < rules["min_length"]
+            ):
                 return f"{field_label} must be at least {rules['min_length']} characters"
-            if "max_length" in rules and isinstance(value, str) and isinstance(rules["max_length"], (int, float)) and len(value) > rules["max_length"]:
+            if (
+                "max_length" in rules
+                and isinstance(value, str)
+                and isinstance(rules["max_length"], (int, float))
+                and len(value) > rules["max_length"]
+            ):
                 return f"{field_label} must be at most {rules['max_length']} characters"
 
             # Enum/choice validation
@@ -719,7 +748,7 @@ class EntryService(BaseService):
                 if rule_type == "range" and is_numeric:
                     min_val = float(rules.get("min", float("-inf")))
                     max_val = float(rules.get("max", float("inf")))
-                    
+
                     if not (min_val <= num_value <= max_val):
                         custom_message = rules.get(
                             "message", f"{field_label} must be between {min_val} and {max_val}"
@@ -757,12 +786,13 @@ class EntryService(BaseService):
 
         return None
 
-    def _has_meaningful_value(self, value: Any) -> bool:
+    @staticmethod
+    def _has_meaningful_value(value: Any) -> bool:
         """Check if a field value is meaningful (not null, empty, or default false for booleans).
-        
+
         Args:
             value: Field value to check
-            
+
         Returns:
             bool: True if value is meaningful, False otherwise
         """
@@ -788,57 +818,86 @@ class EntryService(BaseService):
         opening_system = form_data.get("opening_system", "").lower()
 
         # Validate business rule violations
-        
+
         # Rule 1: Renovation should only have values for frames
-        if (self._has_meaningful_value(form_data.get("renovation")) and product_type != "frame"):
+        if self._has_meaningful_value(form_data.get("renovation")) and product_type != "frame":
             errors["renovation"] = "Renovation is only applicable for frame types"
 
         # Rule 2: Builtin flyscreen track should only be set for sliding frames
-        if (self._has_meaningful_value(form_data.get("builtin_flyscreen_track")) and 
-            not (product_type == "frame" and "sliding" in opening_system)):
-            errors["builtin_flyscreen_track"] = "Builtin flyscreen track is only applicable for sliding frames"
+        if self._has_meaningful_value(form_data.get("builtin_flyscreen_track")) and not (
+            product_type == "frame" and "sliding" in opening_system
+        ):
+            errors["builtin_flyscreen_track"] = (
+                "Builtin flyscreen track is only applicable for sliding frames"
+            )
 
         # Rule 3: Total width should only be set when builtin flyscreen is enabled
-        if (self._has_meaningful_value(form_data.get("total_width")) and 
-            not (product_type == "frame" and form_data.get("builtin_flyscreen_track") is True)):
-            errors["total_width"] = "Total width is only applicable when builtin flyscreen track is enabled"
+        if self._has_meaningful_value(form_data.get("total_width")) and not (
+            product_type == "frame" and form_data.get("builtin_flyscreen_track") is True
+        ):
+            errors["total_width"] = (
+                "Total width is only applicable when builtin flyscreen track is enabled"
+            )
 
         # Rule 4: Flyscreen track height should only be set when builtin flyscreen is enabled
-        if (self._has_meaningful_value(form_data.get("flyscreen_track_height")) and 
-            not (product_type == "frame" and form_data.get("builtin_flyscreen_track") is True)):
-            errors["flyscreen_track_height"] = "Flyscreen track height is only applicable when builtin flyscreen track is enabled"
+        if self._has_meaningful_value(form_data.get("flyscreen_track_height")) and not (
+            product_type == "frame" and form_data.get("builtin_flyscreen_track") is True
+        ):
+            errors["flyscreen_track_height"] = (
+                "Flyscreen track height is only applicable when builtin flyscreen track is enabled"
+            )
 
         # Rule 5: Sash overlap should only have values for sash types
-        if (self._has_meaningful_value(form_data.get("sash_overlap")) and product_type != "sash"):
+        if self._has_meaningful_value(form_data.get("sash_overlap")) and product_type != "sash":
             errors["sash_overlap"] = "Sash overlap is only applicable for sash types"
 
         # Rule 6: Flying mullion clearances should only have values for flying mullion types
-        if (self._has_meaningful_value(form_data.get("flying_mullion_horizontal_clearance")) and 
-            product_type != "flying mullion"):
-            errors["flying_mullion_horizontal_clearance"] = "Flying mullion horizontal clearance is only applicable for flying mullion types"
-        
-        if (self._has_meaningful_value(form_data.get("flying_mullion_vertical_clearance")) and 
-            product_type != "flying mullion"):
-            errors["flying_mullion_vertical_clearance"] = "Flying mullion vertical clearance is only applicable for flying mullion types"
+        if (
+            self._has_meaningful_value(form_data.get("flying_mullion_horizontal_clearance"))
+            and product_type != "flying mullion"
+        ):
+            errors["flying_mullion_horizontal_clearance"] = (
+                "Flying mullion horizontal clearance is only applicable for flying mullion types"
+            )
+
+        if (
+            self._has_meaningful_value(form_data.get("flying_mullion_vertical_clearance"))
+            and product_type != "flying mullion"
+        ):
+            errors["flying_mullion_vertical_clearance"] = (
+                "Flying mullion vertical clearance is only applicable for flying mullion types"
+            )
 
         # Rule 7: Glazing undercut height should only have values for glazing bead types
-        if (self._has_meaningful_value(form_data.get("glazing_undercut_height")) and 
-            product_type != "glazing bead"):
-            errors["glazing_undercut_height"] = "Glazing undercut height is only applicable for glazing bead types"
+        if (
+            self._has_meaningful_value(form_data.get("glazing_undercut_height"))
+            and product_type != "glazing bead"
+        ):
+            errors["glazing_undercut_height"] = (
+                "Glazing undercut height is only applicable for glazing bead types"
+            )
 
         # Rule 8: Renovation height should only have values for frame types
-        if (self._has_meaningful_value(form_data.get("renovation_height")) and product_type != "frame"):
+        if (
+            self._has_meaningful_value(form_data.get("renovation_height"))
+            and product_type != "frame"
+        ):
             errors["renovation_height"] = "Renovation height is only applicable for frame types"
 
         # Rule 9: Steel material thickness should only have values for reinforcement types
-        if (self._has_meaningful_value(form_data.get("steel_material_thickness")) and 
-            product_type != "reinforcement"):
-            errors["steel_material_thickness"] = "Steel material thickness is only applicable for reinforcement types"
+        if (
+            self._has_meaningful_value(form_data.get("steel_material_thickness"))
+            and product_type != "reinforcement"
+        ):
+            errors["steel_material_thickness"] = (
+                "Steel material thickness is only applicable for reinforcement types"
+            )
 
         return errors
 
+    @staticmethod
     def validate_cross_field_rules(
-        self, form_data: dict[str, Any], schema: ProfileSchema
+            form_data: dict[str, Any], schema: ProfileSchema
     ) -> dict[str, str]:
         """Validate cross-field rules and dependencies.
 
@@ -890,7 +949,7 @@ class EntryService(BaseService):
                 # Handle Decimal types for price calculations
                 price_per_meter = float(form_data["price_per_meter"])
                 price_per_beam = float(form_data["price_per_beam"])
-                
+
                 expected_beam_price = price_per_meter * form_data["length_of_beam"]
                 if (
                     abs(expected_beam_price - price_per_beam) > expected_beam_price * 0.1
@@ -903,7 +962,9 @@ class EntryService(BaseService):
 
     # @require(ConfigurationCreator)
     # @require(AdminAccess)  # Allow admins to save configurations
-    async def save_profile_configuration(self, data: ProfileEntryData, user: User, page_type: str = "profile") -> Configuration:
+    async def save_profile_configuration(
+        self, data: ProfileEntryData, user: User, page_type: str = "profile"
+    ) -> Configuration:
         """Save profile configuration data with proper customer relationship.
 
         Args:
@@ -1089,7 +1150,9 @@ class EntryService(BaseService):
         # No need for manual authorization checks
 
         # Generate preview table with manufacturing_type_id
-        preview_table = await self.generate_preview_table(configuration, configuration.manufacturing_type_id)
+        preview_table = await self.generate_preview_table(
+            configuration, configuration.manufacturing_type_id
+        )
 
         return ProfilePreviewData(
             configuration_id=configuration.id,
@@ -1102,114 +1165,114 @@ class EntryService(BaseService):
     _mapping_cache: dict[int, dict[str, str]] = {}
     _reverse_mapping_cache: dict[int, dict[str, str]] = {}
 
-    async def generate_preview_headers(self, manufacturing_type_id: int, page_type: str = "profile") -> list[str]:
+    async def generate_preview_headers(
+        self, manufacturing_type_id: int, page_type: str = "profile"
+    ) -> list[str]:
         """Generate dynamic preview headers from attribute nodes.
-        
+
         Args:
             manufacturing_type_id: Manufacturing type ID
             page_type: Page type (profile, accessories, glazing)
-            
+
         Returns:
             list[str]: Ordered list of preview headers
         """
         # Create cache key that includes page_type
         cache_key = f"{manufacturing_type_id}_{page_type}"
-        
+
         # Check cache first
         if cache_key in self._header_cache:
             return self._header_cache[cache_key]
-        
+
         # Get attribute nodes for this manufacturing type and page type, ordered by sort_order
         stmt = (
             select(AttributeNode)
             .where(
                 AttributeNode.manufacturing_type_id == manufacturing_type_id,
                 AttributeNode.page_type == page_type,
-                AttributeNode.node_type == "attribute"  # Only attributes generate headers
+                AttributeNode.node_type == "attribute",  # Only attributes generate headers
             )
             .order_by(AttributeNode.sort_order, AttributeNode.name)
         )
         result = await self.db.execute(stmt)
         attribute_nodes = result.scalars().all()
-        
+
         # Generate headers list starting with id only
         # All attributes including "name" will be processed and get proper labels
         headers = ["id"]
-        
+
         for node in attribute_nodes:
             # Use the human-readable label as the header
             header = self._generate_label_from_name(node.name)
             headers.append(header)
-        
+
         # Cache the result
         self._header_cache[cache_key] = headers
         return headers
 
     async def generate_header_mapping(self, manufacturing_type_id: int) -> dict[str, str]:
         """Generate dynamic header-to-field mapping from attribute nodes.
-        
+
         Args:
             manufacturing_type_id: Manufacturing type ID
-            
+
         Returns:
             dict[str, str]: Mapping from header names to field names
         """
         # Check cache first
         if manufacturing_type_id in self._mapping_cache:
             return self._mapping_cache[manufacturing_type_id]
-        
+
         # Get attribute nodes for this manufacturing type, ordered by sort_order
         stmt = (
             select(AttributeNode)
             .where(
                 AttributeNode.manufacturing_type_id == manufacturing_type_id,
-                AttributeNode.node_type == "attribute"  # Only attributes generate mappings
+                AttributeNode.node_type == "attribute",  # Only attributes generate mappings
             )
             .order_by(AttributeNode.sort_order, AttributeNode.name)
         )
         result = await self.db.execute(stmt)
         attribute_nodes = result.scalars().all()
-        
+
         # Generate mapping starting with special cases
-        mapping = {
-            "id": "id"
-        }
-        
+        mapping = {"id": "id"}
+
         for node in attribute_nodes:
             # Map human-readable header to field name
             header = self._generate_label_from_name(node.name)
             mapping[header] = node.name
-        
+
         # Cache the result
         self._mapping_cache[manufacturing_type_id] = mapping
         return mapping
 
     async def get_reverse_header_mapping(self, manufacturing_type_id: int) -> dict[str, str]:
         """Get reverse mapping from field names to headers.
-        
+
         Args:
             manufacturing_type_id: Manufacturing type ID
-            
+
         Returns:
             dict[str, str]: Mapping from field names to header names
         """
         # Check cache first
         if manufacturing_type_id in self._reverse_mapping_cache:
             return self._reverse_mapping_cache[manufacturing_type_id]
-        
+
         # Generate forward mapping first
         forward_mapping = await self.generate_header_mapping(manufacturing_type_id)
-        
+
         # Create reverse mapping
         reverse_mapping = {v: k for k, v in forward_mapping.items()}
-        
+
         # Cache the result
         self._reverse_mapping_cache[manufacturing_type_id] = reverse_mapping
         return reverse_mapping
 
     def clear_header_cache(self, manufacturing_type_id: int | None = None) -> None:
         """Clear header cache for a specific manufacturing type or all types.
-        
+
         Args:
             manufacturing_type_id: Manufacturing type ID to clear, or None for all
         """
@@ -1242,10 +1305,11 @@ class EntryService(BaseService):
             .options(selectinload(Configuration.selections))
             .order_by(Configuration.updated_at.desc())
         )
-        
+
         # Apply RBAC filtering if not superadmin
         if user.role != Role.SUPERADMIN.value:
             from app.services.rbac import RBACService
+
             rbac_service = RBACService(self.db)
             accessible_customers = await rbac_service.get_accessible_customers(user)
             if accessible_customers:
@@ -1260,7 +1324,11 @@ class EntryService(BaseService):
 
         return await self.generate_preview_table(configurations, manufacturing_type_id)
 
-    async def generate_preview_table(self, data: Configuration | list[Configuration] | dict[str, Any], manufacturing_type_id: int | None = None) -> PreviewTable:
+    async def generate_preview_table(
+        self,
+        data: Configuration | list[Configuration] | dict[str, Any],
+        manufacturing_type_id: int | None = None,
+    ) -> PreviewTable:
         """Generate preview table from configuration data or form data.
 
         Args:
@@ -1278,10 +1346,10 @@ class EntryService(BaseService):
                 manufacturing_type_id = data[0].manufacturing_type_id
             elif isinstance(data, dict):
                 manufacturing_type_id = data.get("manufacturing_type_id")
-            
+
             if manufacturing_type_id is None:
                 raise ValueError("manufacturing_type_id is required for dynamic header generation")
-        
+
         # Generate dynamic headers
         headers = await self.generate_preview_headers(manufacturing_type_id)
         rows = []
@@ -1294,7 +1362,9 @@ class EntryService(BaseService):
 
         return PreviewTable(headers=headers, rows=rows)
 
-    async def _create_row(self, data: Configuration | dict[str, Any], manufacturing_type_id: int) -> dict[str, Any]:
+    async def _create_row(
+        self, data: Configuration | dict[str, Any], manufacturing_type_id: int
+    ) -> dict[str, Any]:
         """Create a single table row.
 
         Args:
@@ -1305,16 +1375,18 @@ class EntryService(BaseService):
             dict: Row data
         """
         row_data: dict[str, Any] = {}
-        
+
         # Get dynamic mappings
         header_mapping = await self.generate_header_mapping(manufacturing_type_id)
         reverse_mapping = await self.get_reverse_header_mapping(manufacturing_type_id)
 
         if isinstance(data, Configuration):
             row_data["id"] = data.id
-            
+
             # Use the correct header name for the name field
-            name_header = reverse_mapping.get("name", "Product Name")  # Default to "Product Name" if not found
+            name_header = reverse_mapping.get(
+                "name", "Product Name"
+            )  # Default to "Product Name" if not found
             row_data[name_header] = data.name
 
             # Preload attribute nodes for this configuration's manufacturing type
@@ -1357,7 +1429,9 @@ class EntryService(BaseService):
                     header = reverse_mapping.get(field_name)
                     if header:
                         # Use business rules to determine display value
-                        row_data[header] = self.get_field_display_value(field_name, value, form_data)
+                        row_data[header] = self.get_field_display_value(
+                            field_name, value, form_data
+                        )
         else:
             # Handle dictionary (form data)
             row_data["id"] = data.get("id", "N/A")
@@ -1375,8 +1449,8 @@ class EntryService(BaseService):
 
         return row_data
 
-
-    def format_preview_value(self, value: Any) -> str:
+    @staticmethod
+    def format_preview_value(value: Any) -> str:
         """Format value for preview display.
 
         Args:
@@ -1404,7 +1478,9 @@ class EntryService(BaseService):
             return str(value)
 
     @require(AdminAccess)  # Allow admins to edit configurations
-    async def update_preview_value(self, configuration_id: int, field: str, value: Any, user: User) -> Configuration:
+    async def update_preview_value(
+        self, configuration_id: int, field: str, value: Any, user: User
+    ) -> Configuration:
         """Update a specific field in a configuration from table preview.
 
         Args:
@@ -1416,8 +1492,10 @@ class EntryService(BaseService):
         Returns:
             Configuration: Updated configuration
         """
-        print(f"🦆 [UPDATE DEBUG] Updating field '{field}' with value '{value}' for config {configuration_id}")
-        
+        print(
+            f"🦆 [UPDATE DEBUG] Updating field '{field}' with value '{value}' for config {configuration_id}"
+        )
+
         # Load configuration with selections
         stmt = (
             select(Configuration)
@@ -1432,7 +1510,7 @@ class EntryService(BaseService):
 
         # Get dynamic header mapping for this manufacturing type
         header_mapping = await self.generate_header_mapping(config.manufacturing_type_id)
-        
+
         # Resolve field name from header if needed
         field_path = header_mapping.get(field, field)
         print(f"🦆 [UPDATE DEBUG] Resolved field_path: '{field_path}'")
@@ -1444,11 +1522,11 @@ class EntryService(BaseService):
             # Get attribute node by name (not ltree_path!)
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == config.manufacturing_type_id,
-                AttributeNode.name == field_path  # Use name instead of ltree_path
+                AttributeNode.name == field_path,  # Use name instead of ltree_path
             )
             res = await self.db.execute(stmt)
             node = res.scalar_one_or_none()
-            
+
             print(f"🦆 [UPDATE DEBUG] Found attribute node: {node}")
             print(f"🦆 [UPDATE DEBUG] Node name: {node.name if node else 'None'}")
             print(f"🦆 [UPDATE DEBUG] Node data_type: {node.data_type if node else 'None'}")
@@ -1464,16 +1542,16 @@ class EntryService(BaseService):
                 selection = ConfigurationSelection(
                     configuration_id=config.id,
                     attribute_node_id=node.id,
-                    selection_path=node.ltree_path
+                    selection_path=node.ltree_path,
                 )
                 self.db.add(selection)
-                print(f"🦆 [UPDATE DEBUG] Created new selection")
+                print("🦆 [UPDATE DEBUG] Created new selection")
 
             # Store value in appropriate field based on data type
             # (matches logic in save_profile_configuration)
             data_type = node.data_type
-            print(f"🦆 [UPDATE DEBUG] Data type: {data_type}")
-            
+            print("🦆 [UPDATE DEBUG] Data type: {data_type}")
+
             # Clear all value fields first
             selection.string_value = None
             selection.numeric_value = None
@@ -1481,14 +1559,16 @@ class EntryService(BaseService):
             selection.json_value = None
 
             if data_type == "boolean" or isinstance(value, bool):
-                selection.boolean_value = bool(value) if isinstance(value, bool) else (str(value).lower() == "yes")
+                selection.boolean_value = (
+                    bool(value) if isinstance(value, bool) else (str(value).lower() == "yes")
+                )
                 print(f"🦆 [UPDATE DEBUG] Set boolean_value: {selection.boolean_value}")
             elif data_type in ["number", "dimension"] or isinstance(value, (int, float)):
                 try:
                     selection.numeric_value = Decimal(str(value))
                     print(f"🦆 [UPDATE DEBUG] Set numeric_value: {selection.numeric_value}")
-                except (TypeError, ValueError):
-                    raise ValidationException(f"Invalid numeric value: {value}")
+                except (TypeError, ValueError) as e:
+                    raise ValidationException(f"Invalid numeric value: {value}") from e
             elif data_type == "selection" and isinstance(value, (list, dict)):
                 selection.json_value = value
                 print(f"🦆 [UPDATE DEBUG] Set json_value: {selection.json_value}")
@@ -1499,7 +1579,7 @@ class EntryService(BaseService):
         config.updated_at = datetime.now()
         await self.commit()
         await self.refresh(config)
-        print(f"🦆 [UPDATE DEBUG] Successfully updated configuration")
+        print("🦆 [UPDATE DEBUG] Successfully updated configuration")
         return config
 
     @require(ConfigurationDeleter)
@@ -1521,7 +1601,9 @@ class EntryService(BaseService):
         await self.commit()
 
     @require(BulkConfigurationDeleter)
-    async def bulk_delete_profile_configurations(self, configuration_ids: list[int], user: User) -> dict[str, Any]:
+    async def bulk_delete_profile_configurations(
+        self, configuration_ids: list[int], user: User
+    ) -> dict[str, Any]:
         """Bulk delete multiple profile configurations.
 
         Args:
@@ -1538,61 +1620,62 @@ class EntryService(BaseService):
         stmt = select(Configuration).where(Configuration.id.in_(configuration_ids))
         result = await self.db.execute(stmt)
         existing_configs = result.scalars().all()
-        
+
         existing_ids = {config.id for config in existing_configs}
         missing_ids = set(configuration_ids) - existing_ids
-        
+
         success_count = 0
         error_count = 0
         errors = []
-        
+
         # Add errors for missing configurations
         for missing_id in missing_ids:
             errors.append(f"Configuration {missing_id} not found")
             error_count += 1
-        
+
         # Bulk delete existing configurations
         if existing_configs:
             try:
                 # Use bulk delete for efficiency
                 from sqlalchemy import delete
+
                 delete_stmt = delete(Configuration).where(Configuration.id.in_(existing_ids))
                 await self.db.execute(delete_stmt)
                 await self.commit()
                 success_count = len(existing_configs)
-                
+
                 print(f"🦆 [BULK DELETE] Successfully deleted {success_count} configurations")
-                
+
             except Exception as e:
                 print(f"🦆 [BULK DELETE] Error during bulk delete: {e}")
                 # Rollback and try individual deletes as fallback
                 await self.db.rollback()
-                
+
                 for config in existing_configs:
                     try:
                         await self.db.delete(config)
                         await self.commit()
                         success_count += 1
                     except Exception as individual_error:
-                        errors.append(f"Failed to delete configuration {config.id}: {str(individual_error)}")
+                        errors.append(
+                            f"Failed to delete configuration {config.id}: {str(individual_error)}"
+                        )
                         error_count += 1
                         await self.db.rollback()
-        
+
         return {
             "success_count": success_count,
             "error_count": error_count,
             "errors": errors,
-            "total_requested": len(configuration_ids)
+            "total_requested": len(configuration_ids),
         }
 
-
-
     async def add_field_option(
-        self, 
-        manufacturing_type_id: int, 
-        field_name: str, 
-        option_value: str, 
-        page_type: str = "profile"
+        self,
+        manufacturing_type_id: int,
+        field_name: str,
+        option_value: str,
+        page_type: str = "profile",
     ) -> dict[str, Any]:
         """Add a new option to an attribute field.
 
@@ -1611,15 +1694,16 @@ class EntryService(BaseService):
             NotFoundException: If field not found
             ValidationException: If option already exists
         """
-        from app.models.attribute_node import AttributeNode
-        from sqlalchemy import func
         from decimal import Decimal
+        from sqlalchemy import func
+        from app.models.attribute_node import AttributeNode
+
 
         # Check if this is a protected field that shouldn't be modified
-        if field_name.lower() == 'type':
+        if field_name.lower() == "type":
             return {
                 "success": False,
-                "error": "Type options cannot be modified here. Please edit in Node Hierarchy."
+                "error": "Type options cannot be modified here. Please edit in Node Hierarchy.",
             }
 
         # Find the parent attribute node
@@ -1627,37 +1711,38 @@ class EntryService(BaseService):
             AttributeNode.manufacturing_type_id == manufacturing_type_id,
             AttributeNode.name == field_name,
             AttributeNode.page_type == page_type,
-            AttributeNode.node_type == "attribute"
+            AttributeNode.node_type == "attribute",
         )
         parent_result = await self.db.execute(parent_stmt)
         parent_node = parent_result.scalar_one_or_none()
-        
+
         if not parent_node:
-            raise NotFoundException(f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}")
+            raise NotFoundException(
+                f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}"
+            )
 
         # Check if option already exists
         existing_stmt = select(AttributeNode).where(
             AttributeNode.parent_node_id == parent_node.id,
             AttributeNode.name == option_value,
-            AttributeNode.node_type == "option"
+            AttributeNode.node_type == "option",
         )
         existing_result = await self.db.execute(existing_stmt)
         existing_option = existing_result.scalar_one_or_none()
-        
+
         if existing_option:
             return {
                 "success": False,
-                "error": f"Option '{option_value}' already exists for field '{field_name}'"
+                "error": f"Option '{option_value}' already exists for field '{field_name}'",
             }
 
         # Get the next sort order
         sort_stmt = select(func.max(AttributeNode.sort_order)).where(
-            AttributeNode.parent_node_id == parent_node.id,
-            AttributeNode.node_type == "option"
+            AttributeNode.parent_node_id == parent_node.id, AttributeNode.node_type == "option"
         )
         sort_result = await self.db.execute(sort_stmt)
         max_sort_order = sort_result.scalar() or 0
-        
+
         # Create new option node
         new_option = AttributeNode(
             manufacturing_type_id=manufacturing_type_id,
@@ -1673,18 +1758,18 @@ class EntryService(BaseService):
             price_impact_value=Decimal("0.00"),
             weight_impact=Decimal("0.00"),
         )
-        
+
         self.db.add(new_option)
         await self.commit()
         await self.refresh(new_option)
-        
+
         return {
             "success": True,
             "message": f"Option '{option_value}' added successfully to field '{field_name}'",
             "option_id": new_option.id,
             "field_name": field_name,
             "option_value": option_value,
-            "manufacturing_type_id": manufacturing_type_id
+            "manufacturing_type_id": manufacturing_type_id,
         }
 
     async def remove_field_option(self, option_id: int) -> dict[str, Any]:
@@ -1705,39 +1790,42 @@ class EntryService(BaseService):
 
         # Find the option node
         option_stmt = select(AttributeNode).where(
-            AttributeNode.id == option_id,
-            AttributeNode.node_type == "option"
+            AttributeNode.id == option_id, AttributeNode.node_type == "option"
         )
         option_result = await self.db.execute(option_stmt)
         option_node = option_result.scalar_one_or_none()
-        
+
         if not option_node:
             raise NotFoundException(f"Option {option_id} not found")
 
         # Store details for response
         option_name = option_node.name
         parent_field_id = option_node.parent_node_id
-        
+
         # Get parent field name for response
         parent_stmt = select(AttributeNode).where(AttributeNode.id == parent_field_id)
         parent_result = await self.db.execute(parent_stmt)
         parent_field = parent_result.scalar_one_or_none()
         parent_field_name = parent_field.name if parent_field else "unknown"
-        
+
         # Delete the option node
         await self.db.delete(option_node)
         await self.db.commit()
-        
+
         return {
             "success": True,
             "message": f"Option '{option_name}' removed successfully from field '{parent_field_name}'",
             "option_id": option_id,
             "option_name": option_name,
-            "field_name": parent_field_name
+            "field_name": parent_field_name,
         }
 
     async def remove_field_option_by_name(
-        self, manufacturing_type_id: int, field_name: str, option_value: str, page_type: str = "profile"
+        self,
+        manufacturing_type_id: int,
+        field_name: str,
+        option_value: str,
+        page_type: str = "profile",
     ) -> dict[str, Any]:
         """Remove an option from an attribute field by name.
 
@@ -1758,10 +1846,10 @@ class EntryService(BaseService):
         from app.models.attribute_node import AttributeNode
 
         # Check if this is a protected field that shouldn't be modified
-        if field_name.lower() == 'type':
+        if field_name.lower() == "type":
             return {
                 "success": False,
-                "error": "Type options cannot be modified here. Please edit in Node Hierarchy."
+                "error": "Type options cannot be modified here. Please edit in Node Hierarchy.",
             }
 
         # Find the parent attribute node
@@ -1769,19 +1857,21 @@ class EntryService(BaseService):
             AttributeNode.manufacturing_type_id == manufacturing_type_id,
             AttributeNode.name == field_name,
             AttributeNode.page_type == page_type,
-            AttributeNode.node_type == "attribute"
+            AttributeNode.node_type == "attribute",
         )
         parent_result = await self.db.execute(parent_stmt)
         parent_node = parent_result.scalar_one_or_none()
 
         if not parent_node:
-            raise NotFoundException(f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}")
+            raise NotFoundException(
+                f"Field '{field_name}' not found for manufacturing type {manufacturing_type_id}"
+            )
 
         # Find the option node
         option_stmt = select(AttributeNode).where(
             AttributeNode.parent_node_id == parent_node.id,
             AttributeNode.name == option_value,
-            AttributeNode.node_type == "option"
+            AttributeNode.node_type == "option",
         )
         option_result = await self.db.execute(option_stmt)
         option_node = option_result.scalar_one_or_none()
@@ -1789,14 +1879,15 @@ class EntryService(BaseService):
         if not option_node:
             return {
                 "success": False,
-                "error": f"Option '{option_value}' not found in field '{field_name}'"
+                "error": f"Option '{option_value}' not found in field '{field_name}'",
             }
 
         # Store details for response
         option_id = option_node.id
-        
+
         # Delete any configuration selections that reference this option
         from app.models.configuration_selection import ConfigurationSelection
+
         stmt = delete(ConfigurationSelection).where(
             ConfigurationSelection.attribute_node_id == option_id
         )
@@ -1812,15 +1903,14 @@ class EntryService(BaseService):
             "option_id": option_id,
             "field_name": field_name,
             "option_value": option_value,
-            "manufacturing_type_id": manufacturing_type_id
+            "manufacturing_type_id": manufacturing_type_id,
         }
-
 
     # Customer management is now handled by RBACService
     # This method is deprecated - use rbac_service.get_or_create_customer_for_user() instead
 
 
-# JavaScript equivalent for client-side evaluation
+# JavaScivalent for client-side evaluation
 JAVASCRIPT_CONDITION_EVALUATOR = """
 class ConditionEvaluator {
     static OPERATORS = {
@@ -1830,7 +1920,7 @@ class ConditionEvaluator {
         greater_than: (a, b) => (a || 0) > (b || 0),
         less_than: (a, b) => (a || 0) < (b || 0),
         greater_equal: (a, b) => (a || 0) >= (b || 0),
-        less_equal: (a, b) => (a || 0) <= (b || 0),
+        al: (a, b) => (a || 0) <= (b || 0),
         
         // String operators
         contains: (a, b) => String(a || '').toLowerCase().includes(String(b).toLowerCase()),
@@ -1859,11 +1949,11 @@ class ConditionEvaluator {
         
         // Handle logical operators
         if (operator === 'and') {
-            return (condition.conditions || []).every(c => 
+            return (condition.conditions || []).every(c =>
                 ConditionEvaluator.evaluateCondition(c, formData)
             );
         } else if (operator === 'or') {
-            return (condition.conditions || []).some(c => 
+            return (condition.conditions || []).some(c =>
                 ConditionEvaluator.evaluateCondition(c, formData)
             );
         } else if (operator === 'not') {

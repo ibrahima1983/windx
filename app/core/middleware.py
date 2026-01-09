@@ -567,14 +567,14 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 # noinspection PyTypeChecker
 def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
     """Configure MINIMAL middleware for Azure deployment.
-    
+
     FUCK ALL THE FANCY SHIT - JUST MAKE IT WORK
     """
     if settings is None:
         settings = get_settings()
 
     logger.info("Setting up MINIMAL middleware for Azure - no bullshit")
-    
+
     # ONLY CORS - nothing else that can cause redirects
     if settings.backend_cors_origins:
         logger.info(f"Adding CORS for origins: {settings.backend_cors_origins}")

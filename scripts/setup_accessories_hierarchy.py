@@ -64,7 +64,7 @@ async def create_accessories_attribute_nodes(
     # Check if accessories nodes already exist
     stmt = select(AttributeNode).where(
         AttributeNode.manufacturing_type_id == manufacturing_type.id,
-        AttributeNode.page_type == "accessories"
+        AttributeNode.page_type == "accessories",
     )
     result = await session.execute(stmt)
     existing_nodes = result.scalars().all()
@@ -111,7 +111,7 @@ async def create_accessories_attribute_nodes(
                     "Track",
                     "Drain Cover",
                     "Nail Stud",
-                    "Other"
+                    "Other",
                 ]
             },
         },
@@ -148,7 +148,7 @@ async def create_accessories_attribute_nodes(
                     "White",
                     "Black",
                     "Bronze",
-                    "Other"
+                    "Other",
                 ]
             },
         },
@@ -168,7 +168,7 @@ async def create_accessories_attribute_nodes(
             "display_condition": {
                 "operator": "in",
                 "field": "accessory_type",
-                "value": ["Hinge", "Wheel Set"]
+                "value": ["Hinge", "Wheel Set"],
             },
         },
         {
@@ -186,7 +186,7 @@ async def create_accessories_attribute_nodes(
             "display_condition": {
                 "operator": "equals",
                 "field": "accessory_type",
-                "value": "Hinge"
+                "value": "Hinge",
             },
         },
         {
@@ -204,7 +204,7 @@ async def create_accessories_attribute_nodes(
             "display_condition": {
                 "operator": "in",
                 "field": "accessory_type",
-                "value": ["Lock", "Espagnolette"]
+                "value": ["Lock", "Espagnolette"],
             },
         },
         {
@@ -226,7 +226,7 @@ async def create_accessories_attribute_nodes(
                     "Lever",
                     "Tilt & Turn",
                     "Sliding",
-                    "Other"
+                    "Other",
                 ]
             },
         },
@@ -265,7 +265,7 @@ async def create_accessories_attribute_nodes(
                     "Top",
                     "Side",
                     "Corner",
-                    "Other"
+                    "Other",
                 ]
             },
         },

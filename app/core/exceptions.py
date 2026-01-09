@@ -61,7 +61,12 @@ class NotFoundException(HTTPException):
 class ValidationException(HTTPException):
     """Raised when input validation fails."""
 
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None, field_errors: Optional[dict[str, str]] = None):
+    def __init__(
+        self,
+        message: str,
+        details: Optional[dict[str, Any]] = None,
+        field_errors: Optional[dict[str, str]] = None,
+    ):
         self.details = details or {}
         self.field_errors = field_errors or {}  # Add field_errors attribute
         self.message = message  # Add message attribute
@@ -106,7 +111,9 @@ class DatabaseException(Exception):
 class InvalidFormulaException(Exception):
     """Raised when formula evaluation fails."""
 
-    def __init__(self, message: str, formula: Optional[str] = None, details: Optional[dict[str, Any]] = None):
+    def __init__(
+        self, message: str, formula: Optional[str] = None, details: Optional[dict[str, Any]] = None
+    ):
         self.formula = formula
         self.details = details or {}  # Add details attribute
         self.message = message  # Add message attribute

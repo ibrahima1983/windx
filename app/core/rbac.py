@@ -496,6 +496,7 @@ class RBACQueryFilter:
 # Note: Global RBAC service instance removed - use session-specific instances instead
 # Each authorization check creates its own RBACService instance with proper database session
 
+
 def require(*requirements) -> Callable:
     """Advanced decorator supporting multiple authorization patterns.
 
@@ -732,7 +733,9 @@ async def _check_ownership_requirement(
     session_maker = get_session_maker()
     async with session_maker() as db:
         rbac_service_instance = RBACService(db)
-        return await rbac_service_instance.check_resource_ownership(user, ownership.resource_type, resource_id)
+        return await rbac_service_instance.check_resource_ownership(
+            user, ownership.resource_type, resource_id
+        )
 
 
 async def _check_privilege_requirement(

@@ -173,9 +173,10 @@ async def save_profile_data(
         return await entry_service.save_profile_configuration(profile_data, current_user)
     except ValidationException as e:
         import logging
+
         logger = logging.getLogger("uvicorn.error")
         logger.error(f"Save Profile Validation Error: {str(e)}")
-        if hasattr(e, 'field_errors') and e.field_errors:
+        if hasattr(e, "field_errors") and e.field_errors:
             logger.error(f"Field Errors: {e.field_errors}")
             # Return structured error response with field errors
             raise HTTPException(
@@ -183,31 +184,28 @@ async def save_profile_data(
                 detail={
                     "message": e.message,
                     "field_errors": e.field_errors,
-                    "error_type": "validation_error"
-                }
+                    "error_type": "validation_error",
+                },
             )
         else:
             # Return generic validation error
             raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": str(e),
-                    "error_type": "validation_error"
-                }
+                status_code=422, detail={"message": str(e), "error_type": "validation_error"}
             )
     except Exception as e:
         import logging
+
         logger = logging.getLogger("uvicorn.error")
         logger.error(f"Save Profile Unexpected Error: {str(e)}")
         logger.error(f"Error Type: {type(e).__name__}")
-        if hasattr(e, 'field_errors'):
-             logger.error(f"Field Errors: {e.field_errors}")
+        if hasattr(e, "field_errors"):
+            logger.error(f"Field Errors: {e.field_errors}")
         raise HTTPException(
             status_code=500,
             detail={
                 "message": "An unexpected error occurred while saving the configuration",
-                "error_type": "server_error"
-            }
+                "error_type": "server_error",
+            },
         )
 
 

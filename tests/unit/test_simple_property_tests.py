@@ -4,7 +4,6 @@ This module contains simplified property-based tests that verify the core
 correctness properties without complex mocking.
 """
 
-
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st

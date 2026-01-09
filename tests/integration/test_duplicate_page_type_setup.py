@@ -55,7 +55,7 @@ class TestDuplicatePageTypeSetup:
                 sort_order=2,
             ),
         ]
-        
+
         for attr in profile_attributes:
             db_session.add(attr)
         await db_session.commit()
@@ -63,7 +63,7 @@ class TestDuplicatePageTypeSetup:
         # Verify initial count
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result = await db_session.execute(stmt)
         initial_count = len(result.scalars().all())
@@ -100,33 +100,38 @@ class TestDuplicatePageTypeSetup:
             for attr in duplicate_attributes:
                 db_session.add(attr)
             await db_session.commit()
-            
+
             # If no exception, check if duplicates were created
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
-                AttributeNode.page_type == "profile"
+                AttributeNode.page_type == "profile",
             )
             result = await db_session.execute(stmt)
             final_count = len(result.scalars().all())
-            
+
             # We should have either the same count (no duplicates) or more (new attributes added)
             # But we should NOT have exact duplicates of the same name
             stmt_by_name = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
                 AttributeNode.page_type == "profile",
-                AttributeNode.name == "test_attribute_1"
+                AttributeNode.name == "test_attribute_1",
             )
             result_by_name = await db_session.execute(stmt_by_name)
             duplicate_name_count = len(result_by_name.scalars().all())
-            
+
             # This is the key test - we should not have multiple attributes with the same name
             # in the same manufacturing type and page type
-            assert duplicate_name_count <= 1, f"Found {duplicate_name_count} attributes with name 'test_attribute_1', expected at most 1"
-            
+            assert duplicate_name_count <= 1, (
+                f"Found {duplicate_name_count} attributes with name 'test_attribute_1', expected at most 1"
+            )
+
         except Exception as e:
             # If an exception is raised, it should be a meaningful one
-            assert "unique" in str(e).lower() or "duplicate" in str(e).lower() or "constraint" in str(e).lower(), \
-                f"Expected a constraint-related exception, got: {e}"
+            assert (
+                "unique" in str(e).lower()
+                or "duplicate" in str(e).lower()
+                or "constraint" in str(e).lower()
+            ), f"Expected a constraint-related exception, got: {e}"
 
     @pytest.mark.asyncio
     async def test_setup_different_page_types_should_work(self, db_session: AsyncSession):
@@ -146,7 +151,7 @@ class TestDuplicatePageTypeSetup:
 
         # Create attributes for different page types
         page_types = ["profile", "accessories", "glazing"]
-        
+
         for page_type in page_types:
             attributes = [
                 AttributeNode(
@@ -170,24 +175,26 @@ class TestDuplicatePageTypeSetup:
                     sort_order=2,
                 ),
             ]
-            
+
             for attr in attributes:
                 db_session.add(attr)
-        
+
         await db_session.commit()
 
         # Verify all page types were created
         for page_type in page_types:
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
-                AttributeNode.page_type == page_type
+                AttributeNode.page_type == page_type,
             )
             result = await db_session.execute(stmt)
             count = len(result.scalars().all())
             assert count == 2, f"Expected 2 attributes for {page_type}, got {count}"
 
     @pytest.mark.asyncio
-    async def test_manufacturing_type_resolver_with_duplicate_setup_attempts(self, db_session: AsyncSession):
+    async def test_manufacturing_type_resolver_with_duplicate_setup_attempts(
+        self, db_session: AsyncSession
+    ):
         """Test ManufacturingTypeResolver behavior when setup is attempted multiple times."""
         # Create manufacturing type
         manufacturing_type = ManufacturingType(
@@ -221,7 +228,7 @@ class TestDuplicatePageTypeSetup:
     async def test_setup_script_idempotency(self, db_session: AsyncSession):
         """Test that setup scripts are idempotent (can be run multiple times safely)."""
         # This test simulates what happens when setup scripts are run multiple times
-        
+
         # Create manufacturing type
         manufacturing_type = ManufacturingType(
             name="Window Profile Entry",
@@ -258,7 +265,7 @@ class TestDuplicatePageTypeSetup:
                 sort_order=2,
             ),
         ]
-        
+
         for attr in first_run_attributes:
             db_session.add(attr)
         await db_session.commit()
@@ -266,7 +273,7 @@ class TestDuplicatePageTypeSetup:
         # Count after first run
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result = await db_session.execute(stmt)
         first_run_count = len(result.scalars().all())
@@ -276,11 +283,11 @@ class TestDuplicatePageTypeSetup:
         # This is what the setup script should do - check if attributes exist first
         stmt_check = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result_check = await db_session.execute(stmt_check)
         existing_attributes = result_check.scalars().all()
-        
+
         if existing_attributes:
             # Setup script should detect existing attributes and skip creation
             # or update existing ones instead of creating duplicates
@@ -294,13 +301,14 @@ class TestDuplicatePageTypeSetup:
         # Count after second run should be the same
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result = await db_session.execute(stmt)
         second_run_count = len(result.scalars().all())
-        
-        assert second_run_count == first_run_count, \
+
+        assert second_run_count == first_run_count, (
             f"Second run should not create duplicates. First: {first_run_count}, Second: {second_run_count}"
+        )
 
     @pytest.mark.parametrize(
         "page_type,should_succeed",
@@ -319,10 +327,12 @@ class TestDuplicatePageTypeSetup:
             "invalid_page_type",
             "empty_page_type",
             "none_page_type",
-        ]
+        ],
     )
     @pytest.mark.asyncio
-    async def test_page_type_validation_in_setup(self, db_session: AsyncSession, page_type: str | None, should_succeed: bool):
+    async def test_page_type_validation_in_setup(
+        self, db_session: AsyncSession, page_type: str | None, should_succeed: bool
+    ):
         """Test that page type validation works correctly during setup."""
         # Create manufacturing type
         manufacturing_type = ManufacturingType(
@@ -351,11 +361,11 @@ class TestDuplicatePageTypeSetup:
             )
             db_session.add(attribute)
             await db_session.commit()
-            
+
             # Verify it was created
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
-                AttributeNode.page_type == page_type
+                AttributeNode.page_type == page_type,
             )
             result = await db_session.execute(stmt)
             created_attr = result.scalar_one_or_none()

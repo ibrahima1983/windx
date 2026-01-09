@@ -50,7 +50,7 @@ class TestUniqueConstraintEnforcement:
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
             AttributeNode.page_type == "profile",
-            AttributeNode.name == "unique_test_attribute"
+            AttributeNode.name == "unique_test_attribute",
         )
         result = await db_session.execute(stmt)
         created_attr = result.scalar_one_or_none()
@@ -118,7 +118,7 @@ class TestUniqueConstraintEnforcement:
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
                 AttributeNode.page_type == page_type,
-                AttributeNode.name == "shared_attribute_name"
+                AttributeNode.name == "shared_attribute_name",
             )
             result = await db_session.execute(stmt)
             attr = result.scalar_one_or_none()
@@ -168,7 +168,7 @@ class TestUniqueConstraintEnforcement:
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == mfg_type.id,
                 AttributeNode.page_type == "profile",
-                AttributeNode.name == "common_attribute_name"
+                AttributeNode.name == "common_attribute_name",
             )
             result = await db_session.execute(stmt)
             attr = result.scalar_one_or_none()
@@ -229,7 +229,7 @@ class TestUniqueConstraintEnforcement:
         # Count attributes after first run
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result = await db_session.execute(stmt)
         first_run_count = len(result.scalars().all())
@@ -255,7 +255,7 @@ class TestUniqueConstraintEnforcement:
         # Count should remain the same
         stmt = select(AttributeNode).where(
             AttributeNode.manufacturing_type_id == manufacturing_type.id,
-            AttributeNode.page_type == "profile"
+            AttributeNode.page_type == "profile",
         )
         result = await db_session.execute(stmt)
         second_run_count = len(result.scalars().all())
@@ -274,11 +274,15 @@ class TestUniqueConstraintEnforcement:
             "profile_to_accessories_succeeds",
             "accessories_to_glazing_succeeds",
             "glazing_to_profile_succeeds",
-        ]
+        ],
     )
     @pytest.mark.asyncio
     async def test_page_type_constraint_scenarios(
-        self, db_session: AsyncSession, first_page_type: str, second_page_type: str, should_fail: bool
+        self,
+        db_session: AsyncSession,
+        first_page_type: str,
+        second_page_type: str,
+        should_fail: bool,
     ):
         """Test various page type constraint scenarios."""
         # Create manufacturing type
@@ -345,7 +349,7 @@ class TestUniqueConstraintEnforcement:
             # Verify both attributes exist
             stmt = select(AttributeNode).where(
                 AttributeNode.manufacturing_type_id == manufacturing_type.id,
-                AttributeNode.name == "constraint_test_attribute"
+                AttributeNode.name == "constraint_test_attribute",
             )
             result = await db_session.execute(stmt)
             attributes = result.scalars().all()

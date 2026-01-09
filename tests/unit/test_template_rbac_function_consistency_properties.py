@@ -93,7 +93,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
         return RBACTemplateContext(mock_rbac_service)
 
     @given(user=user_with_role_for_templates(), resource_action=resource_action_for_templates())
-    @settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=100, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_can_function_consistency(
         self, mock_rbac_service, rbac_template_context, user: User, resource_action: tuple[str, str]
@@ -151,7 +153,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
             max_size=3,
         ),
     )
-    @settings(max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_has_role_function_consistency(
         self, mock_rbac_service, rbac_template_context, user: User, roles_to_check: list[Role]
@@ -178,7 +182,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
             st.sampled_from(["configuration", "quote", "order", "customer"]), min_size=1, max_size=3
         ),
     )
-    @settings(max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_owns_function_consistency(
         self,
@@ -239,7 +245,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
             ),
         ),
     )
-    @settings(max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_has_privilege_function_consistency(
         self,
@@ -300,7 +308,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
             max_size=5,
         ),
     )
-    @settings(max_examples=20, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=20, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_caching_consistency(
         self,
@@ -344,7 +354,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
         users=st.lists(user_with_role_for_templates(), min_size=2, max_size=5),
         resource_action=resource_action_for_templates(),
     )
-    @settings(max_examples=20, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=20, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_cross_user_consistency(
         self,
@@ -405,7 +417,9 @@ class TestTemplateRBACFunctionConsistencyProperties:
             st.sampled_from(["can", "has_role", "owns", "has_privilege"]), min_size=3, max_size=5
         ),
     )
-    @settings(max_examples=15, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(
+        max_examples=15, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+    )
     @pytest.mark.asyncio
     async def test_property_template_rbac_function_isolation(
         self, mock_rbac_service, rbac_template_context, user: User, template_functions: list[str]

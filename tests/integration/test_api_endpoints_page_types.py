@@ -34,7 +34,7 @@ class TestAPIEndpointsPageTypes:
     async def test_superuser(self, db_session: AsyncSession) -> User:
         """Create a test superuser for authentication."""
         from app.core.security import get_password_hash
-        
+
         user = User(
             email="test_superuser@example.com",
             username="test_superuser",
@@ -52,7 +52,7 @@ class TestAPIEndpointsPageTypes:
     def auth_headers(self, test_superuser: User) -> dict[str, str]:
         """Create authentication headers for API requests."""
         from app.core.security import create_access_token
-        
+
         access_token = create_access_token(subject=test_superuser.id)
         return {"Authorization": f"Bearer {access_token}"}
 
@@ -62,7 +62,7 @@ class TestAPIEndpointsPageTypes:
     ) -> dict[str, list[AttributeNode]]:
         """Create sample attribute nodes for each page type."""
         nodes_by_type = {}
-        
+
         page_type_configs = {
             "profile": [
                 ("name", "string", True, "Product name"),
@@ -80,7 +80,7 @@ class TestAPIEndpointsPageTypes:
                 ("u_value", "number", False, "U-value rating"),
             ],
         }
-        
+
         for page_type, configs in page_type_configs.items():
             nodes = []
             for i, (name, data_type, required, description) in enumerate(configs):
@@ -100,9 +100,9 @@ class TestAPIEndpointsPageTypes:
                 )
                 nodes.append(node)
                 db_session.add(node)
-            
+
             nodes_by_type[page_type] = nodes
-        
+
         await db_session.commit()
         return nodes_by_type
 
@@ -113,7 +113,7 @@ class TestAPIEndpointsPageTypes:
             ("accessories", 200),
             ("glazing", 200),
         ],
-        ids=["profile_page", "accessories_page", "glazing_page"]
+        ids=["profile_page", "accessories_page", "glazing_page"],
     )
     def test_entry_page_endpoints_valid_page_types(
         self,
@@ -140,7 +140,7 @@ class TestAPIEndpointsPageTypes:
                 f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}&type=window",
                 headers=auth_headers,
             )
-        
+
         assert response.status_code == expected_status
         assert "text/html" in response.headers.get("content-type", "")
 
@@ -159,13 +159,13 @@ class TestAPIEndpointsPageTypes:
         ids=[
             "random_invalid",
             "uppercase",
-            "titlecase", 
+            "titlecase",
             "plural",
             "singular",
             "different_term",
             "empty",
             "numeric",
-        ]
+        ],
     )
     def test_profile_endpoint_invalid_page_types(
         self,
@@ -179,7 +179,7 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}&page_type={invalid_page_type}",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 400
         assert "Invalid page type" in response.text
 
@@ -194,7 +194,7 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         assert "text/html" in response.headers.get("content-type", "")
 
@@ -210,14 +210,14 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/profile/schema/{test_manufacturing_type.id}",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify response structure
         assert "sections" in data
         assert isinstance(data["sections"], list)
-        
+
         if data["sections"]:
             section = data["sections"][0]
             assert "fields" in section
@@ -235,10 +235,10 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/profile/headers/{test_manufacturing_type.id}",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         headers = response.json()
-        
+
         assert isinstance(headers, list)
         # Should include at least the ID column
         assert "id" in headers
@@ -255,7 +255,7 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}",
             f"/api/v1/admin/entry/profile/schema/{test_manufacturing_type.id}",
         ]
-        
+
         for endpoint in endpoints:
             response = client.get(endpoint)
             assert response.status_code == 401
@@ -268,22 +268,20 @@ class TestAPIEndpointsPageTypes:
     ):
         """Test endpoints with non-existent manufacturing type ID."""
         invalid_id = 99999
-        
+
         endpoints = [
             f"/api/v1/admin/entry/profile?manufacturing_type_id={invalid_id}",
             f"/api/v1/admin/entry/accessories?manufacturing_type_id={invalid_id}",
             f"/api/v1/admin/entry/glazing?manufacturing_type_id={invalid_id}",
         ]
-        
+
         for endpoint in endpoints:
             response = client.get(endpoint, headers=auth_headers)
             # Should either return 503 (no manufacturing types) or handle gracefully
             assert response.status_code in [503, 200]
 
     @pytest.mark.parametrize(
-        "manufacturing_category",
-        ["window", "door"],
-        ids=["window_category", "door_category"]
+        "manufacturing_category", ["window", "door"], ids=["window_category", "door_category"]
     )
     def test_accessories_glazing_endpoints_with_categories(
         self,
@@ -297,7 +295,7 @@ class TestAPIEndpointsPageTypes:
             f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}&type={manufacturing_category}",
             f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}&type={manufacturing_category}",
         ]
-        
+
         for endpoint in endpoints:
             response = client.get(endpoint, headers=auth_headers)
             assert response.status_code == 200
@@ -314,7 +312,7 @@ class TestAPIEndpointsPageTypes:
             "/api/v1/admin/entry/profile?manufacturing_type_id=1&page_type=invalid",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 400
         assert "text/html" in response.headers.get("content-type", "")
         assert "Invalid page type" in response.text
@@ -327,11 +325,20 @@ class TestAPIEndpointsPageTypes:
     ):
         """Test that templates receive correct navigation context."""
         endpoints_and_expected_titles = [
-            (f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}", "Profile Entry"),
-            (f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}", "Window Accessories Entry"),
-            (f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}", "Window Glazing Entry"),
+            (
+                f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}",
+                "Profile Entry",
+            ),
+            (
+                f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}",
+                "Window Accessories Entry",
+            ),
+            (
+                f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}",
+                "Window Glazing Entry",
+            ),
         ]
-        
+
         for endpoint, expected_title in endpoints_and_expected_titles:
             response = client.get(endpoint, headers=auth_headers)
             assert response.status_code == 200

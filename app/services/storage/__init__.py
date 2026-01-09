@@ -30,6 +30,7 @@ from .supabase_provider import SupabaseStorageProvider
 # Optional image processing
 try:
     from .image_processor import ImageProcessor, ImageInfo, ImageProcessingResult
+
     __all__ = [
         "StorageProvider",
         "UploadResult",

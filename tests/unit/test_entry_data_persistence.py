@@ -347,11 +347,11 @@ class TestEntryDataPersistence:
         # Mock load configuration
         mock_load_result = MagicMock()
         mock_load_result.scalar_one_or_none = MagicMock(return_value=created_config)
-        
+
         # Create a separate mock for the load operation
         def mock_load_execute(stmt):
             return mock_load_result
-        
+
         # Update mock_db.execute to handle load operation
         mock_db.execute = MagicMock(side_effect=mock_load_execute)
 
@@ -405,7 +405,7 @@ class TestEntryDataPersistence:
 
         # Mock manufacturing type and attribute nodes
         manufacturing_type.id = profile_data.manufacturing_type_id
-        
+
         # Create fixed attribute nodes for testing
         attribute_nodes = [
             AttributeNode(
@@ -421,7 +421,7 @@ class TestEntryDataPersistence:
             for i, field_name in enumerate(
                 [
                     "type",
-                    "company", 
+                    "company",
                     "material",
                     "opening_system",
                     "system_series",

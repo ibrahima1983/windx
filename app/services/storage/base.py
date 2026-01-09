@@ -14,7 +14,7 @@ from typing import BinaryIO
 @dataclass
 class UploadResult:
     """Result of a file upload operation.
-    
+
     Attributes:
         success: Whether the upload was successful
         filename: The stored filename (may be different from original)
@@ -22,6 +22,7 @@ class UploadResult:
         size: File size in bytes
         error: Error message if upload failed
     """
+
     success: bool
     filename: str | None = None
     url: str | None = None
@@ -31,7 +32,7 @@ class UploadResult:
 
 class StorageProvider(ABC):
     """Abstract base class for file storage providers.
-    
+
     This class defines the interface that all storage providers must implement.
     It follows the strategy pattern to allow switching between different
     storage backends (local, Supabase, Azure, etc.).
@@ -45,12 +46,12 @@ class StorageProvider(ABC):
         content_type: str | None = None,
     ) -> UploadResult:
         """Upload a file to the storage provider.
-        
+
         Args:
             file_content: The file content as bytes
             filename: Original filename (will be processed for uniqueness)
             content_type: MIME type of the file
-            
+
         Returns:
             UploadResult: Result of the upload operation
         """
@@ -59,10 +60,10 @@ class StorageProvider(ABC):
     @abstractmethod
     async def delete_file(self, filename: str) -> bool:
         """Delete a file from the storage provider.
-        
+
         Args:
             filename: Name of the file to delete
-            
+
         Returns:
             bool: True if deletion was successful, False otherwise
         """
@@ -71,10 +72,10 @@ class StorageProvider(ABC):
     @abstractmethod
     async def get_file_url(self, filename: str) -> str | None:
         """Get the public URL for a file.
-        
+
         Args:
             filename: Name of the file
-            
+
         Returns:
             str | None: Public URL if file exists, None otherwise
         """
@@ -83,10 +84,10 @@ class StorageProvider(ABC):
     @abstractmethod
     async def file_exists(self, filename: str) -> bool:
         """Check if a file exists in storage.
-        
+
         Args:
             filename: Name of the file to check
-            
+
         Returns:
             bool: True if file exists, False otherwise
         """
@@ -95,7 +96,7 @@ class StorageProvider(ABC):
     @abstractmethod
     def get_provider_name(self) -> str:
         """Get the name of this storage provider.
-        
+
         Returns:
             str: Provider name (e.g., 'local', 'supabase', 'azure')
         """

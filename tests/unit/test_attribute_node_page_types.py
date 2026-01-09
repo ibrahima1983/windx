@@ -30,13 +30,10 @@ class TestAttributeNodePageTypes:
             ("accessories", "accessories"),
             ("glazing", "glazing"),
         ],
-        ids=["profile_type", "accessories_type", "glazing_type"]
+        ids=["profile_type", "accessories_type", "glazing_type"],
     )
     def test_attribute_node_page_type_assignment(
-        self, 
-        sample_manufacturing_type: ManufacturingType,
-        page_type: str,
-        expected_page_type: str
+        self, sample_manufacturing_type: ManufacturingType, page_type: str, expected_page_type: str
     ):
         """Test that page_type is correctly assigned to AttributeNode."""
         node = AttributeNode(
@@ -50,7 +47,7 @@ class TestAttributeNodePageTypes:
             depth=1,
             sort_order=1,
         )
-        
+
         assert node.page_type == expected_page_type
         assert node.manufacturing_type_id == sample_manufacturing_type.id
 
@@ -61,18 +58,18 @@ class TestAttributeNodePageTypes:
             manufacturing_type_id=sample_manufacturing_type.id,
             name="test_attribute",
             description="Test attribute",
-            node_type="attribute", 
+            node_type="attribute",
             data_type="string",
             ltree_path="test.attribute",
             depth=1,
             sort_order=1,
             # page_type not explicitly set
         )
-        
+
         # The default is set at the database level, so in Python it might be None
         # until the object is persisted. Let's test that we can set it explicitly.
-        assert hasattr(node, 'page_type')
-        
+        assert hasattr(node, "page_type")
+
         # Test explicit setting works
         node.page_type = "profile"
         assert node.page_type == "profile"
@@ -84,14 +81,14 @@ class TestAttributeNodePageTypes:
             ("accessories", "accessory_attr", "accessory_attr"),
             ("glazing", "glazing_attr", "glazing_attr"),
         ],
-        ids=["profile_repr", "accessories_repr", "glazing_repr"]
+        ids=["profile_repr", "accessories_repr", "glazing_repr"],
     )
     def test_attribute_node_repr_with_page_types(
         self,
         sample_manufacturing_type: ManufacturingType,
         page_type: str,
         node_name: str,
-        expected_repr_content: str
+        expected_repr_content: str,
     ):
         """Test AttributeNode string representation includes relevant information."""
         node = AttributeNode(
@@ -106,7 +103,7 @@ class TestAttributeNodePageTypes:
             depth=2,
             sort_order=1,
         )
-        
+
         repr_str = repr(node)
         assert expected_repr_content in repr_str
         assert "id=123" in repr_str
@@ -124,18 +121,18 @@ class TestAttributeNodePageTypes:
         ],
         ids=[
             "profile_basic_name",
-            "accessories_hardware_hinge", 
+            "accessories_hardware_hinge",
             "glazing_performance_u_value",
             "profile_dimensions_width",
             "accessories_pricing_unit_price",
-        ]
+        ],
     )
     def test_attribute_node_ltree_path_with_page_types(
         self,
         sample_manufacturing_type: ManufacturingType,
         page_type: str,
         ltree_path: str,
-        expected_depth: int
+        expected_depth: int,
     ):
         """Test LTREE path structure with different page types."""
         node = AttributeNode(
@@ -149,7 +146,7 @@ class TestAttributeNodePageTypes:
             depth=expected_depth,
             sort_order=1,
         )
-        
+
         assert node.ltree_path == ltree_path
         assert node.depth == expected_depth
         assert node.page_type == page_type
@@ -160,17 +157,21 @@ class TestAttributeNodePageTypes:
         "page_type,validation_rules,expected_rules",
         [
             ("profile", {"min_length": 1, "max_length": 200}, {"min_length": 1, "max_length": 200}),
-            ("accessories", {"options": ["Hinge", "Handle", "Lock"]}, {"options": ["Hinge", "Handle", "Lock"]}),
+            (
+                "accessories",
+                {"options": ["Hinge", "Handle", "Lock"]},
+                {"options": ["Hinge", "Handle", "Lock"]},
+            ),
             ("glazing", {"min": 4, "max": 25}, {"min": 4, "max": 25}),
         ],
-        ids=["profile_validation", "accessories_validation", "glazing_validation"]
+        ids=["profile_validation", "accessories_validation", "glazing_validation"],
     )
     def test_attribute_node_validation_rules_with_page_types(
         self,
         sample_manufacturing_type: ManufacturingType,
         page_type: str,
         validation_rules: dict,
-        expected_rules: dict
+        expected_rules: dict,
     ):
         """Test validation rules storage with different page types."""
         node = AttributeNode(
@@ -185,7 +186,7 @@ class TestAttributeNodePageTypes:
             sort_order=1,
             validation_rules=validation_rules,
         )
-        
+
         assert node.validation_rules == expected_rules
         assert node.page_type == page_type
 
@@ -193,16 +194,19 @@ class TestAttributeNodePageTypes:
         "page_type,display_condition",
         [
             ("profile", {"operator": "equals", "field": "type", "value": "Frame"}),
-            ("accessories", {"operator": "in", "field": "accessory_type", "value": ["Hinge", "Lock"]}),
-            ("glazing", {"operator": "not_equals", "field": "pane_configuration", "value": "Single Pane"}),
+            (
+                "accessories",
+                {"operator": "in", "field": "accessory_type", "value": ["Hinge", "Lock"]},
+            ),
+            (
+                "glazing",
+                {"operator": "not_equals", "field": "pane_configuration", "value": "Single Pane"},
+            ),
         ],
-        ids=["profile_condition", "accessories_condition", "glazing_condition"]
+        ids=["profile_condition", "accessories_condition", "glazing_condition"],
     )
     def test_attribute_node_display_conditions_with_page_types(
-        self,
-        sample_manufacturing_type: ManufacturingType,
-        page_type: str,
-        display_condition: dict
+        self, sample_manufacturing_type: ManufacturingType, page_type: str, display_condition: dict
     ):
         """Test display conditions with different page types."""
         node = AttributeNode(
@@ -217,7 +221,7 @@ class TestAttributeNodePageTypes:
             sort_order=1,
             display_condition=display_condition,
         )
-        
+
         assert node.display_condition == display_condition
         assert node.page_type == page_type
 
@@ -238,14 +242,14 @@ class TestAttributeNodePageTypes:
             "accessories_number",
             "glazing_slider",
             "glazing_currency",
-        ]
+        ],
     )
     def test_attribute_node_ui_components_with_page_types(
         self,
         sample_manufacturing_type: ManufacturingType,
         page_type: str,
         ui_component: str,
-        expected_component: str
+        expected_component: str,
     ):
         """Test UI component assignment with different page types."""
         node = AttributeNode(
@@ -260,7 +264,7 @@ class TestAttributeNodePageTypes:
             sort_order=1,
             ui_component=ui_component,
         )
-        
+
         assert node.ui_component == expected_component
         assert node.page_type == page_type
 
@@ -269,7 +273,7 @@ class TestAttributeNodePageTypes:
     ):
         """Test pricing impact fields work with all page types."""
         page_types = ["profile", "accessories", "glazing"]
-        
+
         for i, page_type in enumerate(page_types):
             node = AttributeNode(
                 manufacturing_type_id=sample_manufacturing_type.id,
@@ -285,7 +289,7 @@ class TestAttributeNodePageTypes:
                 price_impact_value=Decimal(str(10.00 * (i + 1))),
                 weight_impact=Decimal(str(1.0 * (i + 1))),
             )
-            
+
             assert node.page_type == page_type
             assert node.price_impact_type == "fixed"
             assert node.price_impact_value == Decimal(str(10.00 * (i + 1)))
@@ -300,7 +304,7 @@ class TestAttributeNodePageTypes:
             ("accessories", "load_capacity", "base_load * safety_factor"),
             ("glazing", "u_value", "1 / (sum_of_resistances)"),
         ]
-        
+
         for page_type, tech_type, formula in technical_configs:
             node = AttributeNode(
                 manufacturing_type_id=sample_manufacturing_type.id,
@@ -315,7 +319,7 @@ class TestAttributeNodePageTypes:
                 technical_property_type=tech_type,
                 technical_impact_formula=formula,
             )
-            
+
             assert node.page_type == page_type
             assert node.technical_property_type == tech_type
             assert node.technical_impact_formula == formula

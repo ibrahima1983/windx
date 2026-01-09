@@ -221,7 +221,9 @@ class TestForeignKeyConstraintProperties:
 
         # Mock customer auto-creation
         entry_service.rbac_service = AsyncMock()
-        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(return_value=customer)
+        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(
+            return_value=customer
+        )
 
         # Mock manufacturing type lookup
         mock_result = MagicMock()
@@ -277,7 +279,9 @@ class TestForeignKeyConstraintProperties:
 
         # Mock customer auto-creation to return same customer for all users
         entry_service.rbac_service = AsyncMock()
-        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(return_value=customer)
+        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(
+            return_value=customer
+        )
 
         # Mock manufacturing type lookup
         mock_result = MagicMock()
@@ -337,7 +341,9 @@ class TestForeignKeyConstraintProperties:
 
         # Mock customer auto-creation
         entry_service.rbac_service = AsyncMock()
-        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(return_value=customer)
+        entry_service.rbac_service.get_or_create_customer_for_user = AsyncMock(
+            return_value=customer
+        )
 
         # Mock service methods
         entry_service.commit = AsyncMock()

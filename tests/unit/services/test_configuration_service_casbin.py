@@ -131,15 +131,16 @@ class TestConfigurationServiceCasbin:
     ):
         """Test that create_configuration uses proper customer relationship."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -149,7 +150,9 @@ class TestConfigurationServiceCasbin:
         config_service = ConfigurationService(db_session)
 
         # Mock configuration creation data
-        config_data = ConfigurationCreate(manufacturing_type_id=mfg_type.id, name="Test Configuration")
+        config_data = ConfigurationCreate(
+            manufacturing_type_id=mfg_type.id, name="Test Configuration"
+        )
 
         # Execute
         result = await config_service.create_configuration(config_data, test_user_with_rbac)
@@ -158,14 +161,15 @@ class TestConfigurationServiceCasbin:
         assert result is not None
         assert result.name == "Test Configuration"
         assert result.manufacturing_type_id == mfg_type.id
-        
+
         # Verify customer relationship was established
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         customer_result = await db_session.execute(stmt)
         customer_id = customer_result.scalar_one()
-        
+
         assert result.customer_id == customer_id
         assert result.customer_id != test_user_with_rbac.id  # Should be customer.id, not user.id
 
@@ -177,7 +181,7 @@ class TestConfigurationServiceCasbin:
 
         # Execute - this will test the actual RBAC decorators with real database
         result = await config_service.list_configurations(test_user_with_rbac)
-        
+
         # Verify the result is a list (even if empty)
         assert isinstance(result, list)
 
@@ -187,15 +191,16 @@ class TestConfigurationServiceCasbin:
     ):
         """Test update_configuration with multiple @require decorators (OR logic)."""
         import uuid
-        
+
         # Create a manufacturing type with unique name
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -204,19 +209,21 @@ class TestConfigurationServiceCasbin:
         # Get the customer ID for the test user (created by RBAC initialization)
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration owned by the test user
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,  # Set to user's customer ID
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -233,7 +240,9 @@ class TestConfigurationServiceCasbin:
         assert "insufficient privileges" in str(exc_info.value.detail)
 
         # Test 2: Superuser CAN update any configuration
-        result = await config_service.update_configuration(config.id, update_data, test_superuser_with_rbac)
+        result = await config_service.update_configuration(
+            config.id, update_data, test_superuser_with_rbac
+        )
         assert result is not None
         assert result.name == "Updated Configuration"
 
@@ -243,28 +252,30 @@ class TestConfigurationServiceCasbin:
     ):
         """Test get_configuration_with_details with Casbin decorator authorization."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
         await db_session.refresh(mfg_type)
 
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=None,  # No specific customer
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -274,7 +285,9 @@ class TestConfigurationServiceCasbin:
         config_service = ConfigurationService(db_session)
 
         # Test: Superuser can access configuration details
-        result = await config_service.get_configuration_with_details(config.id, test_superuser_with_rbac)
+        result = await config_service.get_configuration_with_details(
+            config.id, test_superuser_with_rbac
+        )
         assert result is not None
         assert result.id == config.id
 
@@ -284,15 +297,16 @@ class TestConfigurationServiceCasbin:
     ):
         """Test customer context extraction and ownership validation."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -301,19 +315,21 @@ class TestConfigurationServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration owned by the test user
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -330,7 +346,9 @@ class TestConfigurationServiceCasbin:
         assert "insufficient privileges" in str(exc_info.value.detail)
 
         # Test 2: Superuser CAN update any configuration (ownership validation works)
-        result = await config_service.update_configuration(config.id, update_data, test_superuser_with_rbac)
+        result = await config_service.update_configuration(
+            config.id, update_data, test_superuser_with_rbac
+        )
         assert result is not None
         assert result.name == "Updated"
 
@@ -340,15 +358,16 @@ class TestConfigurationServiceCasbin:
     ):
         """Test delete_configuration with Casbin authorization."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -356,13 +375,14 @@ class TestConfigurationServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=None,  # No specific customer
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -376,6 +396,7 @@ class TestConfigurationServiceCasbin:
 
         # Verify configuration was deleted
         from sqlalchemy import select
+
         stmt = select(Configuration).where(Configuration.id == config.id)
         result = await db_session.execute(stmt)
         deleted_config = result.scalar_one_or_none()
@@ -415,15 +436,17 @@ class TestConfigurationServiceCasbin:
         config_service = ConfigurationService(db_session)
 
         # Execute - test the actual RBAC query filtering with real database
-        result = await config_service.list_configurations(test_user_with_rbac, manufacturing_type_id=1)
-        
+        result = await config_service.list_configurations(
+            test_user_with_rbac, manufacturing_type_id=1
+        )
+
         # Verify the result is a list (even if empty due to filtering)
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
     async def test_configuration_not_found_error_handling(self, db_session, test_user_with_rbac):
         """Test error handling when configuration is not found.
-        
+
         The RBAC system now properly allows 404 errors to pass through,
         so we should get NotFoundException instead of 403 Access Denied.
         """
@@ -439,7 +462,7 @@ class TestConfigurationServiceCasbin:
     @pytest.mark.asyncio
     async def test_manufacturing_type_not_found_in_create(self, db_session, test_user_with_rbac):
         """Test error handling when manufacturing type is not found during creation.
-        
+
         The RBAC system now properly allows 404 errors to pass through,
         so we should get NotFoundException instead of 403 Access Denied.
         """

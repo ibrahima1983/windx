@@ -232,7 +232,7 @@ class AttributeNode(Base):
         Index(
             "idx_attribute_nodes_mfg_page_node_type",
             "manufacturing_type_id",
-            "page_type", 
+            "page_type",
             "node_type",
         ),
         # Composite index for filtering by manufacturing type and node type (backward compatibility)

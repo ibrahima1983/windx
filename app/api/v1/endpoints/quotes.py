@@ -116,7 +116,7 @@ async def list_quotes(
     # Apply RBAC filtering
     if current_user.role != "superadmin":
         accessible_customers = await rbac_service.get_accessible_customers(current_user)
-        
+
         if not accessible_customers:
             # User has no accessible customers - return empty result
             query = query.where(False)

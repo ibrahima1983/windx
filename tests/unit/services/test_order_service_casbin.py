@@ -153,20 +153,21 @@ class TestOrderServiceCasbin:
         self, db_session, test_superuser_with_rbac
     ):
         """Test that order creation maintains customer relationships from quotes.
-        
+
         Note: Only staff members (superadmin, salesman, partner) can create orders.
         Customers cannot create orders directly per RBAC policy.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -174,6 +175,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -186,13 +188,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -200,6 +203,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -220,7 +224,9 @@ class TestOrderServiceCasbin:
         order_service = OrderService(db_session)
 
         # Execute - superuser can create orders from any quote
-        result = await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+        result = await order_service.create_order_from_quote(
+            quote_id=quote.id, user=test_superuser_with_rbac
+        )
 
         # Verify order creation maintains customer relationship through quote
         assert result is not None
@@ -232,20 +238,21 @@ class TestOrderServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test Casbin decorator authorization on create_order_from_quote.
-        
+
         Tests that customers CANNOT create orders (per RBAC policy),
         but staff members CAN create orders.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -253,6 +260,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -265,13 +273,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -279,6 +288,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -305,7 +315,9 @@ class TestOrderServiceCasbin:
         assert "insufficient privileges" in str(exc_info.value.detail)
 
         # Test 2: Superuser CAN create orders from any quote
-        result = await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+        result = await order_service.create_order_from_quote(
+            quote_id=quote.id, user=test_superuser_with_rbac
+        )
         assert result is not None
 
     @pytest.mark.asyncio
@@ -313,20 +325,21 @@ class TestOrderServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test get_order with multiple @require decorators (OR logic).
-        
+
         Tests that customers CANNOT read orders (per RBAC policy),
         but staff members CAN read orders.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -334,6 +347,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -346,13 +360,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -360,6 +375,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -378,7 +394,9 @@ class TestOrderServiceCasbin:
 
         # Create an order (using superuser since customers can't create orders)
         order_service = OrderService(db_session)
-        order = await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+        order = await order_service.create_order_from_quote(
+            quote_id=quote.id, user=test_superuser_with_rbac
+        )
 
         # Test 1: Customer CANNOT read orders (per RBAC policy)
         with pytest.raises(HTTPException) as exc_info:
@@ -440,19 +458,20 @@ class TestOrderServiceCasbin:
         self, db_session, test_superuser_with_rbac
     ):
         """Test that order-customer relationship consistency is maintained through quotes.
-        
+
         Note: Only staff members can create orders per RBAC policy.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -460,6 +479,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -472,13 +492,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -486,6 +507,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -507,7 +529,9 @@ class TestOrderServiceCasbin:
 
         # Execute - superuser can create orders
         result = await order_service.create_order_from_quote(
-            quote_id=quote.id, user=test_superuser_with_rbac, special_instructions="Test instructions"
+            quote_id=quote.id,
+            user=test_superuser_with_rbac,
+            special_instructions="Test instructions",
         )
 
         # Verify order maintains relationship through quote
@@ -522,15 +546,16 @@ class TestOrderServiceCasbin:
     async def test_quote_not_accepted_validation(self, db_session, test_superuser_with_rbac):
         """Test validation that quote must be accepted before creating order."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -538,6 +563,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -550,13 +576,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -564,6 +591,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote with non-accepted status
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -585,25 +613,26 @@ class TestOrderServiceCasbin:
 
         # Execute and verify exception
         with pytest.raises(ValidationException) as exc_info:
-            await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+            await order_service.create_order_from_quote(
+                quote_id=quote.id, user=test_superuser_with_rbac
+            )
 
         assert "Quote must be accepted" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_order_already_exists_validation(
-        self, db_session, test_superuser_with_rbac
-    ):
+    async def test_order_already_exists_validation(self, db_session, test_superuser_with_rbac):
         """Test validation that order cannot be created if one already exists for the quote."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -611,6 +640,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -623,13 +653,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -637,6 +668,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -657,12 +689,16 @@ class TestOrderServiceCasbin:
         order_service = OrderService(db_session)
 
         # Create first order
-        existing_order = await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+        existing_order = await order_service.create_order_from_quote(
+            quote_id=quote.id, user=test_superuser_with_rbac
+        )
         assert existing_order is not None
 
         # Execute and verify exception when trying to create second order
         with pytest.raises(ValidationException) as exc_info:
-            await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+            await order_service.create_order_from_quote(
+                quote_id=quote.id, user=test_superuser_with_rbac
+            )
 
         assert "Order already exists" in str(exc_info.value)
 
@@ -671,19 +707,20 @@ class TestOrderServiceCasbin:
         self, db_session, test_superuser_with_rbac
     ):
         """Test Casbin authorization through quote-customer relationships.
-        
+
         Note: Only staff can read orders per RBAC policy, so testing with superuser.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -691,6 +728,7 @@ class TestOrderServiceCasbin:
 
         # Create a customer for the order with unique email
         from app.models.customer import Customer
+
         customer = Customer(
             email=f"customer-{uuid.uuid4().hex[:8]}@example.com",
             contact_person="Test Customer",
@@ -703,13 +741,14 @@ class TestOrderServiceCasbin:
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer.id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -717,6 +756,7 @@ class TestOrderServiceCasbin:
 
         # Create a quote
         from app.models.quote import Quote
+
         quote = Quote(
             configuration_id=config.id,
             customer_id=customer.id,
@@ -737,7 +777,9 @@ class TestOrderServiceCasbin:
         order_service = OrderService(db_session)
 
         # Create an order (superuser can create orders)
-        order = await order_service.create_order_from_quote(quote_id=quote.id, user=test_superuser_with_rbac)
+        order = await order_service.create_order_from_quote(
+            quote_id=quote.id, user=test_superuser_with_rbac
+        )
 
         # Execute - test authorization (superuser can read orders)
         result = await order_service.get_order(order.id, test_superuser_with_rbac)
@@ -749,7 +791,7 @@ class TestOrderServiceCasbin:
     @pytest.mark.asyncio
     async def test_quote_not_found_error_handling(self, db_session, test_superuser_with_rbac):
         """Test error handling when quote is not found.
-        
+
         Note: Using superuser since customers cannot create orders per RBAC policy.
         """
         # Setup
@@ -764,7 +806,7 @@ class TestOrderServiceCasbin:
     @pytest.mark.asyncio
     async def test_order_not_found_error_handling(self, db_session, test_superuser_with_rbac):
         """Test error handling when order is not found.
-        
+
         Note: Using superuser since customers cannot read orders per RBAC policy.
         """
         # Setup

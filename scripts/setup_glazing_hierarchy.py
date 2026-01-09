@@ -64,7 +64,7 @@ async def create_glazing_attribute_nodes(
     # Check if glazing nodes already exist
     stmt = select(AttributeNode).where(
         AttributeNode.manufacturing_type_id == manufacturing_type.id,
-        AttributeNode.page_type == "glazing"
+        AttributeNode.page_type == "glazing",
     )
     result = await session.execute(stmt)
     existing_nodes = result.scalars().all()
@@ -98,7 +98,7 @@ async def create_glazing_attribute_nodes(
                     "Insulated",
                     "Acoustic",
                     "Security",
-                    "Other"
+                    "Other",
                 ]
             },
         },
@@ -113,9 +113,7 @@ async def create_glazing_attribute_nodes(
             "sort_order": 2,
             "ui_component": "dropdown",
             "help_text": "Select glass thickness in millimeters",
-            "validation_rules": {
-                "options": ["4", "5", "6", "8", "10", "12", "15", "19", "25"]
-            },
+            "validation_rules": {"options": ["4", "5", "6", "8", "10", "12", "15", "19", "25"]},
         },
         {
             "name": "pane_configuration",
@@ -129,12 +127,7 @@ async def create_glazing_attribute_nodes(
             "ui_component": "dropdown",
             "help_text": "Select the pane configuration",
             "validation_rules": {
-                "options": [
-                    "Single Pane",
-                    "Double Pane",
-                    "Triple Pane",
-                    "Quadruple Pane"
-                ]
+                "options": ["Single Pane", "Double Pane", "Triple Pane", "Quadruple Pane"]
             },
         },
         {
@@ -152,7 +145,7 @@ async def create_glazing_attribute_nodes(
             "display_condition": {
                 "operator": "not_equals",
                 "field": "pane_configuration",
-                "value": "Single Pane"
+                "value": "Single Pane",
             },
         },
         # Glass Treatments and Coatings
@@ -184,14 +177,10 @@ async def create_glazing_attribute_nodes(
                     "Surface 1 (Outside)",
                     "Surface 2 (Inside outer pane)",
                     "Surface 3 (Outside inner pane)",
-                    "Surface 4 (Inside)"
+                    "Surface 4 (Inside)",
                 ]
             },
-            "display_condition": {
-                "operator": "equals",
-                "field": "low_e_coating",
-                "value": True
-            },
+            "display_condition": {"operator": "equals", "field": "low_e_coating", "value": True},
         },
         {
             "name": "tint_color",
@@ -205,16 +194,7 @@ async def create_glazing_attribute_nodes(
             "ui_component": "dropdown",
             "help_text": "Select tint color if applicable",
             "validation_rules": {
-                "options": [
-                    "None",
-                    "Bronze",
-                    "Gray",
-                    "Green",
-                    "Blue",
-                    "Silver",
-                    "Gold",
-                    "Other"
-                ]
+                "options": ["None", "Bronze", "Gray", "Green", "Blue", "Silver", "Gold", "Other"]
             },
         },
         {
@@ -302,7 +282,7 @@ async def create_glazing_attribute_nodes(
                     "Laminated",
                     "Security",
                     "Bulletproof",
-                    "Fire Rated"
+                    "Fire Rated",
                 ]
             },
         },
@@ -322,7 +302,7 @@ async def create_glazing_attribute_nodes(
                     "Class 1 (Basic)",
                     "Class 2 (Enhanced)",
                     "Class 3 (High)",
-                    "Class 4 (Maximum)"
+                    "Class 4 (Maximum)",
                 ]
             },
         },
@@ -365,14 +345,7 @@ async def create_glazing_attribute_nodes(
             "ui_component": "dropdown",
             "help_text": "Type of edge finishing",
             "validation_rules": {
-                "options": [
-                    "Polished",
-                    "Ground",
-                    "Cut",
-                    "Beveled",
-                    "Rounded",
-                    "Other"
-                ]
+                "options": ["Polished", "Ground", "Cut", "Beveled", "Rounded", "Other"]
             },
         },
         # Pricing

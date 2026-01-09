@@ -274,10 +274,13 @@ class TestAdminTemplateSave:
 
         # Verify template was created in database
         from sqlalchemy import select
-        stmt = select(ConfigurationTemplate).where(ConfigurationTemplate.name == "New Test Template")
+
+        stmt = select(ConfigurationTemplate).where(
+            ConfigurationTemplate.name == "New Test Template"
+        )
         result = await db_session.execute(stmt)
         template = result.scalar_one_or_none()
-        
+
         assert template is not None
         assert template.name == "New Test Template"
         assert template.description == "A new test template"
@@ -562,7 +565,10 @@ class TestAdminTemplateAuthFlow:
 
         # Step 6: Find the created template
         from sqlalchemy import select
-        stmt = select(ConfigurationTemplate).where(ConfigurationTemplate.name == "Flow Test Template")
+
+        stmt = select(ConfigurationTemplate).where(
+            ConfigurationTemplate.name == "Flow Test Template"
+        )
         result = await db_session.execute(stmt)
         template = result.scalar_one()
 

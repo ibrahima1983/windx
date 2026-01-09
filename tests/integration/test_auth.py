@@ -206,7 +206,7 @@ class TestLoginEndpoint:
         """Test login with inactive user fails."""
         # Store original state
         original_is_active = test_user.is_active
-        
+
         try:
             # Deactivate user
             test_user.is_active = False
@@ -341,7 +341,7 @@ class TestAuthenticationFlow:
             test_user.is_active = True
             await db_session.commit()
             await db_session.refresh(test_user)
-        
+
         # Login
         login_response = await client.post(
             "/api/v1/auth/login",
@@ -350,7 +350,7 @@ class TestAuthenticationFlow:
                 "password": test_user_data["password"],
             },
         )
-        
+
         assert login_response.status_code == 200, f"Login failed: {login_response.json()}"
         token = login_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}

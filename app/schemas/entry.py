@@ -591,4 +591,3 @@ class InlineEditRequest(BaseModel):
             examples=["Aluminum", 48.5],
         ),
     ]
-

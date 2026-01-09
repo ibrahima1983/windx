@@ -319,7 +319,7 @@ class ConfigurationService(BaseService):
         # Apply RBAC filtering using the same database session
         # Get accessible customers for user using existing session
         accessible_customers = await self.rbac_service.get_accessible_customers(user)
-        
+
         if user.role != Role.SUPERADMIN.value:
             if not accessible_customers:
                 # User has no accessible customers - return empty result

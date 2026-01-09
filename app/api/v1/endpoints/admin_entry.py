@@ -214,12 +214,15 @@ async def save_profile_data(
 
     entry_service = EntryService(db)
     try:
-        return await entry_service.save_profile_configuration(profile_data, current_superuser, page_type)
+        return await entry_service.save_profile_configuration(
+            profile_data, current_superuser, page_type
+        )
     except ValidationException as e:
         import logging
+
         logger = logging.getLogger("uvicorn.error")
         logger.error(f"Save Profile Validation Error: {str(e)}")
-        if hasattr(e, 'field_errors') and e.field_errors:
+        if hasattr(e, "field_errors") and e.field_errors:
             logger.error(f"Field Errors: {e.field_errors}")
             # Return structured error response with field errors
             raise HTTPException(
@@ -227,31 +230,28 @@ async def save_profile_data(
                 detail={
                     "message": e.message,
                     "field_errors": e.field_errors,
-                    "error_type": "validation_error"
-                }
+                    "error_type": "validation_error",
+                },
             )
         else:
             # Return generic validation error
             raise HTTPException(
-                status_code=422,
-                detail={
-                    "message": str(e),
-                    "error_type": "validation_error"
-                }
+                status_code=422, detail={"message": str(e), "error_type": "validation_error"}
             )
     except Exception as e:
         import logging
+
         logger = logging.getLogger("uvicorn.error")
         logger.error(f"Save Profile Unexpected Error: {str(e)}")
         logger.error(f"Error Type: {type(e).__name__}")
-        if hasattr(e, 'field_errors'):
-             logger.error(f"Field Errors: {e.field_errors}")
+        if hasattr(e, "field_errors"):
+            logger.error(f"Field Errors: {e.field_errors}")
         raise HTTPException(
             status_code=500,
             detail={
                 "message": "An unexpected error occurred while saving the configuration",
-                "error_type": "server_error"
-            }
+                "error_type": "server_error",
+            },
         )
 
 
@@ -449,10 +449,10 @@ async def delete_configuration(
                         "success_count": 3,
                         "error_count": 1,
                         "total_requested": 4,
-                        "errors": ["Configuration 999 not found"]
+                        "errors": ["Configuration 999 not found"],
                     }
                 }
-            }
+            },
         },
         400: {
             "description": "Invalid request - no IDs provided",
@@ -466,15 +466,15 @@ async def bulk_delete_configurations(
     db: DBSession,
 ) -> dict[str, Any]:
     """Bulk delete multiple configurations (admin interface).
-    
+
     Args:
         configuration_ids: List of configuration IDs to delete
         current_superuser: Current authenticated superuser
         db: Database session
-        
+
     Returns:
         dict: Result with success/error counts and details
-        
+
     Example:
         DELETE /api/v1/admin/entry/profile/configurations/bulk
         [123, 124, 125]
@@ -482,13 +482,12 @@ async def bulk_delete_configurations(
     from app.services.entry import EntryService
 
     if not configuration_ids:
-        raise HTTPException(
-            status_code=400,
-            detail="No configuration IDs provided"
-        )
+        raise HTTPException(status_code=400, detail="No configuration IDs provided")
 
     entry_service = EntryService(db)
-    return await entry_service.bulk_delete_profile_configurations(configuration_ids, current_superuser)
+    return await entry_service.bulk_delete_profile_configurations(
+        configuration_ids, current_superuser
+    )
 
 
 @router.post(
@@ -506,10 +505,10 @@ async def bulk_delete_configurations(
                         "success": True,
                         "filename": "uploaded_image_123456.jpg",
                         "url": "https://example.com/path/to/image.jpg",
-                        "message": "Image uploaded successfully"
+                        "message": "Image uploaded successfully",
                     }
                 }
-            }
+            },
         },
         400: {
             "description": "Invalid file or upload error",
@@ -517,11 +516,11 @@ async def bulk_delete_configurations(
                 "application/json": {
                     "example": {
                         "success": False,
-                        "error": "Invalid file type. Only images are allowed."
+                        "error": "Invalid file type. Only images are allowed.",
                     }
                 }
-            }
-        }
+            },
+        },
     },
 )
 async def upload_image(
@@ -530,66 +529,54 @@ async def upload_image(
 ) -> dict[str, Any]:
     """Upload an image file for profile entry fields (admin interface)."""
     from app.services.storage import get_storage_service
-    
+
     try:
         # Parse multipart form data
         form_data = await request.form()
         file = form_data.get("file")
-        
+
         print(f"🦆 [BACKEND DEBUG] Upload endpoint called")
         print(f"🦆 [BACKEND DEBUG] form_data keys: {list(form_data.keys())}")
         print(f"🦆 [BACKEND DEBUG] file object: {file}")
         print(f"🦆 [BACKEND DEBUG] file type: {type(file)}")
-        
+
         if not file:
             print(f"🦆 [BACKEND DEBUG] ❌ No file in form data")
-            return {
-                "success": False,
-                "error": "No file provided"
-            }
-        
+            return {"success": False, "error": "No file provided"}
+
         # Check if it's a proper file object
-        if not hasattr(file, 'filename') or not hasattr(file, 'read'):
+        if not hasattr(file, "filename") or not hasattr(file, "read"):
             print(f"🦆 [BACKEND DEBUG] ❌ Invalid file object - missing filename or read method")
             print(f"🦆 [BACKEND DEBUG] file attributes: {dir(file)}")
-            return {
-                "success": False,
-                "error": "Invalid file object"
-            }
-        
+            return {"success": False, "error": "Invalid file object"}
+
         print(f"🦆 [BACKEND DEBUG] file.filename: {file.filename}")
         print(f"🦆 [BACKEND DEBUG] file content_type: {getattr(file, 'content_type', 'unknown')}")
-        
+
         # Use the storage service to handle the upload
         storage_service = get_storage_service()
         print(f"🦆 [BACKEND DEBUG] Calling storage service upload_file...")
         result = await storage_service.upload_file(file)
-        
+
         print(f"🦆 [BACKEND DEBUG] Upload result: {result}")
-        
+
         if result.success:
             return {
                 "success": True,
                 "filename": result.filename,
                 "url": result.url,
-                "message": "Image uploaded successfully"
+                "message": "Image uploaded successfully",
             }
         else:
-            return {
-                "success": False,
-                "error": result.error or "Upload failed"
-            }
-        
+            return {"success": False, "error": result.error or "Upload failed"}
+
     except Exception as e:
         print(f"🦆 [BACKEND DEBUG] ❌ Exception in upload endpoint: {e}")
         print(f"🦆 [BACKEND DEBUG] Exception type: {type(e)}")
         import traceback
-        print(f"🦆 [BACKEND DEBUG] Traceback: {traceback.format_exc()}")
-        return {
-            "success": False,
-            "error": f"Upload failed: {str(e)}"
-        }
 
+        print(f"🦆 [BACKEND DEBUG] Traceback: {traceback.format_exc()}")
+        return {"success": False, "error": f"Upload failed: {str(e)}"}
 
 
 @router.post(
@@ -659,10 +646,10 @@ async def evaluate_display_conditions(
                         "message": "Option 'New Material' added successfully",
                         "option_id": 123,
                         "field_name": "material",
-                        "option_value": "New Material"
+                        "option_value": "New Material",
                     }
                 }
-            }
+            },
         },
         400: {
             "description": "Invalid request or duplicate option",
@@ -767,10 +754,10 @@ async def remove_field_option(
                         "message": "Option 'Steel' removed successfully from field 'material'",
                         "option_id": 123,
                         "field_name": "material",
-                        "option_value": "Steel"
+                        "option_value": "Steel",
                     }
                 }
-            }
+            },
         },
         400: {
             "description": "Invalid request or option not found",
@@ -904,19 +891,19 @@ async def profile_page(
     # Determine the template based on page_type
     template_map = {
         "profile": "admin/entry/profile.html.jinja",
-        "accessories": "admin/entry/accessories.html.jinja", 
+        "accessories": "admin/entry/accessories.html.jinja",
         "glazing": "admin/entry/glazing.html.jinja",
     }
-    
+
     template_name = template_map.get(page_type, "admin/entry/profile.html.jinja")
-    
+
     # Determine active page for navigation
     active_page_map = {
         "profile": "entry_profile",
         "accessories": "entry_accessories",
         "glazing": "entry_glazing",
     }
-    
+
     active_page = active_page_map.get(page_type, "entry_profile")
 
     return templates.TemplateResponse(
@@ -934,7 +921,6 @@ async def profile_page(
             can_delete=True,  # TODO: Implement granular RBAC check
         ),
     )
-
 
 
 @router.get(

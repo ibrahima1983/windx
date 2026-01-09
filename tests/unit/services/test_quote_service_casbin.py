@@ -37,19 +37,20 @@ class TestQuoteServiceCasbin:
         self, db_session, test_user_with_rbac
     ):
         """Test that generate_quote uses customer.id from configuration to maintain relationship consistency.
-        
+
         Note: Using test_user_with_rbac since customers can create quotes per RBAC policy.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -58,19 +59,21 @@ class TestQuoteServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -94,20 +97,21 @@ class TestQuoteServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test Casbin decorator authorization on generate_quote.
-        
+
         Tests that customers CAN create quotes (per RBAC policy),
         and staff members CAN also create quotes.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -116,19 +120,21 @@ class TestQuoteServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -151,7 +157,7 @@ class TestQuoteServiceCasbin:
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config2)
         await db_session.commit()
@@ -165,7 +171,7 @@ class TestQuoteServiceCasbin:
     @pytest.mark.asyncio
     async def test_list_quotes_rbac_query_filter(self, db_session, test_user_with_rbac):
         """Test that list_quotes uses RBACQueryFilter for automatic filtering by customer relationships.
-        
+
         Note: Customers CAN read quotes per RBAC policy.
         """
         # Setup
@@ -183,20 +189,21 @@ class TestQuoteServiceCasbin:
         self, db_session, test_user_with_rbac, test_superuser_with_rbac
     ):
         """Test get_quote with multiple @require decorators (OR logic).
-        
+
         Tests that customers CAN read quotes (per RBAC policy),
         and staff members CAN also read quotes.
         """
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -205,19 +212,21 @@ class TestQuoteServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -240,20 +249,19 @@ class TestQuoteServiceCasbin:
         assert result2.id == quote.id
 
     @pytest.mark.asyncio
-    async def test_quote_customer_relationship_consistency(
-        self, db_session, test_user_with_rbac
-    ):
+    async def test_quote_customer_relationship_consistency(self, db_session, test_user_with_rbac):
         """Test that quote-customer relationship consistency is maintained."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -262,19 +270,21 @@ class TestQuoteServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=mfg_type.base_price,
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -334,15 +344,16 @@ class TestQuoteServiceCasbin:
     ):
         """Test quote totals calculation maintains customer context."""
         import uuid
-        
+
         # Create test data with unique names
         from app.models.manufacturing_type import ManufacturingType
+
         unique_name = f"Test Window Type {uuid.uuid4().hex[:8]}"
         mfg_type = ManufacturingType(
             name=unique_name,
             base_price=Decimal("200.00"),
             base_weight=Decimal("15.00"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(mfg_type)
         await db_session.commit()
@@ -351,19 +362,21 @@ class TestQuoteServiceCasbin:
         # Get the customer ID for the test user
         from app.models.customer import Customer
         from sqlalchemy import select
+
         stmt = select(Customer.id).where(Customer.email == test_user_with_rbac.email)
         result = await db_session.execute(stmt)
         customer_id = result.scalar_one()
 
         # Create a configuration with specific total price
         from app.models.configuration import Configuration
+
         config = Configuration(
             name="Test Configuration",
             manufacturing_type_id=mfg_type.id,
             customer_id=customer_id,
             base_price=mfg_type.base_price,
             total_price=Decimal("250.00"),  # Specific total for calculation test
-            status="draft"
+            status="draft",
         )
         db_session.add(config)
         await db_session.commit()
@@ -407,7 +420,7 @@ class TestQuoteServiceCasbin:
     @pytest.mark.asyncio
     async def test_quote_not_found_error_handling(self, db_session, test_superuser_with_rbac):
         """Test error handling when quote is not found.
-        
+
         Note: Using superuser since customers need ownership to read quotes per RBAC policy.
         """
         # Setup

@@ -97,10 +97,11 @@ async def lifespan(application: FastAPI):
     # Skip lifespan during test collection to prevent pytest capture issues
     # Unkown if it can cause any issues
     import os
+
     if os.getenv("TESTING") == "true":
         yield
         return
-    
+
     # Startup
     print("[*] Starting application...")
 
@@ -221,7 +222,7 @@ async def version_info() -> dict[str, str | dict[str, str]]:
 
     Returns detailed information about the current deployment including:
     - Application version
-    - Deployment script version  
+    - Deployment script version
     - Git commit information (if available)
     - Deployment timestamp
 
@@ -243,7 +244,7 @@ async def version_info() -> dict[str, str | dict[str, str]]:
     """
     import json
     from pathlib import Path
-    
+
     # Read app version from VERSION file
     app_version = "1.0.2"  # fallback
     version_file = Path("VERSION")
@@ -252,11 +253,11 @@ async def version_info() -> dict[str, str | dict[str, str]]:
             app_version = version_file.read_text().strip()
         except Exception:
             pass
-    
+
     # Try to read deployment info created by startup script
     deployment_info = {}
     deployment_file = Path("/tmp/deployment-info.json")
-    
+
     if deployment_file.exists():
         try:
             with open(deployment_file, "r") as f:
@@ -265,17 +266,13 @@ async def version_info() -> dict[str, str | dict[str, str]]:
             deployment_info = {"error": "Could not read deployment info"}
     else:
         deployment_info = {"status": "No deployment info available"}
-    
+
     return {
         "app_name": "WindX Product Configurator",
         "app_version": app_version,
         "script_version": "v1.0.2",
         "deployment_info": deployment_info,
-        "endpoints": {
-            "docs": "/docs",
-            "health": "/health",
-            "api": "/api/v1"
-        }
+        "endpoints": {"docs": "/docs", "health": "/health", "api": "/api/v1"},
     }
 
 
@@ -283,7 +280,7 @@ async def version_info() -> dict[str, str | dict[str, str]]:
 async def debug_env() -> dict[str, str]:
     """Debug endpoint to check Azure environment variables."""
     import os
-    
+
     azure_vars = {
         "WEBSITE_SITE_NAME": os.getenv("WEBSITE_SITE_NAME", "NOT_SET"),
         "WEBSITE_HOSTNAME": os.getenv("WEBSITE_HOSTNAME", "NOT_SET"),
@@ -292,7 +289,7 @@ async def debug_env() -> dict[str, str]:
         "HTTP_X_FORWARDED_PROTO": os.getenv("HTTP_X_FORWARDED_PROTO", "NOT_SET"),
         "HTTP_X_FORWARDED_FOR": os.getenv("HTTP_X_FORWARDED_FOR", "NOT_SET"),
     }
-    
+
     return azure_vars
 
 

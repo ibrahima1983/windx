@@ -158,7 +158,9 @@ class TestEntryIntegrationComprehensive:
         def mock_execute_side_effect(stmt):
             mock_result = AsyncMock()
             if "manufacturing_types" in str(stmt):
-                mock_result.scalar_one_or_none = MagicMock(return_value=manufacturing_type)  # Use MagicMock
+                mock_result.scalar_one_or_none = MagicMock(
+                    return_value=manufacturing_type
+                )  # Use MagicMock
             elif "attribute_nodes" in str(stmt):
                 mock_scalars = MagicMock()
                 mock_scalars.all = MagicMock(return_value=attribute_nodes)  # Use MagicMock
@@ -171,7 +173,9 @@ class TestEntryIntegrationComprehensive:
                 saved_config.name = profile_data.name
                 saved_config.customer_id = customer.id
                 saved_config.selections = []
-                mock_result.scalar_one_or_none = MagicMock(return_value=saved_config)  # Use MagicMock
+                mock_result.scalar_one_or_none = MagicMock(
+                    return_value=saved_config
+                )  # Use MagicMock
             else:
                 mock_result.scalar_one_or_none = MagicMock(return_value=None)  # Use MagicMock
             return mock_result

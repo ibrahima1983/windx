@@ -594,27 +594,27 @@ class FileStorageSettings(BaseSettings):
         """Validate and normalize file extensions."""
         if not v:
             raise ValueError("At least one file extension must be allowed")
-        
+
         # Normalize extensions (remove dots, convert to lowercase, strip whitespace)
         normalized = []
         for ext in v:
             ext = ext.strip().lower()
             # Remove all dots, not just leading ones
-            ext = ext.replace('.', '')
+            ext = ext.replace(".", "")
             if ext:
                 normalized.append(ext)
-        
+
         if not normalized:
             raise ValueError("No valid file extensions provided")
-        
+
         return normalized
 
     @field_validator("min_size")
     @classmethod
     def validate_min_size(cls, v: int, info) -> int:
         """Validate minimum file size."""
-        if hasattr(info, 'data') and 'max_size' in info.data:
-            max_size = info.data['max_size']
+        if hasattr(info, "data") and "max_size" in info.data:
+            max_size = info.data["max_size"]
             if v >= max_size:
                 raise ValueError("min_size must be less than max_size")
         return v
@@ -623,8 +623,8 @@ class FileStorageSettings(BaseSettings):
     @classmethod
     def validate_min_width(cls, v: int, info) -> int:
         """Validate minimum image width."""
-        if hasattr(info, 'data') and 'max_width' in info.data:
-            max_width = info.data['max_width']
+        if hasattr(info, "data") and "max_width" in info.data:
+            max_width = info.data["max_width"]
             if v >= max_width:
                 raise ValueError("min_width must be less than max_width")
         return v
@@ -633,8 +633,8 @@ class FileStorageSettings(BaseSettings):
     @classmethod
     def validate_min_height(cls, v: int, info) -> int:
         """Validate minimum image height."""
-        if hasattr(info, 'data') and 'max_height' in info.data:
-            max_height = info.data['max_height']
+        if hasattr(info, "data") and "max_height" in info.data:
+            max_height = info.data["max_height"]
             if v >= max_height:
                 raise ValueError("min_height must be less than max_height")
         return v
@@ -645,34 +645,35 @@ class FileStorageSettings(BaseSettings):
         if self.provider == "supabase":
             # Check environment variables directly to avoid recursion
             import os
-            
-            supabase_url = os.environ.get('SUPABASE_URL')
-            supabase_key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
-            
+
+            supabase_url = os.environ.get("SUPABASE_URL")
+            supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+
             # Check in order of importance
             if not supabase_url:
                 raise ValueError(
                     "SUPABASE_URL is required when FILE_STORAGE_PROVIDER=supabase. "
                     "Please set SUPABASE_URL in your environment variables."
                 )
-            
+
             if not supabase_key:
                 raise ValueError(
                     "SUPABASE_SERVICE_ROLE_KEY is required when FILE_STORAGE_PROVIDER=supabase. "
                     "Please set SUPABASE_SERVICE_ROLE_KEY in your environment variables."
                 )
-            
+
             # Check bucket name (warn if using default)
             if not self.supabase_bucket or self.supabase_bucket == "windx-uploads":
                 # If using default, just warn but don't fail
                 import warnings
+
                 warnings.warn(
                     "Using default Supabase bucket name 'windx-uploads'. "
                     "Set FILE_STORAGE_SUPABASE_BUCKET to customize.",
                     UserWarning,
                     stacklevel=2,
                 )
-        
+
         return self
 
     @computed_field

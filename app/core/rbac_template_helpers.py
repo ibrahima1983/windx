@@ -59,6 +59,7 @@ class Can:
     def rbac_service(self):
         """Get shared Casbin enforcer for permission checks."""
         from app.services.rbac import get_shared_enforcer
+
         return get_shared_enforcer()
 
     def __call__(self, permission: str) -> bool:

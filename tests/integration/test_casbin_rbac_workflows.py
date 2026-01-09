@@ -24,9 +24,9 @@ async def salesman_user(db_session: AsyncSession, test_user_data: dict[str, Any]
     """Create a salesman user for testing."""
     import uuid
     from app.core.security import get_password_hash
-    
+
     unique_id = uuid.uuid4().hex[:8]
-    
+
     user = User(
         email=f"salesman_{unique_id}@windx.com",
         username=f"salesman_{unique_id}",
@@ -39,19 +39,21 @@ async def salesman_user(db_session: AsyncSession, test_user_data: dict[str, Any]
     db_session.add(user)
     await db_session.commit()  # Need commit for session creation to work
     await db_session.refresh(user)
-    
+
     # Small delay to ensure database transaction is fully committed (CI timing issue)
     import asyncio
+
     await asyncio.sleep(0.1)
-    
+
     # Initialize Casbin policies for the user
     from app.services.rbac import RBACService
+
     rbac_service = RBACService(db_session)
     await rbac_service.initialize_user_policies(user)
-    
+
     # Store the password for login tests
     user._test_password = test_user_data["password"]
-    
+
     return user
 
 
@@ -60,9 +62,9 @@ async def partner_user(db_session: AsyncSession, test_user_data: dict[str, Any])
     """Create a partner user for testing."""
     import uuid
     from app.core.security import get_password_hash
-    
+
     unique_id = uuid.uuid4().hex[:8]
-    
+
     user = User(
         email=f"partner_{unique_id}@company.com",
         username=f"partner_{unique_id}",
@@ -75,19 +77,21 @@ async def partner_user(db_session: AsyncSession, test_user_data: dict[str, Any])
     db_session.add(user)
     await db_session.commit()  # Need commit for session creation to work
     await db_session.refresh(user)
-    
+
     # Small delay to ensure database transaction is fully committed (CI timing issue)
     import asyncio
+
     await asyncio.sleep(0.1)
-    
+
     # Initialize Casbin policies for the user
     from app.services.rbac import RBACService
+
     rbac_service = RBACService(db_session)
     await rbac_service.initialize_user_policies(user)
-    
+
     # Store the password for login tests
     user._test_password = test_user_data["password"]
-    
+
     return user
 
 
@@ -96,9 +100,9 @@ async def data_entry_user(db_session: AsyncSession, test_user_data: dict[str, An
     """Create a data entry user for testing."""
     import uuid
     from app.core.security import get_password_hash
-    
+
     unique_id = uuid.uuid4().hex[:8]
-    
+
     user = User(
         email=f"data_{unique_id}@windx.com",
         username=f"dataentry_{unique_id}",
@@ -111,19 +115,21 @@ async def data_entry_user(db_session: AsyncSession, test_user_data: dict[str, An
     db_session.add(user)
     await db_session.commit()  # Need commit for session creation to work
     await db_session.refresh(user)
-    
+
     # Small delay to ensure database transaction is fully committed (CI timing issue)
     import asyncio
+
     await asyncio.sleep(0.1)
-    
+
     # Initialize Casbin policies for the user
     from app.services.rbac import RBACService
+
     rbac_service = RBACService(db_session)
     await rbac_service.initialize_user_policies(user)
-    
+
     # Store the password for login tests
     user._test_password = test_user_data["password"]
-    
+
     return user
 
 
@@ -132,9 +138,9 @@ async def rbac_customer_user(db_session: AsyncSession, test_user_data: dict[str,
     """Create a customer user for RBAC testing using proper test credentials."""
     import uuid
     from app.core.security import get_password_hash
-    
+
     unique_id = uuid.uuid4().hex[:8]
-    
+
     user = User(
         email=f"customer_{unique_id}@example.com",
         username=f"customer_{unique_id}",
@@ -147,19 +153,21 @@ async def rbac_customer_user(db_session: AsyncSession, test_user_data: dict[str,
     db_session.add(user)
     await db_session.commit()  # Need commit for session creation to work
     await db_session.refresh(user)
-    
+
     # Small delay to ensure database transaction is fully committed (CI timing issue)
     import asyncio
+
     await asyncio.sleep(0.1)
-    
+
     # Initialize Casbin policies for the user
     from app.services.rbac import RBACService
+
     rbac_service = RBACService(db_session)
     await rbac_service.initialize_user_policies(user)
-    
+
     # Store the password for login tests
     user._test_password = test_user_data["password"]
-    
+
     return user
 
 
@@ -168,37 +176,37 @@ async def manufacturing_type_with_attributes(db_session: AsyncSession) -> Manufa
     """Create a manufacturing type with attributes for testing."""
     import uuid
     from decimal import Decimal
-    
+
     # Create unique name to avoid conflicts
     unique_id = uuid.uuid4().hex[:8]
-    
+
     # Create manufacturing type directly without service to avoid commits
     mfg_type = ManufacturingType(
         name=f"Test Window {unique_id}",
         description="Test window type with attributes",
         base_price=Decimal("200.00"),
         base_weight=Decimal("0.00"),
-        is_active=True
+        is_active=True,
     )
-    
+
     db_session.add(mfg_type)
     await db_session.commit()  # Need commit for session creation to work
     await db_session.refresh(mfg_type)
-    
+
     # Create some basic attributes for testing using direct model creation
     from app.models.attribute_node import AttributeNode
-    
+
     root = AttributeNode(
         manufacturing_type_id=mfg_type.id,
         name="Frame Options",
         node_type="category",
         ltree_path=f"frame_options_{unique_id}",
-        depth=0
+        depth=0,
     )
     db_session.add(root)
     await db_session.commit()
     await db_session.refresh(root)
-    
+
     material_attr = AttributeNode(
         manufacturing_type_id=mfg_type.id,
         name="Material",
@@ -206,12 +214,12 @@ async def manufacturing_type_with_attributes(db_session: AsyncSession) -> Manufa
         parent_node_id=root.id,
         data_type="string",
         ltree_path=f"frame_options_{unique_id}.material",
-        depth=1
+        depth=1,
     )
     db_session.add(material_attr)
     await db_session.commit()
     await db_session.refresh(material_attr)
-    
+
     # Add some options
     aluminum_option = AttributeNode(
         manufacturing_type_id=mfg_type.id,
@@ -220,23 +228,23 @@ async def manufacturing_type_with_attributes(db_session: AsyncSession) -> Manufa
         parent_node_id=material_attr.id,
         price_impact_value=Decimal("50.00"),
         ltree_path=f"frame_options_{unique_id}.material.aluminum",
-        depth=2
+        depth=2,
     )
     db_session.add(aluminum_option)
-    
+
     wood_option = AttributeNode(
         manufacturing_type_id=mfg_type.id,
         name="Wood",
-        node_type="option", 
+        node_type="option",
         parent_node_id=material_attr.id,
         price_impact_value=Decimal("120.00"),
         ltree_path=f"frame_options_{unique_id}.material.wood",
-        depth=2
+        depth=2,
     )
     db_session.add(wood_option)
-    
+
     await db_session.commit()  # Ensure all objects have IDs
-    
+
     return mfg_type
 
 
@@ -262,20 +270,27 @@ class TestCasbinRBACWorkflows:
                 "password": rbac_customer_user._test_password,  # Use fixture password
             },
         )
-        
+
         # Add more detailed error information for CI debugging
         if login_response.status_code != 200:
-            error_detail = f"Login failed for user {rbac_customer_user.username}: {login_response.text}"
+            error_detail = (
+                f"Login failed for user {rbac_customer_user.username}: {login_response.text}"
+            )
             # Check if user exists in database
             from sqlalchemy import select
-            result = await db_session.execute(select(User).where(User.username == rbac_customer_user.username))
+
+            result = await db_session.execute(
+                select(User).where(User.username == rbac_customer_user.username)
+            )
             user_exists = result.scalar_one_or_none()
             if user_exists:
-                error_detail += f" (User exists: {user_exists.email}, active: {user_exists.is_active})"
+                error_detail += (
+                    f" (User exists: {user_exists.email}, active: {user_exists.is_active})"
+                )
             else:
                 error_detail += " (User not found in database)"
             assert False, error_detail
-            
+
         token = login_response.json()["access_token"]
         auth_headers = {"Authorization": f"Bearer {token}"}
 
@@ -360,13 +375,16 @@ class TestCasbinRBACWorkflows:
         # Login to get valid tokens
         customer_login = await client.post(
             "/api/v1/auth/login",
-            json={"username": rbac_customer_user.username, "password": rbac_customer_user._test_password},
+            json={
+                "username": rbac_customer_user.username,
+                "password": rbac_customer_user._test_password,
+            },
         )
         assert customer_login.status_code == 200
         customer_headers = {"Authorization": f"Bearer {customer_login.json()['access_token']}"}
-        
+
         salesman_login = await client.post(
-            "/api/v1/auth/login", 
+            "/api/v1/auth/login",
             json={"username": salesman_user.username, "password": salesman_user._test_password},
         )
         assert salesman_login.status_code == 200
@@ -436,10 +454,14 @@ class TestCasbinRBACWorkflows:
         from tests.conftest import create_auth_headers
 
         # Get auth headers for all users
-        customer_headers = await create_auth_headers(rbac_customer_user, rbac_customer_user._test_password)
+        customer_headers = await create_auth_headers(
+            rbac_customer_user, rbac_customer_user._test_password
+        )
         salesman_headers = await create_auth_headers(salesman_user, salesman_user._test_password)
         partner_headers = await create_auth_headers(partner_user, partner_user._test_password)
-        data_entry_headers = await create_auth_headers(data_entry_user, data_entry_user._test_password)
+        data_entry_headers = await create_auth_headers(
+            data_entry_user, data_entry_user._test_password
+        )
         superuser_headers = await create_auth_headers(test_superuser, "AdminPassword123!")
 
         # Test 1: All roles should be able to get manufacturing type schema
@@ -503,7 +525,9 @@ class TestCasbinRBACWorkflows:
         """Test multiple decorator patterns and Privilege objects in real workflows."""
         from tests.conftest import create_auth_headers
 
-        customer_headers = await create_auth_headers(rbac_customer_user, rbac_customer_user._test_password)
+        customer_headers = await create_auth_headers(
+            rbac_customer_user, rbac_customer_user._test_password
+        )
         salesman_headers = await create_auth_headers(salesman_user, salesman_user._test_password)
         superuser_headers = await create_auth_headers(test_superuser, "AdminPassword123!")
 
@@ -558,7 +582,9 @@ class TestCasbinRBACWorkflows:
         """Test mixed scenarios with existing and new customer relationships."""
         from tests.conftest import create_auth_headers
 
-        auth_headers = await create_auth_headers(rbac_customer_user, rbac_customer_user._test_password)
+        auth_headers = await create_auth_headers(
+            rbac_customer_user, rbac_customer_user._test_password
+        )
 
         # Scenario 1: Create configuration (auto-creates customer)
         profile_data_1 = {
@@ -629,7 +655,9 @@ class TestCasbinRBACWorkflows:
 
         from tests.conftest import create_auth_headers
 
-        auth_headers = await create_auth_headers(rbac_customer_user, rbac_customer_user._test_password)
+        auth_headers = await create_auth_headers(
+            rbac_customer_user, rbac_customer_user._test_password
+        )
 
         # Create multiple configurations to test performance
         profile_data_base = {

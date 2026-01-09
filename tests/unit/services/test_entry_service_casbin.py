@@ -86,12 +86,12 @@ class TestEntryServiceCasbin:
     def sample_profile_data(self):
         """Create sample profile entry data for testing."""
         return ProfileEntryData(
-            manufacturing_type_id=1, 
-            name="Test Configuration", 
+            manufacturing_type_id=1,
+            name="Test Configuration",
             type="window",
             material="Aluminum",  # Required field
             opening_system="Casement",  # Required field
-            system_series="Series100"  # Required field
+            system_series="Series100",  # Required field
         )
 
     @pytest.mark.asyncio
@@ -102,7 +102,9 @@ class TestEntryServiceCasbin:
 
         # Mock no existing customer
         mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=None)  # Use MagicMock, not AsyncMock
+        mock_result.scalar_one_or_none = MagicMock(
+            return_value=None
+        )  # Use MagicMock, not AsyncMock
         mock_db.execute.return_value = mock_result
 
         # Mock service methods instead of db methods
@@ -128,7 +130,7 @@ class TestEntryServiceCasbin:
         assert added_customer.customer_type == "residential"
         assert added_customer.is_active is True
         assert "Auto-created from user:" in added_customer.notes
-        
+
         # Verify service methods were called
         rbac_service.commit.assert_called_once()
         rbac_service.refresh.assert_called_once_with(added_customer)
@@ -150,7 +152,9 @@ class TestEntryServiceCasbin:
 
         # Mock no existing customer
         mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=None)  # Use MagicMock, not AsyncMock
+        mock_result.scalar_one_or_none = MagicMock(
+            return_value=None
+        )  # Use MagicMock, not AsyncMock
         mock_db.execute.return_value = mock_result
 
         # Mock service methods
@@ -174,7 +178,9 @@ class TestEntryServiceCasbin:
 
         # Mock existing customer found
         mock_result = AsyncMock()
-        mock_result.scalar_one_or_none = MagicMock(return_value=sample_customer)  # Use MagicMock, not AsyncMock
+        mock_result.scalar_one_or_none = MagicMock(
+            return_value=sample_customer
+        )  # Use MagicMock, not AsyncMock
         mock_db.execute.return_value = mock_result
 
         # Execute
@@ -194,13 +200,17 @@ class TestEntryServiceCasbin:
 
         # Mock the _find_customer_by_email method directly to simulate race condition
         # First call returns None, second call (after IntegrityError) returns customer
-        rbac_service._find_customer_by_email = AsyncMock(side_effect=[
-            None,  # First call - no customer found
-            sample_customer,  # Second call (in exception handler) - customer found
-        ])
+        rbac_service._find_customer_by_email = AsyncMock(
+            side_effect=[
+                None,  # First call - no customer found
+                sample_customer,  # Second call (in exception handler) - customer found
+            ]
+        )
 
         # Mock service methods - commit fails with IntegrityError (unique constraint)
-        rbac_service.commit = AsyncMock(side_effect=IntegrityError("unique constraint email", None, None))
+        rbac_service.commit = AsyncMock(
+            side_effect=IntegrityError("unique constraint email", None, None)
+        )
         rbac_service.rollback = AsyncMock()
 
         # Execute
@@ -246,21 +256,19 @@ class TestEntryServiceCasbin:
         # First call returns manufacturing type, second call returns attribute nodes
         mock_result_1 = AsyncMock()
         mock_result_1.scalar_one_or_none = MagicMock(return_value=sample_manufacturing_type)
-        
+
         mock_result_2 = AsyncMock()
         mock_scalars = MagicMock()
         mock_scalars.all = MagicMock(return_value=[])  # Empty list of attribute nodes
         mock_result_2.scalars = MagicMock(return_value=mock_scalars)
-        
+
         mock_db.execute.side_effect = [mock_result_1, mock_result_2]
 
         # Mock validation
         entry_service.validate_profile_data = AsyncMock()
 
         # Execute (decorators are currently commented out, so no authorization check)
-        result = await entry_service.save_profile_configuration(
-            sample_profile_data, sample_user
-        )
+        result = await entry_service.save_profile_configuration(sample_profile_data, sample_user)
 
         # Verify configuration was created
         assert result is not None
@@ -284,12 +292,12 @@ class TestEntryServiceCasbin:
         # First call returns manufacturing type, second call returns attribute nodes
         mock_result_1 = AsyncMock()
         mock_result_1.scalar_one_or_none = MagicMock(return_value=sample_manufacturing_type)
-        
+
         mock_result_2 = AsyncMock()
         mock_scalars = MagicMock()
         mock_scalars.all = MagicMock(return_value=[])  # Empty list of attribute nodes
         mock_result_2.scalars = MagicMock(return_value=mock_scalars)
-        
+
         mock_db.execute.side_effect = [mock_result_1, mock_result_2]
 
         # Mock validation
@@ -311,7 +319,7 @@ class TestEntryServiceCasbin:
         """Test generate_preview_data with multiple @require decorators (OR logic)."""
         from datetime import datetime
         from app.schemas.entry import PreviewTable
-        
+
         # Setup
         entry_service = EntryService(mock_db)
 
@@ -326,16 +334,17 @@ class TestEntryServiceCasbin:
         mock_db.execute.return_value = mock_result_config
 
         # Mock the RBAC ownership check to return True (user owns the configuration)
-        with patch("app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock) as mock_ownership:
+        with patch(
+            "app.services.rbac.RBACService.check_resource_ownership", new_callable=AsyncMock
+        ) as mock_ownership:
             mock_ownership.return_value = True
-            
+
             # Mock the generate_preview_table method to return a proper PreviewTable
             mock_preview_table = PreviewTable(
-                headers=["Name", "Value"],
-                rows=[{"Name": "Test Config", "Value": "Test Value"}]
+                headers=["Name", "Value"], rows=[{"Name": "Test Config", "Value": "Test Value"}]
             )
             entry_service.generate_preview_table = MagicMock(return_value=mock_preview_table)
-            
+
             # Execute
             result = await entry_service.generate_preview_data(1, test_user_with_rbac)
 
@@ -343,7 +352,7 @@ class TestEntryServiceCasbin:
             assert result is not None
             assert result.configuration_id == 1
             assert result.table == mock_preview_table
-            
+
             # Verify ownership check was called
             mock_ownership.assert_called_once_with(test_user_with_rbac, "configuration", 1)
 

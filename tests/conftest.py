@@ -212,6 +212,7 @@ def setup_test_settings(test_settings: TestSettings):
     # Cleanup
     app.dependency_overrides.clear()
 
+
 @pytest_asyncio.fixture(scope="function")
 async def test_engine():
     """Create test database engine with asyncpg driver.
@@ -234,7 +235,7 @@ async def test_engine():
         - Supabase compatibility
 
         Schema isolation ensures tests don't affect development data.
-        
+
         The schema is completely dropped and recreated for each test to prevent
         PostgreSQL system catalog corruption from failed tests.
     """
@@ -339,7 +340,6 @@ async def test_engine():
     await asyncio.sleep(0.1)
 
 
-
 @pytest_asyncio.fixture(scope="function")
 async def test_session_maker(test_engine):
     """Create test session maker.
@@ -386,6 +386,7 @@ async def db_session(test_session_maker) -> AsyncGenerator[AsyncSession, None]:
         reset_order_counter()
         reset_configuration_counter()
     except ImportError:
+
         def reset_configuration_counter():
             return None
 
@@ -414,7 +415,7 @@ async def db_session(test_session_maker) -> AsyncGenerator[AsyncSession, None]:
 # noinspection PyUnresolvedReferences
 @pytest_asyncio.fixture(scope="function")
 async def client(
-        db_session: AsyncSession, test_settings: TestSettings
+    db_session: AsyncSession, test_settings: TestSettings
 ) -> AsyncGenerator[AsyncClient, None]:
     """Create test HTTP client with httpx.
 
@@ -438,8 +439,8 @@ async def client(
 
     # Create async client
     async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test",
+        transport=ASGITransport(app=app),
+        base_url="http://test",
     ) as ac:
         yield ac
 
@@ -642,7 +643,7 @@ async def test_superuser_with_rbac(db_session: AsyncSession, test_superuser):
 
 @pytest_asyncio.fixture
 async def auth_headers(
-        client: AsyncClient, test_user, test_user_data: dict[str, Any]
+    client: AsyncClient, test_user, test_user_data: dict[str, Any]
 ) -> dict[str, str]:
     """Get authentication headers for test user.
 
@@ -668,9 +669,9 @@ async def auth_headers(
 
 @pytest_asyncio.fixture
 async def superuser_auth_headers(
-        client: AsyncClient,
-        test_superuser,
-        test_superuser_data: dict[str, Any],
+    client: AsyncClient,
+    test_superuser,
+    test_superuser_data: dict[str, Any],
 ) -> dict[str, str]:
     """Get authentication headers for test superuser.
 
@@ -696,17 +697,17 @@ async def superuser_auth_headers(
 
 async def create_auth_headers(user: User, password: str = "TestPassword123!") -> dict[str, str]:
     """Create authentication headers for a user.
-    
+
     This function creates a login request for the given user and returns
     the authorization headers needed for API requests.
-    
+
     Args:
         user (User): User to create auth headers for
         password (str): Password to use for login (defaults to "TestPassword123!")
-        
+
     Returns:
         dict[str, str]: Authorization headers
-        
+
     Note:
         The default password "TestPassword123!" is used for users created in the
         RBAC workflow tests. For other users (like test_superuser), pass the
@@ -714,7 +715,7 @@ async def create_auth_headers(user: User, password: str = "TestPassword123!") ->
     """
     from httpx import AsyncClient, ASGITransport
     from main import app
-    
+
     # Create a temporary client for login
     async with AsyncClient(
         transport=ASGITransport(app=app),
@@ -728,9 +729,9 @@ async def create_auth_headers(user: User, password: str = "TestPassword123!") ->
                 "password": password,
             },
         )
-        
+
         if response.status_code != 200:
             raise ValueError(f"Login failed for user {user.username}: {response.text}")
-            
+
         token = response.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}

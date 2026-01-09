@@ -48,7 +48,6 @@ async def test_hierarchy_dashboard_no_type_selected(
     assert "Select Manufacturing Type" in content
 
 
-
 @pytest.mark.asyncio
 async def test_hierarchy_dashboard_shows_ascii_tree(
     client: AsyncClient,
@@ -351,7 +350,7 @@ async def test_hierarchy_dashboard_flattened_attribute_nodes_structure(
     """Test that dashboard provides flattened attribute_nodes for JavaScript consumption."""
     import random
     import time
-    
+
     # Create manufacturing type and complex hierarchy with unique name
     service = HierarchyBuilderService(db_session)
     unique_id = f"{int(time.time() * 1000)}{random.randint(1000, 9999)}"
@@ -413,10 +412,10 @@ async def test_hierarchy_dashboard_flattened_attribute_nodes_structure(
     # Verify the structure contains all expected node IDs
     # The flattened structure should include all 4 nodes we created
     import re
-    
+
     # Look for JavaScript variable containing node data
     # The template should render something like: var nodeData = [...];
-    js_data_match = re.search(r'nodeData\s*=\s*(\[.*?\]);', content, re.DOTALL)
+    js_data_match = re.search(r"nodeData\s*=\s*(\[.*?\]);", content, re.DOTALL)
     if js_data_match:
         js_data = js_data_match.group(1)
         # Verify all node names appear in the JavaScript data
@@ -424,11 +423,13 @@ async def test_hierarchy_dashboard_flattened_attribute_nodes_structure(
         assert "Material Type" in js_data
         assert "Aluminum" in js_data
         assert "Wood" in js_data
-        
+
         # Verify it's a flat structure (no nested "children" arrays)
         # Count occurrences of "children" - should be 0 in flattened structure
         children_count = js_data.count('"children"')
-        assert children_count == 0, f"Found {children_count} 'children' properties in flattened data, expected 0"
+        assert children_count == 0, (
+            f"Found {children_count} 'children' properties in flattened data, expected 0"
+        )
 
 
 # ============================================================================

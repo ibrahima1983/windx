@@ -351,20 +351,24 @@ class UserService(BaseService):
             # Check for duplicates within the batch first
             emails_in_batch = [user.email for user in users_in]
             usernames_in_batch = [user.username for user in users_in]
-            
+
             # Check for duplicate emails within batch
             if len(emails_in_batch) != len(set(emails_in_batch)):
-                duplicate_emails = [email for email in set(emails_in_batch) 
-                                  if emails_in_batch.count(email) > 1]
+                duplicate_emails = [
+                    email for email in set(emails_in_batch) if emails_in_batch.count(email) > 1
+                ]
                 raise ConflictException(
                     message="Duplicate emails found within batch",
                     details={"duplicate_emails": duplicate_emails},
                 )
-            
+
             # Check for duplicate usernames within batch
             if len(usernames_in_batch) != len(set(usernames_in_batch)):
-                duplicate_usernames = [username for username in set(usernames_in_batch) 
-                                     if usernames_in_batch.count(username) > 1]
+                duplicate_usernames = [
+                    username
+                    for username in set(usernames_in_batch)
+                    if usernames_in_batch.count(username) > 1
+                ]
                 raise ConflictException(
                     message="Duplicate usernames found within batch",
                     details={"duplicate_usernames": duplicate_usernames},
@@ -427,7 +431,7 @@ class UserService(BaseService):
                     ) from e
                 elif "ix_users_username" in str(e):
                     raise ConflictException(
-                        message="Username already taken", 
+                        message="Username already taken",
                         details={"error": "Database constraint violation on username"},
                     ) from e
             # Re-raise as DatabaseException if not a known constraint

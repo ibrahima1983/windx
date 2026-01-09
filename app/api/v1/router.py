@@ -55,9 +55,7 @@ api_router.include_router(
 api_router.include_router(
     admin_documentation.router, prefix="/admin/documentation", tags=["Admin Documentation"]
 )
-api_router.include_router(
-    admin_entry.router, prefix="/admin/entry", tags=["Admin Entry"]
-)
+api_router.include_router(admin_entry.router, prefix="/admin/entry", tags=["Admin Entry"])
 api_router.include_router(admin_settings.router, prefix="/admin", tags=["Admin Settings"])
 api_router.include_router(users.router, prefix="/users")
 api_router.include_router(export.router, prefix="/export")

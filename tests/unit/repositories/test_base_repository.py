@@ -21,7 +21,7 @@ class TestBaseRepositoryGetByField:
     async def test_get_by_field_finds_existing_record(self, db_session: AsyncSession):
         """Test get_by_field returns record when it exists."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
         unique_id = uuid.uuid4().hex[:8]
@@ -56,7 +56,7 @@ class TestBaseRepositoryGetByField:
     async def test_get_by_field_with_username(self, db_session: AsyncSession):
         """Test get_by_field works with different field names."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
         unique_id = uuid.uuid4().hex[:8]
@@ -93,7 +93,7 @@ class TestBaseRepositoryExists:
     async def test_exists_returns_true_for_existing_id(self, db_session: AsyncSession):
         """Test exists returns True when record exists."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
         unique_id = uuid.uuid4().hex[:8]
@@ -131,13 +131,13 @@ class TestBaseRepositoryCount:
     async def test_count_returns_total_without_filters(self, db_session: AsyncSession):
         """Test count returns total count when no filters provided."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
-        
+
         # Get initial count
         initial_count = await repo.count()
-        
+
         unique_id = uuid.uuid4().hex[:8]
         user1 = User(
             email=f"user4_{unique_id}@example.com",
@@ -163,13 +163,13 @@ class TestBaseRepositoryCount:
     async def test_count_with_single_filter(self, db_session: AsyncSession):
         """Test count returns correct count with single filter."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
-        
+
         # Get initial count of active users
         initial_active_count = await repo.count({"is_active": True})
-        
+
         unique_id = uuid.uuid4().hex[:8]
         user1 = User(
             email=f"user6_{unique_id}@example.com",
@@ -195,13 +195,13 @@ class TestBaseRepositoryCount:
     async def test_count_with_multiple_filters(self, db_session: AsyncSession):
         """Test count returns correct count with multiple filters."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
-        
+
         # Get initial count of active superusers
         initial_count = await repo.count({"is_active": True, "is_superuser": True})
-        
+
         unique_id = uuid.uuid4().hex[:8]
         user1 = User(
             email=f"user8_{unique_id}@example.com",
@@ -236,11 +236,11 @@ class TestBaseRepositoryCount:
     async def test_count_returns_zero_when_no_matches(self, db_session: AsyncSession):
         """Test count returns 0 when no records match filters."""
         import uuid
-        
+
         # Arrange
         repo = BaseRepository(User, db_session)
         unique_id = uuid.uuid4().hex[:8]
-        
+
         # Create a user with a unique username pattern
         user = User(
             email=f"user11_{unique_id}@example.com",
