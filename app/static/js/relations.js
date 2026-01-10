@@ -337,11 +337,13 @@ const RelationsManager = {
             const preview = document.getElementById('imagePreview');
             const placeholder = document.getElementById('imagePlaceholder');
             const overlay = document.getElementById('imageOverlay');
+            const clearBtn = document.getElementById('clearImageBtn');
             
             preview.src = event.target.result;
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
             overlay.classList.remove('hidden');
+            if (clearBtn) clearBtn.classList.remove('hidden');
         };
         reader.readAsDataURL(file);
     },
@@ -354,6 +356,7 @@ const RelationsManager = {
         const placeholder = document.getElementById('imagePlaceholder');
         const overlay = document.getElementById('imageOverlay');
         const input = document.getElementById('entityImage');
+        const clearBtn = document.getElementById('clearImageBtn');
         
         if (preview) {
             preview.src = '';
@@ -362,7 +365,16 @@ const RelationsManager = {
         if (placeholder) placeholder.classList.remove('hidden');
         if (overlay) overlay.classList.add('hidden');
         if (input) input.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
         this.imageFile = null;
+    },
+
+    /**
+     * Clear image (called from clear button)
+     */
+    clearImage(event) {
+        event.stopPropagation();
+        this.resetImagePreview();
     },
 
     /**

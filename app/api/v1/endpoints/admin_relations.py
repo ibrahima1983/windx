@@ -18,16 +18,18 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_active_superuser, get_db
-from app.models.user import User
+from app.api.deps import get_db
+from app.api.types import CurrentSuperuser
+from app.core.rbac_template_helpers import RBACTemplateMiddleware
 from app.services.relations import RelationsService
 
 __all__ = ["router"]
 
 router = APIRouter()
 
-# Initialize templates
+# Initialize templates with RBAC middleware
 templates = Jinja2Templates(directory="app/templates")
+rbac_templates = RBACTemplateMiddleware(templates)
 
 
 # ============================================================================
@@ -88,21 +90,23 @@ class DependentOptionsRequest(BaseModel):
 async def relations_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ):
     """Render the Relations management page.
     
-    MVP: RBAC decorators commented out - page works without admin dashboard.
+    Requires superuser access for full RBAC integration.
     """
+    # Store user in request state for RBAC middleware
+    request.state.user = current_user
+    
     service = RelationsService(db)
     
     # Get all entities grouped by type
     entities = await service.get_all_entities()
     
-    return templates.TemplateResponse(
-        request,
+    return await rbac_templates.render_with_rbac(
         "admin/relations/index.html.jinja",
+        request,
         {
             "active_page": "relations",
             "entities": entities,
@@ -118,8 +122,7 @@ async def relations_page(
 async def create_entity(
     data: EntityCreate,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Create a new relation entity."""
     service = RelationsService(db)
@@ -156,8 +159,7 @@ async def update_entity(
     entity_id: int,
     data: EntityUpdate,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Update an existing relation entity."""
     service = RelationsService(db)
@@ -193,8 +195,7 @@ async def update_entity(
 async def delete_entity(
     entity_id: int,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Delete a relation entity."""
     service = RelationsService(db)
@@ -210,8 +211,7 @@ async def delete_entity(
 async def get_entities_by_type(
     entity_type: str,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Get all entities of a specific type."""
     if entity_type not in RelationsService.ENTITY_METADATA:
@@ -245,8 +245,7 @@ async def get_entities_by_type(
 async def create_path(
     data: PathCreate,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Create a new dependency path."""
     service = RelationsService(db)
@@ -277,8 +276,7 @@ async def create_path(
 async def delete_path(
     data: PathDelete,
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Delete a dependency path."""
     service = RelationsService(db)
@@ -293,8 +291,7 @@ async def delete_path(
 @router.get("/relations/paths")
 async def get_all_paths(
     db: AsyncSession = Depends(get_db),
-    # TODO: Uncomment when RBAC is fully integrated
-    # current_user: User = Depends(get_current_active_superuser),
+    current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Get all dependency paths."""
     service = RelationsService(db)
@@ -318,6 +315,7 @@ async def get_dependent_options(
     """Get dependent options based on parent selections.
     
     Used for cascading dropdowns in profile entry.
+    Note: This endpoint doesn't require authentication as it's used by the public profile entry.
     """
     service = RelationsService(db)
     

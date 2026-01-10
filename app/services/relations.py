@@ -497,86 +497,79 @@ class RelationsService(BaseService):
         
         Used for cascading dropdowns in profile entry.
         
+        Hierarchy: company → material → opening_system → system_series → color
+        
         Args:
-            parent_selections: Dict of entity_type -> selected entity ID
-                e.g., {"company": 1, "material": 2}
+            parent_selections: Dict of entity_type_id -> selected entity ID
+                e.g., {"company_id": 1, "material_id": 2}
                 
         Returns:
             Dict of entity_type -> list of available options
         """
-        from sqlalchemy import text
-        
         result = {}
         
-        # Build the path prefix from selections
-        path_prefix_parts = []
-        for entity_type in ["company", "material", "opening_system", "system_series"]:
-            entity_id = parent_selections.get(entity_type)
-            if entity_id:
-                # Get the entity to get its slug
-                entity = await self.get_entity_by_id(entity_id)
-                if entity:
-                    path_prefix_parts.append(self._slugify(entity.name))
-            else:
-                break
+        # Get all complete paths (leaf nodes)
+        all_paths = await self.get_all_paths()
         
-        path_prefix = ".".join(path_prefix_parts) if path_prefix_parts else None
+        # Always return all companies
+        companies = await self.get_entities_by_type("company")
+        result["company"] = [
+            {"id": e.id, "name": e.name, "image_url": e.image_url}
+            for e in companies
+        ]
         
-        # For each level, get available options
-        for level, entity_type in self.RELATION_LEVELS.items():
-            if level == 0:
-                # Companies - always show all
-                entities = await self.get_entities_by_type("company")
-                result["company"] = [
+        # Filter paths based on selections
+        company_id = parent_selections.get("company_id")
+        material_id = parent_selections.get("material_id")
+        opening_system_id = parent_selections.get("opening_system_id")
+        system_series_id = parent_selections.get("system_series_id")
+        
+        # Filter paths by company
+        if company_id:
+            filtered_paths = [p for p in all_paths if p.get("company_id") == company_id]
+            
+            # Get unique materials from filtered paths
+            material_ids = set(p.get("material_id") for p in filtered_paths if p.get("material_id"))
+            materials = await self.get_entities_by_type("material")
+            result["material"] = [
+                {"id": e.id, "name": e.name, "image_url": e.image_url}
+                for e in materials if e.id in material_ids
+            ]
+            
+            # Filter by material
+            if material_id:
+                filtered_paths = [p for p in filtered_paths if p.get("material_id") == material_id]
+                
+                # Get unique opening systems from filtered paths
+                opening_ids = set(p.get("opening_system_id") for p in filtered_paths if p.get("opening_system_id"))
+                openings = await self.get_entities_by_type("opening_system")
+                result["opening_system"] = [
                     {"id": e.id, "name": e.name, "image_url": e.image_url}
-                    for e in entities
+                    for e in openings if e.id in opening_ids
                 ]
-            elif level <= len(path_prefix_parts):
-                # This level needs filtering based on existing paths
-                target_depth = level
                 
-                if path_prefix:
-                    # Find all path nodes at this depth that start with our prefix
-                    query = select(AttributeNode).where(
-                        and_(
-                            AttributeNode.page_type == "relations",
-                            AttributeNode.depth == target_depth,
-                            AttributeNode.ltree_path.op("<@")(path_prefix) if target_depth > len(path_prefix_parts) - 1
-                            else AttributeNode.ltree_path.op("~")(f"{path_prefix}.*") if path_prefix
-                            else True,
-                        )
-                    )
-                else:
-                    query = select(AttributeNode).where(
-                        and_(
-                            AttributeNode.page_type == "relations",
-                            AttributeNode.node_type == entity_type,
-                        )
-                    )
-                
-                res = await self.db.execute(query)
-                nodes = list(res.scalars().all())
-                
-                # Extract unique entity names at this level
-                seen_names = set()
-                options = []
-                for node in nodes:
-                    path_parts = node.ltree_path.split(".")
-                    if len(path_parts) > level:
-                        name_slug = path_parts[level]
-                        if name_slug not in seen_names:
-                            seen_names.add(name_slug)
-                            # Find the original entity
-                            entities = await self.get_entities_by_type(entity_type)
-                            for e in entities:
-                                if self._slugify(e.name) == name_slug:
-                                    options.append({
-                                        "id": e.id,
-                                        "name": e.name,
-                                        "image_url": e.image_url,
-                                    })
-                                    break
-                
-                result[entity_type] = options
+                # Filter by opening system
+                if opening_system_id:
+                    filtered_paths = [p for p in filtered_paths if p.get("opening_system_id") == opening_system_id]
+                    
+                    # Get unique system series from filtered paths
+                    series_ids = set(p.get("system_series_id") for p in filtered_paths if p.get("system_series_id"))
+                    series = await self.get_entities_by_type("system_series")
+                    result["system_series"] = [
+                        {"id": e.id, "name": e.name, "image_url": e.image_url}
+                        for e in series if e.id in series_ids
+                    ]
+                    
+                    # Filter by system series
+                    if system_series_id:
+                        filtered_paths = [p for p in filtered_paths if p.get("system_series_id") == system_series_id]
+                        
+                        # Get unique colors from filtered paths
+                        color_ids = set(p.get("color_id") for p in filtered_paths if p.get("color_id"))
+                        colors = await self.get_entities_by_type("color")
+                        result["color"] = [
+                            {"id": e.id, "name": e.name, "image_url": e.image_url}
+                            for e in colors if e.id in color_ids
+                        ]
         
         return result

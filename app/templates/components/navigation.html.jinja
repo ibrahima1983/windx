@@ -83,6 +83,13 @@
           active=(active_page == 'entry_glazing'),
           icon='🪟'
         ) }}
+        {{ rbac.rbac_nav_item(
+          'Relations',
+          '/api/v1/admin/relations',
+          permission='attribute_node:create',
+          active=(active_page == 'relations'),
+          icon='🔗'
+        ) }}
       </div>
       
       {# Customers - conditionally enabled #}

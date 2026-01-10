@@ -75,7 +75,7 @@ async def debug_relations():
             company_id = companies[0]["id"]
             company_name = companies[0]["name"]
             print(f"\n2️⃣  Materials for '{company_name}':")
-            options = await service.get_dependent_options({"company": company_id})
+            options = await service.get_dependent_options({"company_id": company_id})
             materials = options.get("material", [])
             for m in materials:
                 print(f"   - {m['name']} (ID: {m['id']})")
@@ -86,8 +86,8 @@ async def debug_relations():
                 material_name = materials[0]["name"]
                 print(f"\n3️⃣  Opening Systems for '{company_name}' → '{material_name}':")
                 options = await service.get_dependent_options({
-                    "company": company_id,
-                    "material": material_id,
+                    "company_id": company_id,
+                    "material_id": material_id,
                 })
                 opening_systems = options.get("opening_system", [])
                 for os in opening_systems:
@@ -99,9 +99,9 @@ async def debug_relations():
                     os_name = opening_systems[0]["name"]
                     print(f"\n4️⃣  System Series for '{company_name}' → '{material_name}' → '{os_name}':")
                     options = await service.get_dependent_options({
-                        "company": company_id,
-                        "material": material_id,
-                        "opening_system": os_id,
+                        "company_id": company_id,
+                        "material_id": material_id,
+                        "opening_system_id": os_id,
                     })
                     series = options.get("system_series", [])
                     for s in series:
@@ -113,10 +113,10 @@ async def debug_relations():
                         series_name = series[0]["name"]
                         print(f"\n5️⃣  Colors for '{company_name}' → '{material_name}' → '{os_name}' → '{series_name}':")
                         options = await service.get_dependent_options({
-                            "company": company_id,
-                            "material": material_id,
-                            "opening_system": os_id,
-                            "system_series": series_id,
+                            "company_id": company_id,
+                            "material_id": material_id,
+                            "opening_system_id": os_id,
+                            "system_series_id": series_id,
                         })
                         colors = options.get("color", [])
                         for c in colors:

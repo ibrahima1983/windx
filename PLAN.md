@@ -22,10 +22,15 @@ Implement hierarchical option dependencies (Company → Material → Opening Sys
 - [x] Created Jinja macros (`app/templates/admin/relations/macros.html.jinja`)
 - [x] Created CSS styles (`app/static/css/relations.css`)
 - [x] Created JavaScript (`app/static/js/relations.js`)
+- [x] Integrated with admin dashboard sidebar
+- [x] Added RBAC support with `CurrentSuperuser` dependency
+- [x] Implemented "Single Step" approach based on stakeholder feedback
 
-### ⏳ Phase 4: Profile Entry Integration - IN PROGRESS
+### ✅ Phase 4: Profile Entry Integration - COMPLETED
 - [x] Remove add/remove option UI from profile template
-- [ ] Implement cascading dropdowns in profile entry
+- [x] Implement cascading dropdowns in profile entry
+- [x] Fix get_dependent_options to properly filter by path hierarchy
+- [x] Update debug script to use correct parameter format (company_id, material_id, etc.)
 
 ## Access the Relations Page
 

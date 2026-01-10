@@ -6,31 +6,42 @@ Tests the Relations management API for hierarchical option dependencies
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
 
 
 @pytest.mark.asyncio
 class TestRelationsPage:
     """Tests for GET /api/v1/admin/relations endpoint."""
 
-    async def test_relations_page_renders(self, client: AsyncClient):
+    async def test_relations_page_renders(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test that relations page renders successfully."""
-        response = await client.get("/api/v1/admin/relations")
+        response = await client.get(
+            "/api/v1/admin/relations",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
+
+    async def test_relations_page_requires_auth(self, client: AsyncClient):
+        """Test that relations page requires authentication."""
+        response = await client.get("/api/v1/admin/relations")
+
+        assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 class TestEntityCRUD:
     """Tests for entity CRUD endpoints."""
 
-    async def test_create_company_entity(self, client: AsyncClient):
+    async def test_create_company_entity(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test creating a company entity."""
         response = await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "company",
                 "name": "Test Company",
@@ -44,10 +55,13 @@ class TestEntityCRUD:
         assert data["entity"]["name"] == "Test Company"
         assert data["entity"]["node_type"] == "company"
 
-    async def test_create_material_entity(self, client: AsyncClient):
+    async def test_create_material_entity(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test creating a material entity with metadata."""
         response = await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "material",
                 "name": "UPVC",
@@ -62,10 +76,13 @@ class TestEntityCRUD:
         assert data["entity"]["name"] == "UPVC"
         assert data["entity"]["node_type"] == "material"
 
-    async def test_create_entity_invalid_type(self, client: AsyncClient):
+    async def test_create_entity_invalid_type(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test creating entity with invalid type returns error."""
         response = await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "invalid_type",
                 "name": "Test",
@@ -74,11 +91,26 @@ class TestEntityCRUD:
 
         assert response.status_code == 400
 
-    async def test_get_entities_by_type(self, client: AsyncClient):
+    async def test_create_entity_requires_auth(self, client: AsyncClient):
+        """Test creating entity requires authentication."""
+        response = await client.post(
+            "/api/v1/admin/relations/entities",
+            json={
+                "entity_type": "company",
+                "name": "Test",
+            },
+        )
+
+        assert response.status_code == 401
+
+    async def test_get_entities_by_type(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test getting entities by type."""
         # First create an entity
         await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "company",
                 "name": "Test Company for List",
@@ -86,24 +118,35 @@ class TestEntityCRUD:
         )
 
         # Then get all companies
-        response = await client.get("/api/v1/admin/relations/entities/company")
+        response = await client.get(
+            "/api/v1/admin/relations/entities/company",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
         assert isinstance(data["entities"], list)
 
-    async def test_get_entities_invalid_type(self, client: AsyncClient):
+    async def test_get_entities_invalid_type(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test getting entities with invalid type returns error."""
-        response = await client.get("/api/v1/admin/relations/entities/invalid_type")
+        response = await client.get(
+            "/api/v1/admin/relations/entities/invalid_type",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 400
 
-    async def test_update_entity(self, client: AsyncClient):
+    async def test_update_entity(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test updating an entity."""
         # First create an entity
         create_response = await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "company",
                 "name": "Original Name",
@@ -114,6 +157,7 @@ class TestEntityCRUD:
         # Update the entity
         response = await client.put(
             f"/api/v1/admin/relations/entities/{entity_id}",
+            headers=superuser_auth_headers,
             json={
                 "name": "Updated Name",
                 "price_from": "200.00",
@@ -125,20 +169,26 @@ class TestEntityCRUD:
         assert data["success"] is True
         assert data["entity"]["name"] == "Updated Name"
 
-    async def test_update_entity_not_found(self, client: AsyncClient):
+    async def test_update_entity_not_found(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test updating non-existent entity returns 404."""
         response = await client.put(
             "/api/v1/admin/relations/entities/99999",
+            headers=superuser_auth_headers,
             json={"name": "New Name"},
         )
 
         assert response.status_code == 404
 
-    async def test_delete_entity(self, client: AsyncClient):
+    async def test_delete_entity(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test deleting an entity."""
         # First create an entity
         create_response = await client.post(
             "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
             json={
                 "entity_type": "company",
                 "name": "To Delete",
@@ -147,15 +197,23 @@ class TestEntityCRUD:
         entity_id = create_response.json()["entity"]["id"]
 
         # Delete the entity
-        response = await client.delete(f"/api/v1/admin/relations/entities/{entity_id}")
+        response = await client.delete(
+            f"/api/v1/admin/relations/entities/{entity_id}",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
 
-    async def test_delete_entity_not_found(self, client: AsyncClient):
+    async def test_delete_entity_not_found(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test deleting non-existent entity returns 404."""
-        response = await client.delete("/api/v1/admin/relations/entities/99999")
+        response = await client.delete(
+            "/api/v1/admin/relations/entities/99999",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 404
 
@@ -164,22 +222,30 @@ class TestEntityCRUD:
 class TestPathManagement:
     """Tests for dependency path management endpoints."""
 
-    async def test_get_all_paths_empty(self, client: AsyncClient):
+    async def test_get_all_paths_empty(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test getting all paths when none exist."""
-        response = await client.get("/api/v1/admin/relations/paths")
+        response = await client.get(
+            "/api/v1/admin/relations/paths",
+            headers=superuser_auth_headers,
+        )
 
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
         assert isinstance(data["paths"], list)
 
-    async def test_create_dependency_path(self, client: AsyncClient):
+    async def test_create_dependency_path(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test creating a complete dependency path."""
         # Create all required entities
         entities = {}
         for entity_type in ["company", "material", "opening_system", "system_series", "color"]:
             response = await client.post(
                 "/api/v1/admin/relations/entities",
+                headers=superuser_auth_headers,
                 json={
                     "entity_type": entity_type,
                     "name": f"Test {entity_type.replace('_', ' ').title()}",
@@ -190,6 +256,7 @@ class TestPathManagement:
         # Create the path
         response = await client.post(
             "/api/v1/admin/relations/paths",
+            headers=superuser_auth_headers,
             json={
                 "company_id": entities["company"],
                 "material_id": entities["material"],
@@ -204,10 +271,13 @@ class TestPathManagement:
         assert data["success"] is True
         assert "ltree_path" in data["path"]
 
-    async def test_create_path_invalid_entity(self, client: AsyncClient):
+    async def test_create_path_invalid_entity(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
         """Test creating path with non-existent entity returns error."""
         response = await client.post(
             "/api/v1/admin/relations/paths",
+            headers=superuser_auth_headers,
             json={
                 "company_id": 99999,
                 "material_id": 99998,
@@ -225,10 +295,40 @@ class TestDependentOptions:
     """Tests for cascading options endpoint."""
 
     async def test_get_dependent_options_empty(self, client: AsyncClient):
-        """Test getting dependent options with no selections."""
+        """Test getting dependent options with no selections.
+        
+        Note: This endpoint doesn't require authentication as it's used
+        by the public profile entry.
+        """
         response = await client.post(
             "/api/v1/admin/relations/options",
             json={},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert isinstance(data["options"], dict)
+
+    async def test_get_dependent_options_with_company(
+        self, client: AsyncClient, superuser_auth_headers: dict[str, str]
+    ):
+        """Test getting dependent options after selecting a company."""
+        # First create a company entity
+        create_response = await client.post(
+            "/api/v1/admin/relations/entities",
+            headers=superuser_auth_headers,
+            json={
+                "entity_type": "company",
+                "name": "Test Company Options",
+            },
+        )
+        company_id = create_response.json()["entity"]["id"]
+
+        # Get dependent options with company selected
+        response = await client.post(
+            "/api/v1/admin/relations/options",
+            json={"company_id": company_id},
         )
 
         assert response.status_code == 200

@@ -1,251 +1,11 @@
 {% extends "admin/base.html.jinja" %}
-{% import "components/buttons.html.jinja" as btn %}
+{% import "components/rbac_helpers.html.jinja" as rbac with context %}
 
 {% block title %}Relations - WindX Admin{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-    .relations-page { max-width: 1200px; margin: 0 auto; padding: 24px; }
-    .page-header { margin-bottom: 24px; }
-    .page-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 4px; }
-    .page-subtitle { color: #6b7280; font-size: 0.875rem; }
-    
-    /* Tabs */
-    .tabs { border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
-    .tabs nav { display: flex; gap: 32px; }
-    .tab-btn { 
-        padding: 12px 4px; 
-        font-weight: 500; 
-        color: #6b7280; 
-        border: none; 
-        background: none; 
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-    }
-    .tab-btn:hover { color: #374151; }
-    .tab-btn.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-    
-    /* Cards */
-    .card { 
-        background: white; 
-        border: 1px solid #e5e7eb; 
-        border-radius: 12px; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        padding: 24px;
-        margin-bottom: 24px;
-    }
-    .card-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 16px; }
-    
-    /* Form */
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px; }
-    .form-control { 
-        width: 100%; 
-        padding: 10px 14px; 
-        border: 1px solid #d1d5db; 
-        border-radius: 8px; 
-        font-size: 0.875rem;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .form-control:focus { 
-        outline: none; 
-        border-color: #3b82f6; 
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
-    }
-    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .form-full { grid-column: span 2; }
-    
-    /* Link Section */
-    .link-section {
-        background: #f8fafc;
-        border: 1px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 16px;
-    }
-    .link-section h4 { font-weight: 500; color: #374151; margin-bottom: 12px; }
-    
-    /* Chips */
-    .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        background: #dbeafe;
-        border: 1px solid #93c5fd;
-        border-radius: 16px;
-        font-size: 13px;
-        margin: 3px;
-    }
-    .chip .remove {
-        cursor: pointer;
-        color: #64748b;
-        font-size: 14px;
-        font-weight: bold;
-    }
-    .chip .remove:hover { color: #ef4444; }
-    .chips-container { min-height: 32px; margin-top: 8px; }
-    
-    /* Summary Cards */
-    .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
-    .summary-card { 
-        padding: 16px; 
-        border-radius: 8px; 
-        text-align: center;
-        border: 1px solid;
-    }
-    .summary-card .icon { font-size: 1.5rem; margin-bottom: 8px; }
-    .summary-card .count { font-size: 1.5rem; font-weight: 700; }
-    .summary-card .label { font-size: 0.75rem; }
-    
-    .summary-card.cyan { background: #ecfeff; border-color: #a5f3fc; }
-    .summary-card.cyan .icon, .summary-card.cyan .count { color: #0891b2; }
-    .summary-card.cyan .label { color: #0e7490; }
-    
-    .summary-card.blue { background: #eff6ff; border-color: #bfdbfe; }
-    .summary-card.blue .icon, .summary-card.blue .count { color: #2563eb; }
-    .summary-card.blue .label { color: #1d4ed8; }
-    
-    .summary-card.pink { background: #fdf2f8; border-color: #fbcfe8; }
-    .summary-card.pink .icon, .summary-card.pink .count { color: #db2777; }
-    .summary-card.pink .label { color: #be185d; }
-    
-    .summary-card.emerald { background: #ecfdf5; border-color: #a7f3d0; }
-    .summary-card.emerald .icon, .summary-card.emerald .count { color: #059669; }
-    .summary-card.emerald .label { color: #047857; }
-    
-    .summary-card.amber { background: #fffbeb; border-color: #fde68a; }
-    .summary-card.amber .icon, .summary-card.amber .count { color: #d97706; }
-    .summary-card.amber .label { color: #b45309; }
-    
-    /* Links Display */
-    .links-container { display: flex; flex-wrap: wrap; gap: 12px; }
-    .link-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(to right, #ecfdf5, #ecfeff);
-        border: 1px solid #a7f3d0;
-        border-radius: 20px;
-        padding: 8px 16px;
-    }
-    .link-pill .company { color: #059669; font-weight: 500; }
-    .link-pill .material { color: #0891b2; font-weight: 500; }
-    .link-pill .arrow { color: #9ca3af; }
-    
-    /* Paths Table */
-    .paths-table { width: 100%; border-collapse: collapse; }
-    .paths-table th { 
-        text-align: left; 
-        padding: 12px 16px; 
-        background: #f9fafb; 
-        font-size: 0.875rem; 
-        color: #6b7280;
-        font-weight: 500;
-    }
-    .paths-table td { padding: 12px 16px; border-top: 1px solid #f3f4f6; }
-    .paths-table tr:hover { background: #f9fafb; }
-    
-    /* Entity Badges */
-    .entity-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    .entity-badge.company { background: #ecfdf5; color: #059669; }
-    .entity-badge.material { background: #ecfeff; color: #0891b2; }
-    .entity-badge.opening { background: #eff6ff; color: #2563eb; }
-    .entity-badge.series { background: #fffbeb; color: #d97706; }
-    .entity-badge.color { background: #fdf2f8; color: #db2777; }
-    
-    /* Buttons */
-    .btn-primary {
-        padding: 10px 20px;
-        background: #3b82f6;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
-    
-    .btn-danger { 
-        color: #ef4444; 
-        background: none; 
-        border: none; 
-        cursor: pointer; 
-        font-size: 1rem;
-    }
-    .btn-danger:hover { color: #dc2626; }
-    
-    /* Toast */
-    .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        color: white;
-        font-weight: 500;
-        z-index: 1000;
-        animation: slideIn 0.3s ease;
-    }
-    .toast.success { background: #10b981; }
-    .toast.error { background: #ef4444; }
-    .toast.info { background: #3b82f6; }
-    .toast.warning { background: #f59e0b; }
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    /* Empty State */
-    .empty-state { padding: 48px; text-align: center; color: #9ca3af; }
-    
-    /* Hidden */
-    .hidden { display: none !important; }
-    
-    /* Image Upload */
-    .image-upload-box {
-        width: 120px;
-        height: 120px;
-        border: 2px dashed #d1d5db;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-        position: relative;
-        overflow: hidden;
-    }
-    .image-upload-box:hover { border-color: #3b82f6; background: #eff6ff; }
-    .image-upload-box .placeholder { text-align: center; color: #9ca3af; }
-    .image-upload-box .placeholder i { font-size: 1.5rem; margin-bottom: 4px; }
-    .image-upload-box .placeholder span { font-size: 0.75rem; display: block; }
-    .image-upload-box img { width: 100%; height: 100%; object-fit: cover; }
-    .image-upload-box .overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.875rem;
-    }
-</style>
+<link rel="stylesheet" href="/static/css/relations.css?v=5">
 {% endblock %}
 
 {% block content %}
@@ -288,92 +48,92 @@
 
             <!-- Dynamic Form -->
             <div id="entityForm" class="hidden">
-                <!-- Common Fields -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Name <span style="color: #ef4444;">*</span></label>
-                        <input type="text" id="entityName" class="form-control" placeholder="Enter name...">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Price From (€)</label>
-                        <input type="number" id="entityPrice" class="form-control" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group form-full">
-                        <label class="form-label">Description</label>
-                        <textarea id="entityDescription" class="form-control" rows="2" placeholder="Optional description..."></textarea>
-                    </div>
-                </div>
-                
-                <!-- Material Extra Fields -->
-                <div id="materialFields" class="hidden">
-                    <div class="form-grid">
+                <!-- Main Form Layout: Fields on left, Image on right -->
+                <div class="form-with-image">
+                    <!-- Left: Form Fields (single column) -->
+                    <div class="form-fields-column">
                         <div class="form-group">
-                            <label class="form-label">Density</label>
-                            <input type="number" id="materialDensity" class="form-control" placeholder="0.00" step="0.01">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- System Series Extra Fields -->
-                <div id="seriesFields" class="hidden">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Width (mm)</label>
-                            <input type="number" id="seriesWidth" class="form-control" placeholder="0" step="0.01">
+                            <label class="form-label">Name <span class="required">*</span></label>
+                            <input type="text" id="entityName" class="form-control" placeholder="Enter name...">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Chambers</label>
-                            <input type="number" id="seriesChambers" class="form-control" placeholder="0">
+                            <label class="form-label">Price From (€)</label>
+                            <input type="number" id="entityPrice" class="form-control" placeholder="0.00" step="0.01">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">U-Value</label>
-                            <input type="number" id="seriesUValue" class="form-control" placeholder="0.00" step="0.01">
+                            <label class="form-label">Description</label>
+                            <textarea id="entityDescription" class="form-control" rows="2" placeholder="Optional description..."></textarea>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Seals</label>
-                            <input type="number" id="seriesSeals" class="form-control" placeholder="0">
+                        
+                        <!-- Material Extra Fields -->
+                        <div id="materialFields" class="hidden">
+                            <div class="form-group">
+                                <label class="form-label">Density</label>
+                                <input type="number" id="materialDensity" class="form-control" placeholder="0.00" step="0.01">
+                            </div>
                         </div>
-                        <div class="form-group form-full">
-                            <label class="form-label">Characteristics</label>
-                            <input type="text" id="seriesCharacteristics" class="form-control" placeholder="Enter characteristics...">
+                        
+                        <!-- System Series Extra Fields -->
+                        <div id="seriesFields" class="hidden">
+                            <div class="form-group">
+                                <label class="form-label">Width (mm)</label>
+                                <input type="number" id="seriesWidth" class="form-control" placeholder="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Chambers</label>
+                                <input type="number" id="seriesChambers" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">U-Value</label>
+                                <input type="number" id="seriesUValue" class="form-control" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Seals</label>
+                                <input type="number" id="seriesSeals" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Characteristics</label>
+                                <input type="text" id="seriesCharacteristics" class="form-control" placeholder="Enter characteristics...">
+                            </div>
+                        </div>
+                        
+                        <!-- Color Extra Fields -->
+                        <div id="colorFields" class="hidden">
+                            <div class="form-group">
+                                <label class="form-label">Color Code</label>
+                                <input type="text" id="colorCode" class="form-control" placeholder="e.g., #FFFFFF">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Has Lamination</label>
+                                <select id="colorLamination" class="form-control">
+                                    <option value="false">No</option>
+                                    <option value="true">Yes</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Color Extra Fields -->
-                <div id="colorFields" class="hidden">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Color Code</label>
-                            <input type="text" id="colorCode" class="form-control" placeholder="e.g., #FFFFFF">
+                    
+                    <!-- Right: Image Upload -->
+                    <div class="image-column">
+                        <label class="form-label">Image</label>
+                        <div class="image-upload-box" onclick="document.getElementById('entityImage').click()">
+                            <div class="placeholder" id="imagePlaceholder">
+                                <i class="fa-solid fa-cloud-upload-alt"></i>
+                                <span>Upload</span>
+                            </div>
+                            <img src="" alt="Preview" class="hidden" id="imagePreview">
+                            <div class="overlay hidden" id="imageOverlay">Change</div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Has Lamination</label>
-                            <select id="colorLamination" class="form-control">
-                                <option value="false">No</option>
-                                <option value="true">Yes</option>
-                            </select>
-                        </div>
+                        <input type="file" id="entityImage" class="hidden" accept="image/*" onchange="RelationsManager.handleImageSelect(event)">
+                        <button type="button" id="clearImageBtn" class="btn-clear-image hidden" onclick="RelationsManager.clearImage(event)">
+                            <i class="fa-solid fa-times"></i> Clear
+                        </button>
                     </div>
-                </div>
-                
-                <!-- Image Upload -->
-                <div class="form-group" style="margin-top: 16px;">
-                    <label class="form-label">Image</label>
-                    <div class="image-upload-box" onclick="document.getElementById('entityImage').click()">
-                        <div class="placeholder" id="imagePlaceholder">
-                            <i class="fa-solid fa-cloud-upload-alt"></i>
-                            <span>Upload</span>
-                        </div>
-                        <img src="" alt="Preview" class="hidden" id="imagePreview">
-                        <div class="overlay hidden" id="imageOverlay">Change</div>
-                    </div>
-                    <input type="file" id="entityImage" class="hidden" accept="image/*" onchange="RelationsManager.handleImageSelect(event)">
                 </div>
 
                 <!-- Company Link Section -->
                 <div id="companyLinks" class="hidden link-section">
-                    <h4><i class="fa-solid fa-link" style="color: #9ca3af; margin-right: 6px;"></i>Link to Material</h4>
+                    <h4><i class="fa-solid fa-link"></i> Link to Material</h4>
                     <div class="form-group" style="max-width: 300px;">
                         <label class="form-label">Material</label>
                         <select id="companyMaterial" class="form-control">
@@ -384,7 +144,7 @@
 
                 <!-- System Series Link Section -->
                 <div id="seriesLinks" class="hidden link-section">
-                    <h4><i class="fa-solid fa-link" style="color: #9ca3af; margin-right: 6px;"></i>Link to Create Path</h4>
+                    <h4><i class="fa-solid fa-link"></i> Link to Create Path</h4>
                     <div class="form-grid-3">
                         <div class="form-group">
                             <label class="form-label">Company → Material</label>
@@ -399,7 +159,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Colors <span style="color: #3b82f6; font-size: 0.75rem;">(multi-select)</span></label>
+                            <label class="form-label">Colors <span class="multi-select-hint">(multi-select)</span></label>
                             <select id="seriesColors" class="form-control" onchange="RelationsManager.addColorChip()">
                                 <option value="">Select colors...</option>
                             </select>
@@ -409,8 +169,8 @@
                 </div>
 
                 <!-- Submit Button -->
-                <div style="margin-top: 24px;">
-                    <button class="btn-primary" onclick="RelationsManager.recordEntity()">
+                <div class="form-actions-inline">
+                    <button class="btn btn-primary" onclick="RelationsManager.recordEntity()">
                         <i class="fa-solid fa-save"></i> Record
                     </button>
                 </div>
@@ -451,15 +211,15 @@
 
         <!-- Company → Material Links -->
         <div class="card">
-            <h3 class="card-title"><i class="fa-solid fa-building" style="color: #059669; margin-right: 8px;"></i>Company → Material Links</h3>
+            <h3 class="card-title"><i class="fa-solid fa-building"></i> Company → Material Links</h3>
             <div id="companyMaterialLinksView" class="links-container">
-                <div class="empty-state" style="padding: 24px;">No company-material links yet.</div>
+                <div class="empty-state">No company-material links yet.</div>
             </div>
         </div>
 
         <!-- Paths Table -->
         <div class="card">
-            <h3 class="card-title"><i class="fa-solid fa-route" style="color: #3b82f6; margin-right: 8px;"></i>All Paths (<span id="totalPaths">0</span>)</h3>
+            <h3 class="card-title"><i class="fa-solid fa-route"></i> All Paths (<span id="totalPaths">0</span>)</h3>
             <div id="pathsTableContainer">
                 <table class="paths-table hidden" id="pathsTable">
                     <thead>
@@ -487,5 +247,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/relations.js?v=5"></script>
+<script src="/static/js/relations.js?v=9"></script>
 {% endblock %}
