@@ -2352,3 +2352,135 @@ select option[value="__ADD_NEW__"] {
         font-size: 0.8rem !important;
     }
 }
+
+
+/* ============================================
+   ELEGANT IMAGE UPLOAD BOX
+   Matches the style from Relations page
+   ============================================ */
+.image-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 220px;
+}
+
+.image-upload-box {
+    width: 200px;
+    height: 180px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+.image-upload-box:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.image-upload-box.has-image {
+    border-style: solid;
+    border-color: #e5e7eb;
+}
+
+.image-upload-box.has-image:hover {
+    border-color: #3b82f6;
+}
+
+/* Upload Placeholder */
+.image-upload-box .upload-placeholder {
+    text-align: center;
+    color: #9ca3af;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.image-upload-box .upload-placeholder i {
+    font-size: 2.5rem;
+    color: #3b82f6;
+}
+
+.image-upload-box .upload-placeholder span {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Image Preview */
+.image-upload-box .upload-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+}
+
+/* Hover Overlay */
+.image-upload-box .upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-upload-box:hover .upload-overlay {
+    opacity: 1;
+}
+
+/* Clear Upload Button */
+.btn-clear-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-upload:hover {
+    color: #ef4444;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.btn-clear-upload i {
+    font-size: 0.7rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .image-upload-wrapper {
+        max-width: 100%;
+    }
+    
+    .image-upload-box {
+        width: 160px;
+        height: 140px;
+    }
+    
+    .image-upload-box .upload-placeholder i {
+        font-size: 2rem;
+    }
+}
