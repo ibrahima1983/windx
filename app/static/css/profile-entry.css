@@ -2574,3 +2574,52 @@ select option[value="__ADD_NEW__"] {
         padding: 0.4rem 0.75rem;
     }
 }
+
+
+/* ========================================
+   AUTO-CALCULATED CELL HIGHLIGHT ANIMATION
+   ======================================== */
+
+/* Keyframe animation for the highlight fade */
+@keyframes autoCalcHighlight {
+    0% {
+        background-color: #fef08a;
+        box-shadow: inset 0 0 0 2px #eab308;
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+}
+
+/* Auto-calculated cell highlight class */
+.auto-calculated-highlight {
+    animation: autoCalcHighlight 1s ease-out forwards;
+    position: relative;
+}
+
+/* Optional: Add a subtle indicator icon during highlight */
+.auto-calculated-highlight::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    color: #16a34a;
+    font-size: 0.75rem;
+    font-weight: bold;
+    opacity: 1;
+    animation: fadeOutIcon 1s ease-out forwards;
+}
+
+@keyframes fadeOutIcon {
+    0% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}

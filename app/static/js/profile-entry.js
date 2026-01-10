@@ -1,7 +1,7 @@
 // Profile Entry Application JavaScript
 // This file uses modular classes loaded from separate files
 
-console.log('%c🚀 profile-entry.js v28 LOADED', 'background: #00ff00; color: black; font-size: 16px; font-weight: bold; padding: 8px;');
+console.log('%c🚀 profile-entry.js v36 LOADED', 'background: #00ff00; color: black; font-size: 16px; font-weight: bold; padding: 8px;');
 
 function profileEntryApp(options = {}) {
     return {
@@ -398,8 +398,16 @@ function profileEntryApp(options = {}) {
         },
 
         async saveInlineEdit(rowId, field) {
+            // Prevent double-save (Enter key + blur can both fire)
+            if (this.editingCell.rowId !== rowId || this.editingCell.field !== field) {
+                console.log('🦆 [SAVE EDIT] Skipping - editingCell mismatch or already saved');
+                return;
+            }
+            
             const newValue = this.editingCell.value;
             const originalValue = this.savedConfigurations.find(r => r.id === rowId)?.[field];
+            
+            console.log('🦆 [SAVE EDIT] Saving:', { rowId, field, newValue, originalValue });
             
             const result = TableEditor.saveInlineEdit(rowId, field, newValue, originalValue, this.pendingEdits, this.savedConfigurations);
             
@@ -408,9 +416,195 @@ function profileEntryApp(options = {}) {
                 this.savedConfigurations = result.savedConfigurations;
                 this.updateConfigurationsData(); // Update search engine
                 this.hasUnsavedEdits = true;
+                
+                // Auto-calculate price fields for inline editing
+                this.autoCalculateInlinePrice(rowId, field, newValue);
             }
 
             this.cancelEditing();
+        },
+
+        /**
+         * Auto-calculate price fields when inline editing in Preview tab
+         * Formula: price_per_beam = price_per_meter * length_of_beam
+         */
+        autoCalculateInlinePrice(rowId, fieldHeader, newValue) {
+            console.log('🧮 [INLINE PRICE CALC] ========================================');
+            console.log('🧮 [INLINE PRICE CALC] Starting calculation...');
+            console.log('🧮 [INLINE PRICE CALC] rowId:', rowId);
+            console.log('🧮 [INLINE PRICE CALC] fieldHeader:', fieldHeader);
+            console.log('🧮 [INLINE PRICE CALC] newValue:', newValue);
+            
+            // Map header to field name
+            const mapping = FormHelpers.getHeaderMapping();
+            console.log('🧮 [INLINE PRICE CALC] Header mapping:', mapping);
+            
+            const fieldName = mapping[fieldHeader] || fieldHeader.toLowerCase().replace(/\s+/g, '_');
+            console.log('🧮 [INLINE PRICE CALC] Mapped fieldName:', fieldName);
+            
+            // Only process relevant fields
+            const priceFields = ['price_per_meter', 'price_per_beam', 'length_of_beam'];
+            if (!priceFields.includes(fieldName)) {
+                console.log('🧮 [INLINE PRICE CALC] Field not in priceFields, skipping');
+                return;
+            }
+            
+            // Find the row in savedConfigurations
+            const row = this.savedConfigurations.find(r => r.id === rowId);
+            if (!row) {
+                console.log('🧮 [INLINE PRICE CALC] Row not found');
+                return;
+            }
+            console.log('🧮 [INLINE PRICE CALC] Found row:', row);
+            console.log('🧮 [INLINE PRICE CALC] Row keys:', Object.keys(row));
+            
+            // Get header names for the fields (reverse lookup)
+            const reverseMapping = {};
+            for (const [header, field] of Object.entries(mapping)) {
+                reverseMapping[field] = header;
+            }
+            console.log('🧮 [INLINE PRICE CALC] Reverse mapping:', reverseMapping);
+            
+            // Find the actual header names used in the row data
+            const lengthHeader = reverseMapping['length_of_beam'] || this.findHeaderInRow(row, ['Length of Beam', 'Length of beam', 'length_of_beam']);
+            const pricePerMeterHeader = reverseMapping['price_per_meter'] || this.findHeaderInRow(row, ['Price/m', 'Price per meter', 'price_per_meter']);
+            const pricePerBeamHeader = reverseMapping['price_per_beam'] || this.findHeaderInRow(row, ['Price per Beam', 'Price per/beam', 'price_per_beam']);
+            
+            console.log('🧮 [INLINE PRICE CALC] lengthHeader:', lengthHeader);
+            console.log('🧮 [INLINE PRICE CALC] pricePerMeterHeader:', pricePerMeterHeader);
+            console.log('🧮 [INLINE PRICE CALC] pricePerBeamHeader:', pricePerBeamHeader);
+            
+            // Get current values from the row
+            const lengthOfBeam = this.parseDecimal(row[lengthHeader]);
+            const pricePerMeter = this.parseDecimal(row[pricePerMeterHeader]);
+            const pricePerBeam = this.parseDecimal(row[pricePerBeamHeader]);
+            
+            console.log('🧮 [INLINE PRICE CALC] Current values:', { lengthOfBeam, pricePerMeter, pricePerBeam });
+            
+            // Skip if length_of_beam is not set or is zero
+            if (lengthOfBeam === null || lengthOfBeam === 0) {
+                console.log('🧮 [INLINE PRICE CALC] length_of_beam is null or 0, skipping');
+                return;
+            }
+            
+            let targetHeader = null;
+            let calculatedValue = null;
+            
+            if (fieldName === 'price_per_meter' && newValue !== null && newValue !== '') {
+                // Calculate price_per_beam from price_per_meter
+                const parsedValue = this.parseDecimal(newValue);
+                if (parsedValue !== null) {
+                    calculatedValue = this.roundToDecimals(parsedValue * lengthOfBeam, 2);
+                    targetHeader = pricePerBeamHeader;
+                    console.log(`🧮 [INLINE PRICE CALC] price_per_beam = ${parsedValue} × ${lengthOfBeam} = ${calculatedValue}`);
+                }
+            } else if (fieldName === 'price_per_beam' && newValue !== null && newValue !== '') {
+                // Calculate price_per_meter from price_per_beam
+                const parsedValue = this.parseDecimal(newValue);
+                if (parsedValue !== null) {
+                    calculatedValue = this.roundToDecimals(parsedValue / lengthOfBeam, 2);
+                    targetHeader = pricePerMeterHeader;
+                    console.log(`🧮 [INLINE PRICE CALC] price_per_meter = ${parsedValue} ÷ ${lengthOfBeam} = ${calculatedValue}`);
+                }
+            } else if (fieldName === 'length_of_beam' && pricePerMeter !== null) {
+                // Recalculate price_per_beam when length changes
+                const parsedLength = this.parseDecimal(newValue);
+                if (parsedLength !== null && parsedLength !== 0) {
+                    calculatedValue = this.roundToDecimals(pricePerMeter * parsedLength, 2);
+                    targetHeader = pricePerBeamHeader;
+                    console.log(`🧮 [INLINE PRICE CALC] length changed: price_per_beam = ${pricePerMeter} × ${parsedLength} = ${calculatedValue}`);
+                }
+            }
+            
+            // Update the calculated field
+            if (targetHeader && calculatedValue !== null) {
+                console.log(`🧮 [INLINE PRICE CALC] Updating ${targetHeader} to ${calculatedValue}`);
+                
+                // Update the row data
+                row[targetHeader] = calculatedValue;
+                
+                // Add to pending edits
+                if (!this.pendingEdits[rowId]) {
+                    this.pendingEdits[rowId] = {};
+                }
+                this.pendingEdits[rowId][targetHeader] = calculatedValue;
+                
+                // Force reactivity
+                this.savedConfigurations = [...this.savedConfigurations];
+                
+                // Highlight the auto-calculated cell with fade animation
+                // Use longer setTimeout to ensure Alpine has finished re-rendering the DOM
+                const self = this;
+                const targetHeaderForHighlight = targetHeader;
+                const rowIdForHighlight = rowId;
+                setTimeout(() => {
+                    self.highlightCalculatedCell(rowIdForHighlight, targetHeaderForHighlight);
+                }, 250);
+                
+                console.log(`🧮 [INLINE PRICE CALC] ✅ Updated ${targetHeader} to ${calculatedValue}`);
+                console.log('🧮 [INLINE PRICE CALC] pendingEdits:', this.pendingEdits);
+            } else {
+                console.log('🧮 [INLINE PRICE CALC] No update needed (targetHeader or calculatedValue is null)');
+            }
+            console.log('🧮 [INLINE PRICE CALC] ========================================');
+        },
+
+        /**
+         * Highlight a cell that was auto-calculated with a fade animation
+         */
+        highlightCalculatedCell(rowId, header) {
+            console.log('✨ [HIGHLIGHT] Attempting to highlight cell:', { rowId, header });
+            
+            // Find the cell by row ID and header
+            // The data attributes are set by Alpine.js as :data-row-id and :data-field
+            const selector = `td[data-row-id="${rowId}"][data-field="${header}"]`;
+            console.log('✨ [HIGHLIGHT] Selector:', selector);
+            
+            // Search in the entire document since $el might not contain the table after re-render
+            const cell = document.querySelector(selector);
+            console.log('✨ [HIGHLIGHT] Found cell:', cell);
+            
+            if (cell) {
+                console.log('✨ [HIGHLIGHT] Adding highlight class');
+                cell.classList.add('auto-calculated-highlight');
+                setTimeout(() => {
+                    cell.classList.remove('auto-calculated-highlight');
+                    console.log('✨ [HIGHLIGHT] Removed highlight class');
+                }, 1500);
+            } else {
+                console.log('✨ [HIGHLIGHT] Cell not found, trying alternative approach');
+                // Alternative: find by iterating through table rows
+                const table = document.querySelector('#preview-tab table tbody');
+                if (table) {
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        cells.forEach(td => {
+                            const tdRowId = td.getAttribute('data-row-id');
+                            const tdField = td.getAttribute('data-field');
+                            if (tdRowId == rowId && tdField === header) {
+                                console.log('✨ [HIGHLIGHT] Found cell via iteration!');
+                                td.classList.add('auto-calculated-highlight');
+                                setTimeout(() => {
+                                    td.classList.remove('auto-calculated-highlight');
+                                }, 1500);
+                            }
+                        });
+                    });
+                }
+            }
+        },
+
+        /**
+         * Helper to find a header in row data by trying multiple possible names
+         */
+        findHeaderInRow(row, possibleNames) {
+            for (const name of possibleNames) {
+                if (row.hasOwnProperty(name)) {
+                    return name;
+                }
+            }
+            return possibleNames[0]; // Return first as fallback
         },
 
         async commitTableChanges() {
