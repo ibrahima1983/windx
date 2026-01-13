@@ -327,10 +327,10 @@ class FormHelpers {
     }
 
     static getPreviewValue(header, formData, fieldVisibility) {
-        // Require dynamic header mapping from backend - no fallbacks allowed
+        // Return N/A while headers are loading to prevent errors
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend via setDynamicHeaders().');
-            return 'ERROR: Headers not loaded';
+            console.log('🦆 [FORMHELPERS] Header mapping not yet loaded, returning N/A');
+            return 'N/A';
         }
 
         const fieldName = this.dynamicHeaderMapping[header];
@@ -376,19 +376,19 @@ class FormHelpers {
     }
 
     static getHeaderMapping() {
-        // Require dynamic header mapping from backend - no fallbacks allowed
+        // Return empty object while headers are loading to prevent errors
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend via setDynamicHeaders().');
+            console.log('🦆 [FORMHELPERS] Header mapping not yet loaded, returning empty object');
             return {};
         }
         return this.dynamicHeaderMapping;
     }
 
     static getPreviewHeaders() {
-        // Require dynamic headers from backend - no fallbacks allowed
+        // Return empty array while loading to prevent errors
         if (!this.dynamicHeaders || this.dynamicHeaders.length === 0) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic headers available. Headers must be loaded from backend via setDynamicHeaders().');
-            return ['ERROR: Headers not loaded'];
+            console.log('🦆 [FORMHELPERS] Headers not yet loaded, returning empty array');
+            return [];
         }
         
         console.log('🦆 [FORMHELPERS] Using dynamic headers from backend:', this.dynamicHeaders);
@@ -457,9 +457,9 @@ class FormHelpers {
     static isValueChanged(header, formData, lastSavedData) {
         if (!lastSavedData) return false;
 
-        // Require dynamic header mapping from backend - no fallbacks allowed
+        // Return false while headers are loading to prevent errors
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available for isValueChanged. Headers must be loaded from backend via setDynamicHeaders().');
+            console.log('🦆 [FORMHELPERS] Header mapping not yet loaded for isValueChanged, returning false');
             return false;
         }
 

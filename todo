@@ -1,0 +1,21 @@
+read the file      
+
+and     
+
+
+
+as you see in relations html page we input "Material" Then Opening-System, Then Colors Then Company [which uses "Material"] Then System_Series [Which uses "Company ->Material", Opening_Sytem, Color(s)]
+
+
+
+now i want you to update the ordering of the  page
+
+the new order will be [
+
+Name (1)
+
+Type (2)
+
+System_Series (3) <New>]
+
+and on choosing system Series the material, company, colors should be choosen automatically 

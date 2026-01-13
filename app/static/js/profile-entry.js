@@ -1,7 +1,7 @@
 // Profile Entry Application JavaScript
 // This file uses modular classes loaded from separate files
 
-console.log('%c🚀 profile-entry.js v36 LOADED', 'background: #00ff00; color: black; font-size: 16px; font-weight: bold; padding: 8px;');
+console.log('%c🚀 profile-entry.js v40 LOADED', 'background: #00ff00; color: black; font-size: 16px; font-weight: bold; padding: 8px;');
 
 function profileEntryApp(options = {}) {
     return {
@@ -27,6 +27,11 @@ function profileEntryApp(options = {}) {
         dynamicHeaders: null,
         headersLoading: false,
         headersError: null,
+        previewHeadersReady: false, // Add explicit flag for template reactivity
+
+        // Initialization guard
+        isInitialized: false,
+        isInitializing: false,
 
         // Inline Editing & Table Preview
         canEdit: options.canEdit || false,
@@ -59,6 +64,15 @@ function profileEntryApp(options = {}) {
         showRemoveInput: {},  // Track which fields have remove input visible: { fieldName: boolean }
         removeOptionValue: {}, // Track remove option values: { fieldName: string }
         removingOption: {},   // Track which fields are currently removing: { fieldName: boolean }
+
+        // System Series auto-population state
+        loadingSystemSeriesData: false,
+        systemSeriesData: null,
+        autoPopulatedFields: new Set(), // Track which fields are auto-populated
+
+        // System Series auto-population state
+        loadingSystemSeriesData: false,
+        autoPopulatedFields: new Set(), // Track which fields are auto-populated
 
         // Computed
         get isFormValid() {
@@ -137,10 +151,22 @@ function profileEntryApp(options = {}) {
         },
 
         async init() {
+            // Prevent multiple initializations
+            if (this.isInitialized || this.isInitializing) {
+                console.log('🦆 [INIT] Already initialized or initializing, skipping...');
+                return;
+            }
+            
+            this.isInitializing = true;
+            
             // Initialize dynamic options state
             this.showAddInput = {};
             this.newOptionValue = {};
             this.addingOption = {};
+            
+            // Initialize System Series auto-population state
+            this.loadingSystemSeriesData = false;
+            this.autoPopulatedFields = new Set();
             
             console.log('🦆 [DUCK DEBUG] ========================================');
             console.log('🦆 [DUCK DEBUG] ProfileEntryApp Initialization Started');
@@ -203,17 +229,22 @@ function profileEntryApp(options = {}) {
             console.log('🦆 [STEP 1] Manufacturing types loaded:', this.manufacturingTypes.length, 'types');
 
             if (this.manufacturingTypeId) {
-                console.log('🦆 [STEP 2] Manufacturing type ID found, loading schema, headers, and previews...');
+                console.log('🦆 [STEP 2] Manufacturing type ID found, loading data in proper order...');
                 this.loading = true;
                 try {
-                    const [schema, headers, previews] = await Promise.all([
+                    // Load headers FIRST to prevent preview table errors
+                    console.log('🦆 [STEP 2a] Loading dynamic headers first...');
+                    const headers = await this.loadDynamicHeaders();
+                    console.log('🦆 [STEP 2a] Headers loaded successfully');
+                    
+                    // Then load schema and previews in parallel
+                    console.log('🦆 [STEP 2b] Loading schema and previews...');
+                    const [schema, previews] = await Promise.all([
                         DataLoader.loadSchema(this.manufacturingTypeId, this.pageType),
-                        this.loadDynamicHeaders(),
                         this.loadPreviews()
                     ]);
                     
                     this.schema = this.processSchema(schema);
-                    // previews are already loaded by this.loadPreviews()
                     console.log('🦆 [STEP 2] Data loading completed');
                     
                     // Initialize cascading options for relation fields
@@ -221,6 +252,9 @@ function profileEntryApp(options = {}) {
                 } catch (err) {
                     console.error('🦆 [ERROR] Failed to load data:', err);
                     this.error = err.message;
+                    // Reset initialization flags on error
+                    this.isInitializing = false;
+                    this.isInitialized = false;
                 } finally {
                     this.loading = false;
                 }
@@ -242,11 +276,16 @@ function profileEntryApp(options = {}) {
                 schemaSection: this.schema?.sections?.length || 0,
                 error: this.error,
                 schemaKeys: Object.keys(this.schema || {}),
-                fullSchema: this.schema
+                fullSchema: this.schema,
+                hasHeaders: this.dynamicHeaders?.length || 0
             });
             console.log('🦆 [DUCK DEBUG] ✨ LOUD DUCK DEBUG - Form data keys:', Object.keys(this.formData));
             console.log('🦆 [DUCK DEBUG] ✨ LOUD DUCK DEBUG - Field visibility:', this.fieldVisibility);
             console.log('🦆 [DUCK DEBUG] ========================================');
+            
+            // Mark initialization as complete
+            this.isInitializing = false;
+            this.isInitialized = true;
         },
 
         processSchema(schema) {
@@ -341,7 +380,14 @@ function profileEntryApp(options = {}) {
                 console.log('🦆 [HEADERS] Loading dynamic headers for manufacturing type:', this.manufacturingTypeId, 'page type:', this.pageType);
                 const headers = await DataLoader.loadDynamicHeaders(this.manufacturingTypeId, this.pageType);
                 
+                console.log('🦆 [HEADERS] About to set this.dynamicHeaders to:', headers);
                 this.dynamicHeaders = headers;
+                console.log('🦆 [HEADERS] After setting - this.dynamicHeaders:', this.dynamicHeaders);
+                console.log('🦆 [HEADERS] After setting - this.dynamicHeaders.length:', this.dynamicHeaders?.length);
+                
+                // Set flag for template reactivity
+                this.previewHeadersReady = true;
+                console.log('🦆 [HEADERS] Set previewHeadersReady to true');
                 
                 // Set the headers in FormHelpers for use throughout the application
                 await FormHelpers.setDynamicHeaders(headers, this.manufacturingTypeId, this.pageType);
@@ -1156,6 +1202,11 @@ function profileEntryApp(options = {}) {
             // Update form data
             this.formData[fieldName] = value;
 
+            // Handle System Series auto-population
+            if (fieldName === 'system_series') {
+                this.handleSystemSeriesChange(value);
+            }
+
             // Auto-calculate price fields
             this.autoCalculatePriceFields(fieldName, value);
 
@@ -1375,7 +1426,7 @@ function profileEntryApp(options = {}) {
             };
             
             try {
-                // First, load initial company options
+                // Load initial options for all relation fields
                 const response = await fetch('/api/v1/admin/relations/options', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1393,13 +1444,15 @@ function profileEntryApp(options = {}) {
                 
                 console.log('🔗 [CASCADE] Initial options loaded:', options);
                 
-                // Update schema options for company field
-                if (this.schema && this.schema.sections && options.company) {
+                // Update schema options for all relation fields
+                if (this.schema && this.schema.sections) {
                     for (const section of this.schema.sections) {
                         for (const field of section.fields) {
-                            if (field.name === 'company') {
-                                field.options = options.company.map(opt => opt.name);
-                                console.log('🔗 [CASCADE] Updated company options:', field.options);
+                            const apiFieldName = apiFieldMapping[field.name] || field.name;
+                            
+                            if (options[apiFieldName] && options[apiFieldName].length > 0) {
+                                field.options = options[apiFieldName].map(opt => opt.name);
+                                console.log(`🔗 [CASCADE] Updated ${field.name} options:`, field.options);
                             }
                         }
                     }
@@ -1476,6 +1529,301 @@ function profileEntryApp(options = {}) {
             }
         },
 
+        /**
+         * Handle System Series selection change for auto-population
+         * This is the master selector that auto-populates dependent fields
+         */
+        async handleSystemSeriesChange(systemSeriesName) {
+            console.log('🎯 [SYSTEM SERIES] ========================================');
+            console.log('🎯 [SYSTEM SERIES] handleSystemSeriesChange called with:', systemSeriesName);
+            
+            // Clear auto-populated fields first
+            this.clearAutoPopulatedFields();
+            
+            if (!systemSeriesName) {
+                console.log('🎯 [SYSTEM SERIES] Empty value, cleared auto-populated fields');
+                return;
+            }
+            
+            this.loadingSystemSeriesData = true;
+            
+            try {
+                // Get system series ID by name
+                const systemSeriesId = await this.getEntityIdByName('system_series', systemSeriesName);
+                
+                if (!systemSeriesId) {
+                    console.warn('🎯 [SYSTEM SERIES] Could not find system series ID for:', systemSeriesName);
+                    return;
+                }
+                
+                console.log('🎯 [SYSTEM SERIES] Found system series ID:', systemSeriesId);
+                
+                // Call the relations API to get dependent options
+                const response = await fetch('/api/v1/admin/relations/options', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ system_series_id: systemSeriesId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch system series data: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('🎯 [SYSTEM SERIES] Received data:', data);
+                
+                const options = data.options || {};
+                
+                // Auto-populate dependent fields
+                this.autoPopulateFromSystemSeries(options);
+                
+                // Store the system series data for reference
+                this.systemSeriesData = options;
+                
+                console.log('🎯 [SYSTEM SERIES] ✅ Auto-population complete');
+                
+            } catch (error) {
+                console.error('🎯 [SYSTEM SERIES] ❌ Error:', error);
+                showToast(`Failed to load system series data: ${error.message}`, 'error');
+            } finally {
+                this.loadingSystemSeriesData = false;
+            }
+            
+            console.log('🎯 [SYSTEM SERIES] ========================================');
+        },
+        
+        /**
+         * Auto-populate fields based on system series selection
+         */
+        autoPopulateFromSystemSeries(options) {
+            console.log('🎯 [AUTO-POPULATE] Starting auto-population with options:', options);
+            
+            // Map API field names to form field names
+            const fieldMapping = {
+                'company': 'company',
+                'material': 'material', 
+                'opening_system': 'opening_system',
+                'color': 'colours' // Note: API uses 'color', form uses 'colours'
+            };
+            
+            // Auto-populate single-select fields
+            for (const [apiField, formField] of Object.entries(fieldMapping)) {
+                if (options[apiField] && options[apiField].length > 0) {
+                    if (formField === 'colours') {
+                        // Handle colors as multi-select (take all colors)
+                        const colorNames = options[apiField].map(opt => opt.name);
+                        this.formData[formField] = colorNames;
+                        this.autoPopulatedFields.add(formField);
+                        console.log(`🎯 [AUTO-POPULATE] Set ${formField} to:`, colorNames);
+                    } else {
+                        // Handle single-select fields (take first option)
+                        const selectedValue = options[apiField][0].name;
+                        this.formData[formField] = selectedValue;
+                        this.autoPopulatedFields.add(formField);
+                        console.log(`🎯 [AUTO-POPULATE] Set ${formField} to:`, selectedValue);
+                    }
+                }
+            }
+            
+            // Force Alpine.js reactivity
+            this.formData = { ...this.formData };
+            
+            console.log('🎯 [AUTO-POPULATE] Auto-populated fields:', Array.from(this.autoPopulatedFields));
+        },
+        
+        /**
+         * Clear auto-populated fields when system series changes
+         */
+        clearAutoPopulatedFields() {
+            console.log('🎯 [CLEAR] Clearing auto-populated fields:', Array.from(this.autoPopulatedFields));
+            
+            for (const fieldName of this.autoPopulatedFields) {
+                this.formData[fieldName] = '';
+            }
+            
+            this.autoPopulatedFields.clear();
+            this.systemSeriesData = null;
+            
+            // Force Alpine.js reactivity
+            this.formData = { ...this.formData };
+        },
+        
+        /**
+         * Check if a field is auto-populated (for UI styling)
+         */
+        isAutoPopulated(fieldName) {
+            return this.autoPopulatedFields.has(fieldName);
+        },
+
+        /**
+         * Add a color to the colors array (for manual selection)
+         */
+        addColor(colorName) {
+            if (!colorName || this.isAutoPopulated('colours')) return;
+            
+            if (!this.formData.colours) {
+                this.formData.colours = [];
+            }
+            
+            if (!this.formData.colours.includes(colorName)) {
+                this.formData.colours.push(colorName);
+                this.formData = { ...this.formData }; // Force reactivity
+                console.log('🎨 [COLORS] Added color:', colorName, 'Current colors:', this.formData.colours);
+            }
+        },
+        
+        /**
+         * Remove a color from the colors array (for manual selection)
+         */
+        removeColor(colorName) {
+            if (this.isAutoPopulated('colours')) return;
+            
+            if (this.formData.colours) {
+                this.formData.colours = this.formData.colours.filter(c => c !== colorName);
+                this.formData = { ...this.formData }; // Force reactivity
+                console.log('🎨 [COLORS] Removed color:', colorName, 'Current colors:', this.formData.colours);
+            }
+        },
+
+        /**
+         * Handle System Series selection change and auto-populate related fields
+         */
+        async handleSystemSeriesChange(systemSeriesValue) {
+            console.log('🎯 [SYSTEM SERIES] ========================================');
+            console.log('🎯 [SYSTEM SERIES] System Series changed to:', systemSeriesValue);
+            
+            // Update the form data first
+            this.updateField('system_series', systemSeriesValue);
+            
+            // Clear auto-populated fields if no system series selected
+            if (!systemSeriesValue) {
+                console.log('🎯 [SYSTEM SERIES] No system series selected, clearing auto-populated fields');
+                this.clearAutoPopulatedFields();
+                return;
+            }
+            
+            this.loadingSystemSeriesData = true;
+            
+            try {
+                // Get the system series entity ID
+                const systemSeriesId = await this.getEntityIdByName('system_series', systemSeriesValue);
+                
+                if (!systemSeriesId) {
+                    console.warn('🎯 [SYSTEM SERIES] Could not find system series ID for:', systemSeriesValue);
+                    return;
+                }
+                
+                console.log('🎯 [SYSTEM SERIES] Found system series ID:', systemSeriesId);
+                
+                // Call the relations API to get dependent options
+                const response = await fetch('/api/v1/admin/relations/options', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ system_series_id: systemSeriesId })
+                });
+                
+                if (!response.ok) {
+                    console.error('🎯 [SYSTEM SERIES] API call failed:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                const options = data.options || {};
+                
+                console.log('🎯 [SYSTEM SERIES] Received auto-population data:', options);
+                
+                // Auto-populate the dependent fields
+                this.autoPopulateFields(options);
+                
+            } catch (error) {
+                console.error('🎯 [SYSTEM SERIES] Error during auto-population:', error);
+            } finally {
+                this.loadingSystemSeriesData = false;
+            }
+            
+            console.log('🎯 [SYSTEM SERIES] ========================================');
+        },
+
+        /**
+         * Auto-populate dependent fields from System Series selection
+         */
+        autoPopulateFields(options) {
+            console.log('🎯 [AUTO-POPULATE] Starting auto-population with options:', options);
+            
+            // Clear previous auto-populated fields
+            this.autoPopulatedFields.clear();
+            
+            // Map API field names to form field names
+            const fieldMapping = {
+                'company': 'company',
+                'material': 'material', 
+                'opening_system': 'opening_system',
+                'color': 'colours'  // Note: API uses 'color', form uses 'colours'
+            };
+            
+            // Auto-populate each field that has data
+            for (const [apiField, formField] of Object.entries(fieldMapping)) {
+                if (options[apiField] && options[apiField].length > 0) {
+                    const firstOption = options[apiField][0];
+                    const value = firstOption.name;
+                    
+                    console.log(`🎯 [AUTO-POPULATE] Setting ${formField} = "${value}"`);
+                    
+                    // Update form data
+                    this.updateField(formField, value);
+                    
+                    // Mark as auto-populated
+                    this.autoPopulatedFields.add(formField);
+                    
+                    // Update field options in schema to include the auto-populated value
+                    this.updateFieldOptions(formField, options[apiField].map(opt => opt.name));
+                }
+            }
+            
+            console.log('🎯 [AUTO-POPULATE] Auto-populated fields:', Array.from(this.autoPopulatedFields));
+        },
+
+        /**
+         * Update field options in the schema
+         */
+        updateFieldOptions(fieldName, newOptions) {
+            if (!this.schema || !this.schema.sections) return;
+            
+            for (const section of this.schema.sections) {
+                const field = section.fields.find(f => f.name === fieldName);
+                if (field) {
+                    field.options = newOptions;
+                    console.log(`🎯 [AUTO-POPULATE] Updated ${fieldName} options:`, newOptions);
+                    break;
+                }
+            }
+            
+            // Force Alpine.js reactivity
+            this.schema = { ...this.schema };
+        },
+
+        /**
+         * Clear auto-populated fields when System Series is deselected
+         */
+        clearAutoPopulatedFields() {
+            console.log('🎯 [AUTO-POPULATE] Clearing auto-populated fields:', Array.from(this.autoPopulatedFields));
+            
+            for (const fieldName of this.autoPopulatedFields) {
+                this.updateField(fieldName, '');
+            }
+            
+            this.autoPopulatedFields.clear();
+        },
+
+        /**
+         * Check if a field is auto-populated by System Series
+         */
+        isAutoPopulated(fieldName) {
+            return this.autoPopulatedFields.has(fieldName);
+        },
+
         validateField(fieldName, value) {
             if (!this.schema) return;
 
@@ -1527,11 +1875,16 @@ function profileEntryApp(options = {}) {
 
         // Enhanced preview headers using dynamic headers from backend
         get previewHeaders() {
-            // Require dynamic headers - no fallbacks allowed
+            console.log('🦆 [PREVIEW HEADERS GETTER] Called - dynamicHeaders:', this.dynamicHeaders);
+            console.log('🦆 [PREVIEW HEADERS GETTER] dynamicHeaders length:', this.dynamicHeaders?.length || 0);
+            console.log('🦆 [PREVIEW HEADERS GETTER] dynamicHeaders type:', typeof this.dynamicHeaders);
+            
+            // Return empty array while loading to prevent errors
             if (!this.dynamicHeaders || this.dynamicHeaders.length === 0) {
-                console.error('🦆 [PREVIEW HEADERS] ERROR: No dynamic headers available');
-                return ['ERROR: Headers not loaded'];
+                console.log('🦆 [PREVIEW HEADERS] Headers not yet loaded, returning empty array');
+                return [];
             }
+            console.log('🦆 [PREVIEW HEADERS] Returning headers:', this.dynamicHeaders);
             return this.dynamicHeaders;
         },
 

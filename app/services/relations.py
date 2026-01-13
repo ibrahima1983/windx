@@ -511,18 +511,59 @@ class RelationsService(BaseService):
         # Get all complete paths (leaf nodes)
         all_paths = await self.get_all_paths()
         
+        # Extract selection values
+        company_id = parent_selections.get("company_id")
+        material_id = parent_selections.get("material_id")
+        opening_system_id = parent_selections.get("opening_system_id")
+        system_series_id = parent_selections.get("system_series_id")
+        
+        # Special case: If only system_series_id is provided, find all related options
+        if system_series_id and not any([company_id, material_id, opening_system_id]):
+            # Filter paths by system series
+            filtered_paths = [p for p in all_paths if p.get("system_series_id") == system_series_id]
+            
+            if filtered_paths:
+                # Get unique companies from filtered paths
+                company_ids = set(p.get("company_id") for p in filtered_paths if p.get("company_id"))
+                companies = await self.get_entities_by_type("company")
+                result["company"] = [
+                    {"id": e.id, "name": e.name, "image_url": e.image_url}
+                    for e in companies if e.id in company_ids
+                ]
+                
+                # Get unique materials from filtered paths
+                material_ids = set(p.get("material_id") for p in filtered_paths if p.get("material_id"))
+                materials = await self.get_entities_by_type("material")
+                result["material"] = [
+                    {"id": e.id, "name": e.name, "image_url": e.image_url}
+                    for e in materials if e.id in material_ids
+                ]
+                
+                # Get unique opening systems from filtered paths
+                opening_ids = set(p.get("opening_system_id") for p in filtered_paths if p.get("opening_system_id"))
+                openings = await self.get_entities_by_type("opening_system")
+                result["opening_system"] = [
+                    {"id": e.id, "name": e.name, "image_url": e.image_url}
+                    for e in openings if e.id in opening_ids
+                ]
+                
+                # Get unique colors from filtered paths
+                color_ids = set(p.get("color_id") for p in filtered_paths if p.get("color_id"))
+                colors = await self.get_entities_by_type("color")
+                result["colors"] = [  # Note: using "colors" (plural) to match frontend expectation
+                    {"id": e.id, "name": e.name, "image_url": e.image_url}
+                    for e in colors if e.id in color_ids
+                ]
+            
+            return result
+        
+        # Standard forward hierarchy logic
         # Always return all companies
         companies = await self.get_entities_by_type("company")
         result["company"] = [
             {"id": e.id, "name": e.name, "image_url": e.image_url}
             for e in companies
         ]
-        
-        # Filter paths based on selections
-        company_id = parent_selections.get("company_id")
-        material_id = parent_selections.get("material_id")
-        opening_system_id = parent_selections.get("opening_system_id")
-        system_series_id = parent_selections.get("system_series_id")
         
         # Filter paths by company
         if company_id:
@@ -567,7 +608,7 @@ class RelationsService(BaseService):
                         # Get unique colors from filtered paths
                         color_ids = set(p.get("color_id") for p in filtered_paths if p.get("color_id"))
                         colors = await self.get_entities_by_type("color")
-                        result["color"] = [
+                        result["colors"] = [  # Note: using "colors" (plural) to match frontend expectation
                             {"id": e.id, "name": e.name, "image_url": e.image_url}
                             for e in colors if e.id in color_ids
                         ]

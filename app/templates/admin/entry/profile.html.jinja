@@ -9,6 +9,178 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/static/css/profile-entry.css?v=23">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/dist/tippy.css">
+<style>
+/* System Series Loading Indicator */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    min-width: 80px;
+}
+
+.loading-spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Auto-populated Fields */
+.auto-populated-field {
+    position: relative;
+}
+
+.input-field.auto-populated {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.input-field.loading {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+}
+
+.auto-selected-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 2px 6px;
+    background-color: #f0f9ff;
+    border: 1px solid #e0f2fe;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+/* Colors Multi-Select */
+.colors-multi-select {
+    position: relative;
+}
+
+.colors-display {
+    min-height: 40px;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+.colors-display.loading {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+}
+
+.colors-display.auto-selected {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.colors-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+}
+
+.selected-colors {
+    min-height: 24px;
+}
+
+.color-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: #fdf2f8;
+    border: 1px solid #fce7f3;
+    border-radius: 16px;
+    font-size: 12px;
+    color: #be185d;
+}
+
+.color-chip .remove-color {
+    margin-left: 4px;
+    padding: 0 4px;
+    background: none;
+    border: none;
+    color: #be185d;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+.color-chip .remove-color:hover {
+    background-color: #be185d;
+    color: white;
+}
+
+.manual-color-selection {
+    margin-top: 8px;
+}
+
+/* Field Reordering Styles */
+.form-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-item[data-field="name"] {
+    order: 1;
+}
+
+.field-item[data-field="type"] {
+    order: 2;
+}
+
+.field-item[data-field="system_series"] {
+    order: 3;
+}
+
+.field-item[data-field="company"] {
+    order: 4;
+}
+
+.field-item[data-field="material"] {
+    order: 5;
+}
+
+.field-item[data-field="opening_system"] {
+    order: 6;
+}
+
+.field-item[data-field="colours"] {
+    order: 7;
+}
+
+.field-item[data-field="code"] {
+    order: 8;
+}
+
+/* All other fields maintain their natural order after the reordered ones */
+.field-item:not([data-field="name"]):not([data-field="type"]):not([data-field="system_series"]):not([data-field="company"]):not([data-field="material"]):not([data-field="opening_system"]):not([data-field="colours"]):not([data-field="code"]) {
+    order: 999;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -128,6 +300,7 @@
                                          'hidden': !isFieldVisible(field.name),
                                          'error': fieldErrors[field.name]
                                      }"
+                                     :data-field="field.name"
                                      x-show="isFieldVisible(field.name)"
                                      x-transition:enter="transition ease-out duration-300"
                                      x-transition:enter-start="opacity-0 transform scale-95"
@@ -155,18 +328,136 @@
                                         <!-- SELECT / DROPDOWN -->
                                         <template x-if="field.componentType === 'dropdown'">
                                             <div class="dynamic-select-container">
-                                                <select :id="field.name" 
-                                                        class="input-field" 
-                                                        :class="{ 'invalid': fieldErrors[field.name] }"
-                                                        :value="formData[field.name] || ''"
-                                                        @change="updateField(field.name, $event.target.value)">
-                                                    <option value="">Select...</option>
-                                                    <template x-for="opt in (field.options || [])" :key="opt">
-                                                        <option :value="opt" 
-                                                                x-text="opt" 
-                                                                :selected="formData[field.name] === opt"></option>
-                                                    </template>
-                                                </select>
+                                                <!-- System Series Dropdown with Loading Indicator -->
+                                                <template x-if="field.name === 'system_series'">
+                                                    <div class="system-series-container">
+                                                        <div class="flex items-center gap-2">
+                                                            <select :id="field.name" 
+                                                                    class="input-field flex-1" 
+                                                                    :class="{ 'invalid': fieldErrors[field.name] }"
+                                                                    :value="formData[field.name] || ''"
+                                                                    @change="handleSystemSeriesChange($event.target.value)"
+                                                                    :disabled="loadingSystemSeriesData">
+                                                                <option value="">Select System Series...</option>
+                                                                <template x-if="field.options && field.options.length > 0">
+                                                                    <template x-for="opt in field.options" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
+                                                                        <option :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                                :text="typeof opt === 'string' ? opt : opt.name" 
+                                                                                :selected="formData[field.name] === (typeof opt === 'string' ? opt : opt.name)"></option>
+                                                                    </template>
+                                                                </template>
+                                                                <template x-if="!field.options || field.options.length === 0">
+                                                                    <option value="" disabled>Loading options...</option>
+                                                                </template>
+                                                            </select>
+                                                            <!-- Loading Indicator -->
+                                                            <div x-show="loadingSystemSeriesData" class="loading-indicator">
+                                                                <div class="loading-spinner-small"></div>
+                                                                <span class="text-xs text-gray-500 ml-1">Loading...</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                
+                                                <!-- Auto-populated Fields (Material, Company, Opening System) -->
+                                                <template x-if="field.name === 'material' || field.name === 'company' || field.name === 'opening_system'">
+                                                    <div class="auto-populated-field">
+                                                        <select :id="field.name" 
+                                                                class="input-field auto-populated" 
+                                                                :class="{ 
+                                                                    'invalid': fieldErrors[field.name],
+                                                                    'loading': loadingSystemSeriesData,
+                                                                    'auto-selected': isAutoPopulated(field.name)
+                                                                }"
+                                                                :value="formData[field.name] || ''"
+                                                                :disabled="isAutoPopulated(field.name) || loadingSystemSeriesData"
+                                                                @change="updateField(field.name, $event.target.value)">
+                                                            <option value="" x-show="loadingSystemSeriesData">Loading...</option>
+                                                            <option value="" x-show="!loadingSystemSeriesData && !isAutoPopulated(field.name)">Select...</option>
+                                                            <template x-for="opt in (field.options || [])" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
+                                                                <option :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                        :text="typeof opt === 'string' ? opt : opt.name" 
+                                                                        :selected="formData[field.name] === (typeof opt === 'string' ? opt : opt.name)"></option>
+                                                            </template>
+                                                        </select>
+                                                        <!-- Auto-selected indicator -->
+                                                        <div x-show="isAutoPopulated(field.name)" class="auto-selected-indicator">
+                                                            <i class="fas fa-lock text-xs text-gray-400"></i>
+                                                            <span class="text-xs text-gray-500">Auto-selected from System Series</span>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                
+                                                <!-- Regular Dropdown Fields -->
+                                                <template x-if="field.name !== 'system_series' && field.name !== 'material' && field.name !== 'company' && field.name !== 'opening_system' && field.name !== 'colours'">
+                                                    <select :id="field.name" 
+                                                            class="input-field" 
+                                                            :class="{ 'invalid': fieldErrors[field.name] }"
+                                                            :value="formData[field.name] || ''"
+                                                            @change="updateField(field.name, $event.target.value)">
+                                                        <option value="">Select...</option>
+                                                        <template x-for="opt in (field.options || [])" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
+                                                            <option :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                    :text="typeof opt === 'string' ? opt : opt.name" 
+                                                                    :selected="formData[field.name] === (typeof opt === 'string' ? opt : opt.name)"></option>
+                                                        </template>
+                                                    </select>
+                                                </template>
+                                                
+                                                <!-- Colors Multi-Select (Special Handling) -->
+                                                <template x-if="field.name === 'colours'">
+                                                    <div class="colors-multi-select">
+                                                        <div class="colors-display" 
+                                                             :class="{ 
+                                                                 'loading': loadingSystemSeriesData,
+                                                                 'auto-selected': isAutoPopulated('colours')
+                                                             }">
+                                                            <!-- Loading State -->
+                                                            <div x-show="loadingSystemSeriesData" class="colors-loading">
+                                                                <span class="text-gray-500">Loading colors...</span>
+                                                            </div>
+                                                            
+                                                            <!-- Selected Colors Display -->
+                                                            <div x-show="!loadingSystemSeriesData" class="selected-colors">
+                                                                <template x-if="!formData.colours || formData.colours.length === 0">
+                                                                    <span class="text-gray-400 italic">No colors selected</span>
+                                                                </template>
+                                                                <template x-if="formData.colours && formData.colours.length > 0">
+                                                                    <div class="color-chips">
+                                                                        <template x-for="color in formData.colours" :key="color">
+                                                                            <span class="color-chip">
+                                                                                <i class="fas fa-palette text-pink-500"></i>
+                                                                                <span x-text="color"></span>
+                                                                                <button x-show="!isAutoPopulated('colours')" 
+                                                                                        type="button" 
+                                                                                        @click="removeColor(color)"
+                                                                                        class="remove-color">×</button>
+                                                                            </span>
+                                                                        </template>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                            
+                                                            <!-- Manual Color Selection (when not auto-populated) -->
+                                                            <div x-show="!isAutoPopulated('colours') && !loadingSystemSeriesData" class="manual-color-selection">
+                                                                <select class="input-field mt-2" @change="addColor($event.target.value); $event.target.value = ''">
+                                                                    <option value="">Add color...</option>
+                                                                    <template x-for="opt in (field.options || [])" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
+                                                                        <option :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                                :text="typeof opt === 'string' ? opt : opt.name" 
+                                                                                :disabled="(formData.colours || []).includes(typeof opt === 'string' ? opt : opt.name)"></option>
+                                                                    </template>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Auto-selected indicator for colors -->
+                                                        <div x-show="isAutoPopulated('colours')" class="auto-selected-indicator">
+                                                            <i class="fas fa-lock text-xs text-gray-400"></i>
+                                                            <span class="text-xs text-gray-500">Auto-selected from System Series</span>
+                                                        </div>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </template>
 
@@ -178,8 +469,10 @@
                                                         :class="{ 'invalid': fieldErrors[field.name] }"
                                                         multiple 
                                                         @change="updateMultiSelectField(field.name, $event.target)">
-                                                    <template x-for="opt in getAllFieldOptions(field.name)" :key="opt">
-                                                        <option :value="opt" x-text="opt" :selected="(formData[field.name] || []).includes(opt)"></option>
+                                                    <template x-for="opt in getAllFieldOptions(field.name)" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
+                                                        <option :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                :text="typeof opt === 'string' ? opt : opt.name" 
+                                                                :selected="(formData[field.name] || []).includes(typeof opt === 'string' ? opt : opt.name)"></option>
                                                     </template>
                                                 </select>
                                                 
@@ -225,15 +518,15 @@
                                         <template x-if="field.componentType === 'radio'">
                                             <div class="dynamic-radio-container">
                                                 <div class="space-y-2">
-                                                    <template x-for="opt in getAllFieldOptions(field.name)" :key="opt">
+                                                    <template x-for="opt in getAllFieldOptions(field.name)" :key="typeof opt === 'string' ? opt : opt.name || opt.id">
                                                         <label class="flex items-center space-x-2 cursor-pointer">
                                                             <input type="radio" 
                                                                    :name="field.name" 
-                                                                   :value="opt" 
-                                                                   :checked="formData[field.name] === opt"
-                                                                   @change="updateField(field.name, opt)" 
+                                                                   :value="typeof opt === 'string' ? opt : opt.name" 
+                                                                   :checked="formData[field.name] === (typeof opt === 'string' ? opt : opt.name)"
+                                                                   @change="updateField(field.name, typeof opt === 'string' ? opt : opt.name)" 
                                                                    class="text-blue-600 focus:ring-blue-500 border-gray-300">
-                                                            <span class="text-gray-700" x-text="opt"></span>
+                                                            <span class="text-gray-700" :text="typeof opt === 'string' ? opt : opt.name"></span>
                                                         </label>
                                                     </template>
                                                 </div>
@@ -630,8 +923,14 @@
                         </div>
                     </div>
                     
+                    <!-- Loading State for Headers -->
+                    <div x-show="!previewHeadersReady" class="text-center py-12">
+                        <div class="loading-spinner mx-auto mb-4" style="width: 2rem; height: 2rem;"></div>
+                        <p class="text-gray-600">Loading preview headers...</p>
+                    </div>
+                    
                     <!-- Horizontal Scroll Container with Viewport Constraints -->
-                    <div class="w-full overflow-x-auto responsive-table-scroll" style="overflow-y: visible;">
+                    <div x-show="previewHeadersReady" class="w-full overflow-x-auto responsive-table-scroll" style="overflow-y: visible;">
                         <table class="min-w-full divide-y divide-gray-200 responsive-table">
                             <thead class="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
                                 <tr>
@@ -836,6 +1135,172 @@ document.addEventListener('alpine:init', () => {
             appendTo: () => document.body
         });
     });
+    
+    // Extend the existing profileEntryApp with System Series functionality
+    const originalProfileEntryApp = window.profileEntryApp;
+    window.profileEntryApp = function(config) {
+        const baseApp = originalProfileEntryApp(config);
+        
+        return {
+            ...baseApp,
+            
+            // System Series related state
+            loadingSystemSeriesData: false,
+            autoPopulatedFields: new Set(),
+            
+            // Handle System Series selection change
+            async handleSystemSeriesChange(systemSeriesValue) {
+                console.log('🔗 [SYSTEM SERIES] Selected:', systemSeriesValue);
+                
+                // Update the field value first
+                this.updateField('system_series', systemSeriesValue);
+                
+                if (!systemSeriesValue) {
+                    // Clear auto-populated fields if no system series selected
+                    this.clearAutoPopulatedFields();
+                    return;
+                }
+                
+                // Start loading
+                this.loadingSystemSeriesData = true;
+                
+                try {
+                    // Get system series ID from the options data
+                    const systemSeriesId = this.getSystemSeriesId(systemSeriesValue);
+                    
+                    if (!systemSeriesId) {
+                        console.warn('🔗 [SYSTEM SERIES] Could not find ID for:', systemSeriesValue);
+                        return;
+                    }
+                    
+                    // Call the relations API to get dependent options
+                    const response = await fetch('/api/v1/admin/relations/options', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            system_series_id: systemSeriesId
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('🔗 [SYSTEM SERIES] API Response:', data);
+                    
+                    if (data.success && data.options) {
+                        this.populateRelatedFields(data.options);
+                    } else {
+                        console.warn('🔗 [SYSTEM SERIES] Invalid API response:', data);
+                        this.showToast('Failed to load related data', 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('🔗 [SYSTEM SERIES] Error loading related data:', error);
+                    this.showToast('Error loading related data: ' + error.message, 'error');
+                } finally {
+                    this.loadingSystemSeriesData = false;
+                }
+            },
+            
+            // Get System Series ID from the field options data
+            getSystemSeriesId(systemSeriesName) {
+                // Look for system_series field in schema
+                for (const section of this.schema?.sections || []) {
+                    for (const field of section.fields || []) {
+                        if (field.name === 'system_series' && field.options_data) {
+                            const option = field.options_data.find(opt => opt.name === systemSeriesName);
+                            return option?.id;
+                        }
+                    }
+                }
+                
+                // Fallback: try to find in the options array (simple string array)
+                console.warn('🔗 [SYSTEM SERIES] Could not find options_data, using fallback method');
+                return null;
+            },
+            
+            // Populate related fields from API response
+            populateRelatedFields(options) {
+                console.log('🔗 [POPULATE] Populating fields with:', options);
+                
+                // Clear previous auto-populated fields
+                this.autoPopulatedFields.clear();
+                
+                // Populate material
+                if (options.material && options.material.length > 0) {
+                    const material = options.material[0]; // Take first material
+                    this.updateField('material', material.name || material);
+                    this.autoPopulatedFields.add('material');
+                }
+                
+                // Populate company  
+                if (options.company && options.company.length > 0) {
+                    const company = options.company[0]; // Take first company
+                    this.updateField('company', company.name || company);
+                    this.autoPopulatedFields.add('company');
+                }
+                
+                // Populate opening system
+                if (options.opening_system && options.opening_system.length > 0) {
+                    const openingSystem = options.opening_system[0]; // Take first opening system
+                    this.updateField('opening_system', openingSystem.name || openingSystem);
+                    this.autoPopulatedFields.add('opening_system');
+                }
+                
+                // Populate colors (multiple)
+                if (options.color && options.color.length > 0) {
+                    const colors = options.color.map(c => c.name || c);
+                    this.updateField('colours', colors);
+                    this.autoPopulatedFields.add('colours');
+                }
+                
+                console.log('🔗 [POPULATE] Auto-populated fields:', Array.from(this.autoPopulatedFields));
+            },
+            
+            // Clear auto-populated fields
+            clearAutoPopulatedFields() {
+                console.log('🔗 [CLEAR] Clearing auto-populated fields');
+                
+                for (const fieldName of this.autoPopulatedFields) {
+                    if (fieldName === 'colours') {
+                        this.updateField(fieldName, []);
+                    } else {
+                        this.updateField(fieldName, '');
+                    }
+                }
+                
+                this.autoPopulatedFields.clear();
+            },
+            
+            // Check if field is auto-populated
+            isAutoPopulated(fieldName) {
+                return this.autoPopulatedFields.has(fieldName);
+            },
+            
+            // Add color to colors array
+            addColor(colorName) {
+                if (!colorName || this.isAutoPopulated('colours')) return;
+                
+                const currentColors = this.formData.colours || [];
+                if (!currentColors.includes(colorName)) {
+                    this.updateField('colours', [...currentColors, colorName]);
+                }
+            },
+            
+            // Remove color from colors array
+            removeColor(colorName) {
+                if (this.isAutoPopulated('colours')) return;
+                
+                const currentColors = this.formData.colours || [];
+                const updatedColors = currentColors.filter(c => c !== colorName);
+                this.updateField('colours', updatedColors);
+            }
+        };
+    };
 });
 </script>
 {% endblock %}
@@ -889,20 +1354,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Load window utility functions -->
-<script src="/static/js/_profile/_window.js?v=2"></script>
+<script src="/static/js/_profile/_window.js?v=3"></script>
 
 <!-- Load modular classes first (order matters!) -->
-<script src="/static/js/_profile/ConditionEvaluator.js?v=3"></script>
-<script src="/static/js/_profile/BusinessRulesEngine.js?v=5"></script>
-<script src="/static/js/_profile/SessionManager.js?v=4"></script>
-<script src="/static/js/_profile/DataLoader.js?v=4"></script>
-<script src="/static/js/_profile/FormValidator.js?v=4"></script>
-<script src="/static/js/_profile/ImageHandler.js?v=4"></script>
-<script src="/static/js/_profile/TableEditor.js?v=4"></script>
-<script src="/static/js/_profile/FormHelpers.js?v=6"></script>
-<script src="/static/js/_profile/ConfigurationSaver.js?v=5"></script>
-<script src="/static/js/_profile/SearchEngine.js?v=5"></script>
+<script src="/static/js/_profile/ConditionEvaluator.js?v=4"></script>
+<script src="/static/js/_profile/BusinessRulesEngine.js?v=6"></script>
+<script src="/static/js/_profile/SessionManager.js?v=5"></script>
+<script src="/static/js/_profile/DataLoader.js?v=5"></script>
+<script src="/static/js/_profile/FormValidator.js?v=5"></script>
+<script src="/static/js/_profile/ImageHandler.js?v=5"></script>
+<script src="/static/js/_profile/TableEditor.js?v=5"></script>
+<script src="/static/js/_profile/FormHelpers.js?v=7"></script>
+<script src="/static/js/_profile/ConfigurationSaver.js?v=6"></script>
+<script src="/static/js/_profile/SearchEngine.js?v=6"></script>
 
 <!-- Load main application file last -->
-<script src="/static/js/profile-entry.js?v=36"></script>
+<script src="/static/js/profile-entry.js?v=40"></script>
 {% endblock %}

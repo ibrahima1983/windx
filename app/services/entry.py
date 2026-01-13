@@ -19,6 +19,7 @@ Features:
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime
 from decimal import Decimal
@@ -47,6 +48,7 @@ from app.services.base import BaseService
 from app.services.rbac import RBACService
 
 __all__ = ["ConditionEvaluator", "EntryService"]
+logger = logging.getLogger("EntrySystem")
 
 
 # Define reusable Privilege objects for Entry Service operations
@@ -360,7 +362,7 @@ class EntryService(BaseService):
         if ui_component in ["input", "text", "string", "textinput"]:
             ui_component = "text"
         elif ui_component == "multiselect":
-            ui_component = "text"
+            ui_component = "multi-select"
         elif not ui_component:
             # Fallback based on data_type
             if node.data_type == "boolean":
@@ -370,12 +372,20 @@ class EntryService(BaseService):
             else:
                 ui_component = "text"
 
-        # Extract options from child nodes if this is a dropdown/radio/multi-select field
+        # Extract options from child nodes or relations system
         options = None
         options_data = None
         if ui_component in ["dropdown", "radio", "multi-select"]:
-            options = await self._extract_options_from_children(node)
-            options_data = await self._extract_options_with_metadata(node)
+            # Check if this is a relations field that should get options from relations system
+            if node.name in ["system_series", "company", "material", "opening_system", "colours"]:
+                logger.info(f"Using relations system for field: {node.name}")
+                options, options_data = await self._extract_options_from_relations(node.name)
+                logger.info(f"Relations system returned {len(options)} options for {node.name}: {options}")
+            else:
+                # Use traditional child nodes approach
+                logger.info(f"Using child nodes for field: {node.name}")
+                options = await self._extract_options_from_children(node)
+                options_data = await self._extract_options_with_metadata(node)
 
         return FieldDefinition(
             name=node.name,
@@ -446,6 +456,82 @@ class EntryService(BaseService):
             }
             for node in option_nodes
         ]
+
+    async def _extract_options_from_relations(
+        self, field_name: str
+    ) -> tuple[list[str], list[dict[str, Any]]]:
+        """Extract options from the relations system for specific fields.
+
+        Args:
+            field_name: Name of the field (system_series, company, material, etc.)
+
+        Returns:
+            tuple: (options list, options_data list)
+        """
+        logger.info(f"Loading options for field: {field_name}")
+        
+        from app.services.relations import RelationsService
+
+        relations_service = RelationsService(self.db)
+
+        # Map field names to entity types
+        field_to_entity_type = {
+            "system_series": "system_series",
+            "company": "company", 
+            "material": "material",
+            "opening_system": "opening_system",
+            "colours": "color",  # Note: colours field maps to color entity type
+        }
+
+        entity_type = field_to_entity_type.get(field_name)
+        if not entity_type:
+            logger.info(f"No entity type mapping for field: {field_name}")
+            return [], []
+
+        try:
+            logger.info(f"Getting entities for type: {entity_type}")
+            # Get entities from relations system
+            entities = await relations_service.get_entities_by_type(entity_type)
+            logger.info(f"Found {len(entities)} entities")
+            
+            # Remove duplicates and ensure unique names
+            seen_names = set()
+            unique_entities = []
+            for entity in entities:
+                if entity.name and entity.name not in seen_names:
+                    seen_names.add(entity.name)
+                    unique_entities.append(entity)
+                    logger.info(f"Added unique entity: {entity.name} (ID: {entity.id})")
+                elif entity.name in seen_names:
+                    logger.info(f"Skipping duplicate entity: {entity.name} (ID: {entity.id})")
+            
+            logger.info(f"After deduplication: {len(unique_entities)} unique entities from {len(entities)} total")
+            
+            # Convert to options format - ensure strings only for options array
+            options = [str(entity.name) for entity in unique_entities if entity.name]
+            options_data = [
+                {
+                    "id": entity.id,
+                    "name": str(entity.name),
+                    "description": entity.description,
+                    "price_impact_value": float(entity.price_impact_value)
+                    if entity.price_impact_value
+                    else None,
+                    "sort_order": 0,  # Relations entities don't have sort_order
+                    "image_url": entity.image_url,
+                }
+                for entity in unique_entities  # Use unique_entities, not entities
+                if entity.name  # Only include entities with names
+            ]
+            
+            logger.info(f"Returning {len(options)} unique options: {options}")
+            return options, options_data
+            
+        except Exception as e:
+            logger.error(f"Error loading options from relations for {field_name}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return [], []
 
     async def evaluate_display_conditions(
         self, form_data: dict[str, Any], schema: ProfileSchema

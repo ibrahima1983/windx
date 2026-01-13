@@ -155,7 +155,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "basic_information.company",
             "depth": 1,
-            "sort_order": 3,
+            "sort_order": 4,  # Moved after system_series
             "ui_component": "dropdown",
             "help_text": "Company or manufacturer name",
             "validation_rules": {"max_length": 100},
@@ -170,7 +170,7 @@ async def create_attribute_nodes(
             "required": True,
             "ltree_path": "basic_information.material",
             "depth": 1,
-            "sort_order": 4,
+            "sort_order": 5,  # Moved after company
             "ui_component": "dropdown",
             "help_text": "Select the material type",
             "validation_rules": {},
@@ -185,7 +185,7 @@ async def create_attribute_nodes(
             "required": True,
             "ltree_path": "basic_information.opening_system",
             "depth": 1,
-            "sort_order": 5,
+            "sort_order": 6,  # Moved after material
             "ui_component": "dropdown",
             "help_text": "Select the opening system type",
             "validation_rules": {},
@@ -200,7 +200,7 @@ async def create_attribute_nodes(
             "required": True,
             "ltree_path": "basic_information.system_series",
             "depth": 1,
-            "sort_order": 6,
+            "sort_order": 3,  # Moved to position 3
             "ui_component": "dropdown",
             "help_text": "Select a system series (e.g., K700, K800)",
             "validation_rules": {"max_length": 200},
@@ -215,7 +215,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "basic_information.code",
             "depth": 1,
-            "sort_order": 7,
+            "sort_order": 8,  # Moved after colours
             "ui_component": "input",
             "help_text": "Product code or SKU",
             "validation_rules": {"max_length": 50},
@@ -229,7 +229,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "basic_information.length_of_beam",
             "depth": 1,
-            "sort_order": 8,
+            "sort_order": 9,  # Updated after code
             "ui_component": "number",
             "help_text": "Length of beam in meters",
             "validation_rules": {"min": 0, "max": 20},
@@ -244,7 +244,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "conditional_fields.renovation",
             "depth": 1,
-            "sort_order": 9,
+            "sort_order": 10,  # Updated
             "ui_component": "checkbox",
             "help_text": "Check if this is for renovation purposes",
             "display_condition": {"operator": "equals", "field": "type", "value": "Frame"},
@@ -258,7 +258,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "conditional_fields.builtin_flyscreen_track",
             "depth": 1,
-            "sort_order": 10,
+            "sort_order": 11,  # Updated
             "ui_component": "checkbox",
             "help_text": "Check if frame has built-in flyscreen track",
             "display_condition": {
@@ -279,7 +279,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.width",
             "depth": 1,
-            "sort_order": 11,
+            "sort_order": 12,  # Updated
             "ui_component": "number",
             "help_text": "Width dimension in mm",
             "validation_rules": {"min": 0, "max": 5000},
@@ -293,7 +293,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.total_width",
             "depth": 1,
-            "sort_order": 12,
+            "sort_order": 13,  # Updated
             "ui_component": "number",
             "help_text": "Total width including flyscreen track",
             "validation_rules": {"min": 0, "max": 5000},
@@ -311,7 +311,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.flyscreen_track_height",
             "depth": 1,
-            "sort_order": 13,
+            "sort_order": 14,  # Updated
             "ui_component": "number",
             "help_text": "Height of flyscreen track in mm",
             "validation_rules": {"min": 0, "max": 200},
@@ -329,7 +329,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.front_height",
             "depth": 1,
-            "sort_order": 14,
+            "sort_order": 15,  # Updated
             "ui_component": "number",
             "help_text": "Front height in mm",
             "validation_rules": {"min": 0, "max": 5000},
@@ -342,7 +342,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.rear_height",
             "depth": 1,
-            "sort_order": 15,
+            "sort_order": 16,  # Updated
             "ui_component": "number",
             "help_text": "Rear height in mm",
             "validation_rules": {"min": 0, "max": 5000},
@@ -355,7 +355,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.glazing_height",
             "depth": 1,
-            "sort_order": 16,
+            "sort_order": 17,  # Updated
             "ui_component": "number",
             "help_text": "Glazing height in mm",
             "validation_rules": {"min": 0, "max": 5000},
@@ -368,7 +368,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.renovation_height",
             "depth": 1,
-            "sort_order": 17,
+            "sort_order": 18,  # Updated
             "ui_component": "number",
             "help_text": "Renovation height in mm",
             "validation_rules": {"min": 0, "max": 5000},
@@ -382,7 +382,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "dimensions.glazing_undercut_height",
             "depth": 1,
-            "sort_order": 18,
+            "sort_order": 19,  # Updated
             "ui_component": "number",
             "help_text": "Glazing undercut height in mm",
             "validation_rules": {"min": 0, "max": 100},
@@ -397,7 +397,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.pic",
             "depth": 1,
-            "sort_order": 19,
+            "sort_order": 20,  # Updated
             "ui_component": "file",
             "help_text": "Image filename or reference",
             "validation_rules": {"max_length": 200},
@@ -410,7 +410,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.sash_overlap",
             "depth": 1,
-            "sort_order": 20,
+            "sort_order": 21,  # Updated
             "ui_component": "number",
             "help_text": "Sash overlap in mm",
             "validation_rules": {"min": 0, "max": 50},
@@ -424,7 +424,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.flying_mullion_horizontal_clearance",
             "depth": 1,
-            "sort_order": 21,
+            "sort_order": 22,  # Updated
             "ui_component": "number",
             "help_text": "Horizontal clearance for flying mullion in mm",
             "validation_rules": {"min": 0, "max": 100},
@@ -438,7 +438,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.flying_mullion_vertical_clearance",
             "depth": 1,
-            "sort_order": 22,
+            "sort_order": 23,  # Updated
             "ui_component": "number",
             "help_text": "Vertical clearance for flying mullion in mm",
             "validation_rules": {"min": 0, "max": 100},
@@ -452,7 +452,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.steel_material_thickness",
             "depth": 1,
-            "sort_order": 23,
+            "sort_order": 24,  # Updated
             "ui_component": "number",
             "help_text": "Steel thickness in mm",
             "validation_rules": {"min": 0, "max": 10},
@@ -470,7 +470,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.weight_per_meter",
             "depth": 1,
-            "sort_order": 24,
+            "sort_order": 25,  # Updated
             "ui_component": "number",
             "help_text": "Weight per meter in kg",
             "validation_rules": {"min": 0, "max": 2000},
@@ -483,7 +483,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.reinforcement_steel",
             "depth": 1,
-            "sort_order": 25,
+            "sort_order": 26,  # Updated
             "ui_component": "dropdown",
             "help_text": "Select reinforcement steel options",
             "validation_rules": {},
@@ -497,9 +497,9 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "technical_specs.colours",
             "depth": 1,
-            "sort_order": 26,
-            "ui_component": "dropdown",
-            "help_text": "Select available colors",
+            "sort_order": 7,  # Moved after opening_system
+            "ui_component": "multi-select",  # Changed to multi-select
+            "help_text": "Select available colors (multiple selection)",
             "validation_rules": {},
             # No hardcoded options - options come from the relations system (colours entity type)
         },
@@ -513,7 +513,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "pricing.price_per_meter",
             "depth": 1,
-            "sort_order": 27,
+            "sort_order": 27,  # Updated
             "ui_component": "currency",
             "help_text": "Price per meter in currency units",
             "validation_rules": {"min": 0, "max": 10000},
@@ -527,7 +527,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "pricing.price_per_beam",
             "depth": 1,
-            "sort_order": 28,
+            "sort_order": 28,  # Updated
             "ui_component": "currency",
             "help_text": "Price per beam in currency units",
             "validation_rules": {"min": 0, "max": 50000},
@@ -541,7 +541,7 @@ async def create_attribute_nodes(
             "required": False,
             "ltree_path": "pricing.upvc_profile_discount",
             "depth": 1,
-            "sort_order": 29,
+            "sort_order": 29,  # Updated
             "ui_component": "percentage",
             "help_text": "Discount percentage for UPVC profiles",
             "validation_rules": {"min": 0, "max": 100},
