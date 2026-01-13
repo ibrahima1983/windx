@@ -1434,3 +1434,104 @@ class TestAdminEntryFieldOptions:
             data = response.json()
             assert data["success"] is True
             assert f"Option_{page_type}" in data["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_header_mapping_requires_auth(
+        self,
+        client: AsyncClient,
+    ):
+        """Test that header mapping endpoint requires authentication."""
+        response = await client.get("/api/v1/admin/entry/profile/header-mapping/1")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_get_header_mapping_requires_superuser(
+        self,
+        client: AsyncClient,
+        test_user_with_rbac: User,
+    ):
+        """Test that header mapping endpoint requires superuser privileges."""
+        from tests.config import get_test_settings
+
+        test_settings = get_test_settings()
+
+        # Login as regular user
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": test_user_with_rbac.username,
+                "password": test_settings.test_user_password,
+            },
+        )
+        assert login_response.status_code == 200
+        token = login_response.json()["access_token"]
+
+        # Try to access header mapping endpoint
+        response = await client.get(
+            "/api/v1/admin/entry/profile/header-mapping/1",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_header_mapping_success(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+    ):
+        """Test successful header mapping retrieval."""
+        response = await client.get(
+            f"/api/v1/admin/entry/profile/header-mapping/{simple_manufacturing_type.id}",
+            headers=superuser_auth_headers,
+        )
+        assert response.status_code == 200
+
+        mapping = response.json()
+        assert isinstance(mapping, dict)
+        
+        # Should always include id mapping
+        assert mapping["id"] == "id"
+        
+        # Should include mappings for any attribute nodes that exist
+        # The exact mappings depend on what attribute nodes are set up for the manufacturing type
+
+    @pytest.mark.asyncio
+    async def test_get_header_mapping_with_page_type(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+        simple_manufacturing_type: ManufacturingType,
+    ):
+        """Test header mapping with page_type parameter."""
+        page_types = ["profile", "accessories", "glazing"]
+        
+        for page_type in page_types:
+            response = await client.get(
+                f"/api/v1/admin/entry/profile/header-mapping/{simple_manufacturing_type.id}?page_type={page_type}",
+                headers=superuser_auth_headers,
+            )
+            assert response.status_code == 200
+
+            mapping = response.json()
+            assert isinstance(mapping, dict)
+            assert mapping["id"] == "id"
+
+    @pytest.mark.asyncio
+    async def test_get_header_mapping_nonexistent_manufacturing_type(
+        self,
+        client: AsyncClient,
+        superuser_auth_headers: dict,
+    ):
+        """Test header mapping with nonexistent manufacturing type."""
+        response = await client.get(
+            "/api/v1/admin/entry/profile/header-mapping/99999",
+            headers=superuser_auth_headers,
+        )
+        # Should return 200 with minimal mapping (just id) since the service method
+        # doesn't validate manufacturing type existence - it just returns empty results
+        assert response.status_code == 200
+        
+        mapping = response.json()
+        assert isinstance(mapping, dict)
+        assert mapping["id"] == "id"

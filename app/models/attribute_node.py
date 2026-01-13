@@ -85,6 +85,11 @@ class AttributeNode(Base):
 
     # Basic information
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    display_name: Mapped[str | None] = mapped_column(
+        String(300),
+        nullable=True,
+        comment="Human-readable display name. If null, auto-generated from 'name' field using title case conversion.",
+    )
     node_type: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
@@ -260,3 +265,73 @@ class AttributeNode(Base):
             f"<AttributeNode(id={self.id}, name='{self.name}', "
             f"node_type='{self.node_type}', path='{self.ltree_path}')>"
         )
+
+    def get_display_name(self) -> str:
+        """
+        Get the display name for this attribute node.
+        
+        Returns the stored display_name if available, otherwise generates one from the name field.
+        
+        Generation Rules:
+        - Converts snake_case and kebab-case to Title Case
+        - Replaces underscores and hyphens with spaces
+        - Preserves parentheses and their content
+        - Capitalizes each word appropriately
+        
+        Examples:
+            - "opening_system" → "Opening System"
+            - "price-per-meter" → "Price Per Meter"  
+            - "width_(mm)" → "Width (mm)"
+            - "u_value" → "U Value"
+            - "built-in_flyscreen_track" → "Built In Flyscreen Track"
+        
+        Returns:
+            str: Human-readable display name for UI presentation
+        """
+        if self.display_name:
+            return self.display_name
+            
+        return self._generate_display_name_from_name(self.name)
+    
+    @staticmethod
+    def _generate_display_name_from_name(name: str) -> str:
+        """
+        Generate a human-readable display name from a technical field name.
+        
+        This method converts technical field names (typically in snake_case or kebab-case)
+        into user-friendly display names suitable for UI presentation.
+        
+        Conversion Rules:
+        1. Replace underscores (_) and hyphens (-) with spaces
+        2. Convert to Title Case (capitalize first letter of each word)
+        3. Preserve parentheses and their content as-is
+        4. Handle special cases for common abbreviations
+        
+        Args:
+            name (str): Technical field name (e.g., "opening_system", "price-per-meter")
+            
+        Returns:
+            str: Human-readable display name (e.g., "Opening System", "Price Per Meter")
+            
+        Examples:
+            >>> AttributeNode._generate_display_name_from_name("opening_system")
+            "Opening System"
+            >>> AttributeNode._generate_display_name_from_name("price-per-meter")
+            "Price Per Meter"
+            >>> AttributeNode._generate_display_name_from_name("width_(mm)")
+            "Width (mm)"
+            >>> AttributeNode._generate_display_name_from_name("built-in_flyscreen_track")
+            "Built In Flyscreen Track"
+            >>> AttributeNode._generate_display_name_from_name("u_value")
+            "U Value"
+        """
+        if not name:
+            return ""
+            
+        # Replace underscores and hyphens with spaces
+        display_name = name.replace("_", " ").replace("-", " ")
+        
+        # Convert to title case
+        display_name = display_name.title()
+        
+        return display_name

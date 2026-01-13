@@ -4,85 +4,53 @@ class FormHelpers {
     static dynamicHeaderMapping = null;
     static fieldOptionsCache = new Map(); // Cache for field options
 
-    static setDynamicHeaders(headers) {
+    static async setDynamicHeaders(headers, manufacturingTypeId, pageType = 'profile') {
         console.log('🦆 [FORMHELPERS] Setting dynamic headers:', headers);
         this.dynamicHeaders = headers;
-        this.dynamicHeaderMapping = this.generateHeaderMapping(headers);
-        console.log('🦆 [FORMHELPERS] Generated dynamic header mapping:', this.dynamicHeaderMapping);
+        
+        // Fetch the header mapping from backend instead of generating client-side
+        this.dynamicHeaderMapping = await this.fetchHeaderMapping(manufacturingTypeId, pageType);
+        console.log('🦆 [FORMHELPERS] Fetched dynamic header mapping from backend:', this.dynamicHeaderMapping);
     }
 
-    static generateHeaderMapping(headers) {
-        // Generate mapping from headers to field names
-        const mapping = {};
-        
-        for (const header of headers) {
-            // Convert header to field name (lowercase, replace spaces with underscores)
-            let fieldName = header.toLowerCase()
-                .replace(/\s+/g, '_')
-                .replace(/[^\w_]/g, '')
-                .replace(/_+/g, '_')
-                .replace(/^_|_$/g, '');
+    static async fetchHeaderMapping(manufacturingTypeId, pageType = 'profile') {
+        try {
+            // Try to get JWT token from localStorage/sessionStorage
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
             
-            // Handle special cases for consistency with existing field names
-            // Maps the auto-generated fieldName to the actual schema field name
-            const specialMappings = {
-                // Product Type is special - schema uses 'type' not 'product_type'
-                'product_type': 'type',
-                
-                // Fields with (mm) suffix - strip the _mm
-                'glazing_undercut_height_mm': 'glazing_undercut_height',
-                'sash_overlap_mm': 'sash_overlap',
-                'flying_mullion_horizontal_clearance_mm': 'flying_mullion_horizontal_clearance',
-                'flying_mullion_vertical_clearance_mm': 'flying_mullion_vertical_clearance',
-                'steel_material_thickness_mm': 'steel_material_thickness',
-                'width_mm': 'width',
-                'total_width_mm': 'total_width',
-                'flyscreen_track_height_mm': 'flyscreen_track_height',
-                'front_height_mm': 'front_height',
-                'rear_height_mm': 'rear_height',
-                'glazing_height_mm': 'glazing_height',
-                'renovation_height_mm': 'renovation_height',
-                
-                // Fields with (kg) suffix
-                'weightm_kg': 'weight_per_meter',
-                
-                // Fields with special characters
-                'pricem': 'price_per_meter',
-                
-                // Fields with (m) suffix
-                'length_of_beam_m': 'length_of_beam',
-                
-                // Standard mappings (no change needed but explicit)
-                'opening_system': 'opening_system',
-                'system_series': 'system_series',
-                'length_of_beam': 'length_of_beam',
-                'builtin_flyscreen_track': 'builtin_flyscreen_track',
-                'total_width': 'total_width',
-                'flyscreen_track_height': 'flyscreen_track_height',
-                'front_height': 'front_height',
-                'rear_height': 'rear_height',
-                'glazing_height': 'glazing_height',
-                'renovation_height': 'renovation_height',
-                'glazing_undercut_height': 'glazing_undercut_height',
-                'sash_overlap': 'sash_overlap',
-                'flying_mullion_horizontal_clearance': 'flying_mullion_horizontal_clearance',
-                'flying_mullion_vertical_clearance': 'flying_mullion_vertical_clearance',
-                'steel_material_thickness': 'steel_material_thickness',
-                'weight_per_meter': 'weight_per_meter',
-                'reinforcement_steel': 'reinforcement_steel',
-                'price_per_meter': 'price_per_meter',
-                'price_per_beam': 'price_per_beam',
-                'upvc_profile_discount': 'upvc_profile_discount'
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json'
             };
             
-            if (specialMappings[fieldName]) {
-                fieldName = specialMappings[fieldName];
+            // Add Authorization header only if token is available
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
-            
-            mapping[header] = fieldName;
+            // If no token, rely on cookie-based authentication
+
+            // Fetch header mapping from backend API
+            const response = await fetch(
+                `/api/v1/admin/entry/profile/header-mapping/${manufacturingTypeId}?page_type=${pageType}`,
+                {
+                    headers: headers,
+                    credentials: 'include'  // Include cookies for authentication
+                }
+            );
+
+            if (!response.ok) {
+                console.warn(`🦆 [FORMHELPERS] Failed to fetch header mapping: ${response.status}`);
+                return {};
+            }
+
+            const mapping = await response.json();
+            console.log('🦆 [FORMHELPERS] Successfully fetched header mapping from backend:', mapping);
+            return mapping;
+
+        } catch (error) {
+            console.error(`🦆 [FORMHELPERS] Error fetching header mapping:`, error);
+            return {};
         }
-        
-        return mapping;
     }
 
     static getUIComponent(field) {
@@ -359,15 +327,15 @@ class FormHelpers {
     }
 
     static getPreviewValue(header, formData, fieldVisibility) {
-        // Require dynamic header mapping - no fallbacks allowed
+        // Require dynamic header mapping from backend - no fallbacks allowed
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend.');
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend via setDynamicHeaders().');
             return 'ERROR: Headers not loaded';
         }
 
         const fieldName = this.dynamicHeaderMapping[header];
         if (!fieldName) {
-            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in mapping:', header);
+            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in backend mapping:', header);
             return 'N/A';
         }
 
@@ -408,22 +376,22 @@ class FormHelpers {
     }
 
     static getHeaderMapping() {
-        // Require dynamic header mapping - no fallbacks allowed
+        // Require dynamic header mapping from backend - no fallbacks allowed
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend.');
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available. Headers must be loaded from backend via setDynamicHeaders().');
             return {};
         }
         return this.dynamicHeaderMapping;
     }
 
     static getPreviewHeaders() {
-        // Require dynamic headers - no fallbacks allowed
+        // Require dynamic headers from backend - no fallbacks allowed
         if (!this.dynamicHeaders || this.dynamicHeaders.length === 0) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic headers available. Headers must be loaded from backend.');
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic headers available. Headers must be loaded from backend via setDynamicHeaders().');
             return ['ERROR: Headers not loaded'];
         }
         
-        console.log('🦆 [FORMHELPERS] Using dynamic headers:', this.dynamicHeaders);
+        console.log('🦆 [FORMHELPERS] Using dynamic headers from backend:', this.dynamicHeaders);
         return this.dynamicHeaders;
     }
 
@@ -489,15 +457,15 @@ class FormHelpers {
     static isValueChanged(header, formData, lastSavedData) {
         if (!lastSavedData) return false;
 
-        // Require dynamic header mapping - no fallbacks allowed
+        // Require dynamic header mapping from backend - no fallbacks allowed
         if (!this.dynamicHeaderMapping) {
-            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available for isValueChanged.');
+            console.error('🦆 [FORMHELPERS] ERROR: No dynamic header mapping available for isValueChanged. Headers must be loaded from backend via setDynamicHeaders().');
             return false;
         }
 
         const fieldName = this.dynamicHeaderMapping[header];
         if (!fieldName) {
-            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in mapping for isValueChanged:', header);
+            console.warn('🦆 [FORMHELPERS] WARNING: Header not found in backend mapping for isValueChanged:', header);
             return false;
         }
 

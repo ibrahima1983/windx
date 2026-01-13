@@ -153,6 +153,66 @@ async def get_preview_headers(
     return await entry_service.generate_preview_headers(manufacturing_type_id, page_type)
 
 
+@router.get(
+    "/profile/header-mapping/{manufacturing_type_id}",
+    response_model=dict[str, str],
+    summary="Get Dynamic Header Mapping (Admin)",
+    description="Get dynamic header-to-field mapping for a manufacturing type based on attribute nodes",
+    response_description="Mapping from header names to field names",
+    operation_id="getAdminHeaderMapping",
+    responses={
+        200: {
+            "description": "Successfully retrieved header mapping",
+        },
+        404: {
+            "description": "Manufacturing type not found",
+        },
+        **get_common_responses(401, 403, 500),
+    },
+)
+async def get_header_mapping(
+    manufacturing_type_id: PositiveInt,
+    current_superuser: CurrentSuperuser,
+    db: DBSession,
+    page_type: Annotated[
+        str,
+        Query(description="Page type: profile, accessories, glazing"),
+    ] = "profile",
+) -> dict[str, str]:
+    """Get dynamic header-to-field mapping for a manufacturing type (admin interface).
+
+    Generates dynamic mapping from human-readable headers to field names
+    based on the attribute hierarchy defined for the specified manufacturing type.
+    This enables the frontend to be truly schema-driven without hardcoded mappings.
+
+    Args:
+        manufacturing_type_id (PositiveInt): Manufacturing type ID
+        current_superuser (User): Current authenticated superuser
+        db (DBSession): Database session
+        page_type (str): Page type (profile, accessories, glazing)
+
+    Returns:
+        dict[str, str]: Mapping from header names to field names
+
+    Raises:
+        NotFoundException: If manufacturing type not found
+
+    Example:
+        GET /api/v1/admin/entry/profile/header-mapping/1?page_type=profile
+        Response: {
+            "id": "id",
+            "Product Name": "name", 
+            "Product Type": "type",
+            "Frame Material": "material",
+            "Width (mm)": "width"
+        }
+    """
+    from app.services.entry import EntryService
+
+    entry_service = EntryService(db)
+    return await entry_service.generate_header_mapping(manufacturing_type_id)
+
+
 @router.post(
     "/profile/save",
     response_model=Configuration,

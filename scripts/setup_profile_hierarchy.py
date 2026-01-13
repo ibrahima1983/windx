@@ -108,6 +108,7 @@ async def create_attribute_nodes(
         # Basic Information Section
         {
             "name": "name",
+            "display_name": "Product Name",
             "description": "Product name",
             "node_type": "attribute",
             "data_type": "string",
@@ -121,6 +122,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "type",
+            "display_name": "Profile Type",
             "description": "Product type",
             "node_type": "attribute",
             "data_type": "string",
@@ -146,6 +148,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "company",
+            "display_name": "Company",
             "description": "Company",
             "node_type": "attribute",
             "data_type": "string",
@@ -160,6 +163,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "material",
+            "display_name": "Material",
             "description": "Material",
             "node_type": "attribute",
             "data_type": "string",
@@ -174,6 +178,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "opening_system",
+            "display_name": "Opening System",
             "description": "Opening System",
             "node_type": "attribute",
             "data_type": "string",
@@ -188,6 +193,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "system_series",
+            "display_name": "System Series",
             "description": "System Series",
             "node_type": "attribute",
             "data_type": "string",
@@ -202,6 +208,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "code",
+            "display_name": "Product Code",
             "description": "Product Code",
             "node_type": "attribute",
             "data_type": "string",
@@ -215,6 +222,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "length_of_beam",
+            "display_name": "Length of Beam (m)",
             "description": "Length of Beam (m)",
             "node_type": "attribute",
             "data_type": "number",
@@ -229,6 +237,7 @@ async def create_attribute_nodes(
         # Conditional Fields Section
         {
             "name": "renovation",
+            "display_name": "Renovation",
             "description": "Renovation (only for frame)",
             "node_type": "attribute",
             "data_type": "boolean",
@@ -242,6 +251,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "builtin_flyscreen_track",
+            "display_name": "Built-in Flyscreen Track",
             "description": "Built-in Flyscreen Track (only for sliding frame)",
             "node_type": "attribute",
             "data_type": "boolean",
@@ -262,6 +272,7 @@ async def create_attribute_nodes(
         # Dimensions Section
         {
             "name": "width",
+            "display_name": "Width (mm)",
             "description": "Width",
             "node_type": "attribute",
             "data_type": "number",
@@ -275,6 +286,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "total_width",
+            "display_name": "Total Width (mm)",
             "description": "Total Width (only for frame with built-in flyscreen)",
             "node_type": "attribute",
             "data_type": "number",
@@ -494,6 +506,7 @@ async def create_attribute_nodes(
         # Pricing Section
         {
             "name": "price_per_meter",
+            "display_name": "Price/m",
             "description": "Price per Meter",
             "node_type": "attribute",
             "data_type": "number",
@@ -507,6 +520,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "price_per_beam",
+            "display_name": "Price per Beam",
             "description": "Price per Beam",
             "node_type": "attribute",
             "data_type": "number",
@@ -520,6 +534,7 @@ async def create_attribute_nodes(
         },
         {
             "name": "upvc_profile_discount",
+            "display_name": "UPVC Profile Discount %",
             "description": "UPVC Profile Discount (%)",
             "node_type": "attribute",
             "data_type": "number",
@@ -671,6 +686,10 @@ async def create_attribute_nodes(
                 node.ui_component = attr_def["ui_component"]
                 node.validation_rules = attr_def.get("validation_rules")
                 node.display_condition = attr_def.get("display_condition")
+                
+                # Update display_name if provided in definition
+                if "display_name" in attr_def:
+                    node.display_name = attr_def["display_name"]
 
                 # Update with rich tooltip content if available
                 if attr_def["name"] in tooltip_content:
@@ -711,6 +730,7 @@ async def create_attribute_nodes(
             manufacturing_type_id=manufacturing_type.id,
             parent_node_id=None,  # All are root level for now
             name=attr_def["name"],
+            display_name=attr_def.get("display_name"),  # Use display_name if provided
             description=description,
             node_type=attr_def["node_type"],
             data_type=attr_def["data_type"],

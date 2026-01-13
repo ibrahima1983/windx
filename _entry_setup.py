@@ -140,11 +140,11 @@ async def create_minimal_entry_data():
             print("Creating basic manufacturing type...")
 
             basic_mfg = ManufacturingType(
-                name="Basic Window",
-                description="Basic window configuration for entry system",
+                name="Schema-Driven Window Entry",
+                description="Schema-driven window configuration with display_name support",
                 base_category="window",
-                base_price=200.00,
-                base_weight=25.0,
+                base_price=200.00, # TODO: it should not be hard-coded
+                base_weight=25.0, # TODO: it should not be hard-coded
                 is_active=True,
             )
             session.add(basic_mfg)
@@ -155,48 +155,76 @@ async def create_minimal_entry_data():
 
             basic_attributes = [
                 {
-                    "name": "name",
+                    "name": "product_name",
+                    "display_name": "Product Name",
                     "node_type": "attribute",
                     "data_type": "string",
                     "required": True,
-                    "ltree_path": "basic.name",
+                    "ltree_path": "basic.product_name",
                     "depth": 1,
                     "sort_order": 1,
                     "ui_component": "text",
                     "description": "Product name",
                 },
                 {
-                    "name": "type",
+                    "name": "product_type",
+                    "display_name": "Profile Type",
                     "node_type": "attribute",
                     "data_type": "string",
                     "required": True,
-                    "ltree_path": "basic.type",
+                    "ltree_path": "basic.product_type",
                     "depth": 1,
                     "sort_order": 2,
-                    "ui_component": "select",
-                    "description": "Product type",
+                    "ui_component": "dropdown",
+                    "description": "Product type selection",
                 },
                 {
-                    "name": "width",
+                    "name": "width_mm",
+                    "display_name": "Width (mm)",
                     "node_type": "attribute",
                     "data_type": "number",
                     "required": False,
-                    "ltree_path": "dimensions.width",
+                    "ltree_path": "dimensions.width_mm",
                     "depth": 1,
                     "sort_order": 3,
                     "ui_component": "number",
-                    "description": "Width in mm",
+                    "description": "Width in millimeters",
                 },
                 {
-                    "name": "height",
+                    "name": "height_mm",
+                    "display_name": "Height (mm)",
                     "node_type": "attribute",
                     "data_type": "number",
                     "required": False,
-                    "ltree_path": "dimensions.height",
+                    "ltree_path": "dimensions.height_mm",
                     "depth": 1,
                     "sort_order": 4,
                     "ui_component": "number",
-                    "description": "Height in mm",
+                    "description": "Height in millimeters",
+                },
+                {
+                    "name": "material_type",
+                    "display_name": "Material Type",
+                    "node_type": "attribute",
+                    "data_type": "string",
+                    "required": False,
+                    "ltree_path": "specifications.material_type",
+                    "depth": 1,
+                    "sort_order": 5,
+                    "ui_component": "dropdown",
+                    "description": "Material selection",
+                },
+                {
+                    "name": "color_finish",
+                    "display_name": "Color & Finish",
+                    "node_type": "attribute",
+                    "data_type": "string",
+                    "required": False,
+                    "ltree_path": "specifications.color_finish",
+                    "depth": 1,
+                    "sort_order": 6,
+                    "ui_component": "dropdown",
+                    "description": "Color and finish options",
                 },
             ]
 
@@ -213,6 +241,11 @@ async def create_minimal_entry_data():
             print("OK: Minimal entry data created successfully!")
             print(f"   Manufacturing Type: {basic_mfg.name} (ID: {basic_mfg.id})")
             print(f"   Attribute Nodes: {len(basic_attributes)} created")
+            print("\nThe entry system now has:")
+            print("   • Proper field names (snake_case) and display names (Title Case)")
+            print("   • Schema-driven display with display_name field")
+            print("   • Ready for production use!")
+            print("   • Options can be added dynamically via the API")
 
         except Exception as e:
             await session.rollback()

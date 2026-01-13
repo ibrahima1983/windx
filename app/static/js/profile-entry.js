@@ -344,7 +344,7 @@ function profileEntryApp(options = {}) {
                 this.dynamicHeaders = headers;
                 
                 // Set the headers in FormHelpers for use throughout the application
-                FormHelpers.setDynamicHeaders(headers);
+                await FormHelpers.setDynamicHeaders(headers, this.manufacturingTypeId, this.pageType);
                 
                 console.log('🦆 [HEADERS] ✅ Dynamic headers loaded and set:', headers);
                 return headers;

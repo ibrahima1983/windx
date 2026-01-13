@@ -351,9 +351,8 @@ class EntryService(BaseService):
         Returns:
             FieldDefinition: Field definition
         """
-        # Convert field name to human-readable label
-        # e.g., "product_type" -> "Product Type", "opening_system" -> "Opening System"
-        label = self._generate_label_from_name(node.name)
+        # Use display_name from the node, with fallback to auto-generated name
+        label = node.get_display_name()
 
         # Map ui_component values to match template expectations
         # Handle variations like 'input', 'string', etc. to ensure they map to 'text'
@@ -447,57 +446,6 @@ class EntryService(BaseService):
             }
             for node in option_nodes
         ]
-
-    @staticmethod
-    def _generate_label_from_name(name: str) -> str:
-        """Generate a human-readable label from a field name.
-
-        Args:
-            name: Field name (e.g., "product_type", "opening_system")
-
-        Returns:
-            str: Human-readable label (e.g., "Product Type", "Opening System")
-        """
-        # Special case mappings for common field names
-        special_cases = {
-            "name": "Product Name",
-            "type": "Product Type",
-            "company": "Company",
-            "material": "Material",
-            "opening_system": "Opening System",
-            "system_series": "System Series",
-            "code": "Product Code",
-            "length_of_beam": "Length of Beam (m)",
-            "renovation": "Renovation",
-            "width": "Width (mm)",
-            "builtin_flyscreen_track": "Built-in Flyscreen Track",
-            "total_width": "Total Width (mm)",
-            "flyscreen_track_height": "Flyscreen Track Height (mm)",
-            "front_height": "Front Height (mm)",
-            "rear_height": "Rear Height (mm)",
-            "glazing_height": "Glazing Height (mm)",
-            "renovation_height": "Renovation Height (mm)",
-            "glazing_undercut_height": "Glazing Undercut Height (mm)",
-            "pic": "Picture",
-            "sash_overlap": "Sash Overlap (mm)",
-            "flying_mullion_horizontal_clearance": "Flying Mullion Horizontal Clearance (mm)",
-            "flying_mullion_vertical_clearance": "Flying Mullion Vertical Clearance (mm)",
-            "steel_material_thickness": "Steel Material Thickness (mm)",
-            "weight_per_meter": "Weight/m (kg)",
-            "reinforcement_steel": "Reinforcement Steel",
-            "colours": "Colours",
-            "price_per_meter": "Price/m",
-            "price_per_beam": "Price per Beam",
-            "upvc_profile_discount": "UPVC Profile Discount %",
-        }
-
-        # Check if we have a special case mapping
-        if name.lower() in special_cases:
-            return special_cases[name.lower()]
-
-        # Otherwise, convert snake_case to Title Case
-        # e.g., "some_field_name" -> "Some Field Name"
-        return name.replace("_", " ").title()
 
     async def evaluate_display_conditions(
         self, form_data: dict[str, Any], schema: ProfileSchema
@@ -1202,8 +1150,8 @@ class EntryService(BaseService):
         headers = ["id"]
 
         for node in attribute_nodes:
-            # Use the human-readable label as the header
-            header = self._generate_label_from_name(node.name)
+            # Use display_name from the node, with fallback to auto-generated name
+            header = node.get_display_name()
             headers.append(header)
 
         # Cache the result
@@ -1239,8 +1187,8 @@ class EntryService(BaseService):
         mapping = {"id": "id"}
 
         for node in attribute_nodes:
-            # Map human-readable header to field name
-            header = self._generate_label_from_name(node.name)
+            # Map human-readable header to field name using display_name
+            header = node.get_display_name()
             mapping[header] = node.name
 
         # Cache the result
