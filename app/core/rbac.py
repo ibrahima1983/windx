@@ -753,6 +753,11 @@ async def _check_privilege_requirement(
     Returns:
         True if user has privilege, False otherwise
     """
+    # Superadmin bypass - superadmin has all privileges
+    if user.role == Role.SUPERADMIN.value:
+        logger.debug(f"Superadmin bypass for {user.email} - granting privilege")
+        return True
+
     # Check role requirement
     role_satisfied = await _check_role_requirement(user, privilege.roles)
     if not role_satisfied:

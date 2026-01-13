@@ -27,6 +27,7 @@ Commands:
     clean                        Stop all servers and clean up project directory
     openapi                      Generate OpenAPI schema JSON file from running server
     setup_fresh_db               Complete fresh database setup (drop, migrate, seed, verify)
+                                 Use --no-sample-data to skip profile data seeding
 
 Examples:
     python manage.py createsuperuser
@@ -62,6 +63,7 @@ Examples:
     python manage.py openapi --output api_schema.json
     python manage.py setup_fresh_db
     python manage.py setup_fresh_db --force
+    python manage.py setup_fresh_db --no-sample-data
 """
 
 import argparse
@@ -726,7 +728,10 @@ async def setup_fresh_db_command(args: argparse.Namespace):
         console.print("  • Seed initial data")
         console.print("  • Create minimal entry system data")
         console.print("  • Setup profile hierarchy with comprehensive attribute structure")
-        console.print("  • Seed sample profile data")
+        if not args.no_sample_data:
+            console.print("  • Seed sample profile data")
+        else:
+            console.print("  • [yellow]Skip sample profile data (--no-sample-data)[/yellow]")
         console.print("  • Create entry pages (accessories & glazing)")
         console.print("  • Verify complete setup")
         console.print()
@@ -810,19 +815,23 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             progress.update(task, description="[green]✓ Profile hierarchy setup completed")
 
             # Step 7: Seed profile data (optional but recommended)
-            progress.update(task, description="[cyan]Seeding profile data...")
-            result = subprocess.run(
-                [python_exe, "scripts/seed_profile_data.py"], capture_output=True, text=True
-            )
-            if result.returncode != 0:
-                console.print(f"\n[bold yellow]⚠ Profile data seeding failed:[/bold yellow]")
-                console.print(result.stderr)
-                console.print("[dim]Profile page will work but won't have sample data[/dim]")
-                progress.update(
-                    task, description="[yellow]⚠ Profile data seeding failed (optional)"
+            if not args.no_sample_data:
+                progress.update(task, description="[cyan]Seeding profile data...")
+                result = subprocess.run(
+                    [python_exe, "scripts/seed_profile_data.py"], capture_output=True, text=True
                 )
+                if result.returncode != 0:
+                    console.print(f"\n[bold yellow]⚠ Profile data seeding failed:[/bold yellow]")
+                    console.print(result.stderr)
+                    console.print("[dim]Profile page will work but won't have sample data[/dim]")
+                    progress.update(
+                        task, description="[yellow]⚠ Profile data seeding failed (optional)"
+                    )
+                else:
+                    progress.update(task, description="[green]✓ Profile data seeded")
             else:
-                progress.update(task, description="[green]✓ Profile data seeded")
+                progress.update(task, description="[yellow]⚠ Profile data seeding skipped (--no-sample-data)")
+                console.print("\n[yellow]ℹ Profile data seeding skipped due to --no-sample-data flag[/yellow]")
 
             # Step 8: Create entry pages
             progress.update(task, description="[cyan]Creating entry pages...")
@@ -848,19 +857,38 @@ async def setup_fresh_db_command(args: argparse.Namespace):
 
         # Success summary
         console.print()
+        
+        # Build dynamic success message based on what was actually done
+        success_message = (
+            "[green]✅ Fresh Database Setup Complete![/green]\n\n"
+            "[cyan]•[/cyan] Database tables created with LTREE extension\n"
+            "[cyan]•[/cyan] Alembic migrations applied\n"
+            "[cyan]•[/cyan] Initial users and data seeded\n"
+            "[cyan]•[/cyan] Entry system configured\n"
+            "[cyan]•[/cyan] Profile hierarchy with comprehensive attribute structure created\n"
+        )
+        
+        if not args.no_sample_data:
+            success_message += "[cyan]•[/cyan] Sample profile data seeded\n"
+        else:
+            success_message += "[yellow]•[/yellow] Sample profile data skipped (--no-sample-data)\n"
+            
+        success_message += (
+            "[cyan]•[/cyan] Entry pages (profile, accessories, glazing) ready\n\n"
+            "[dim]You can now start the server and use the application![/dim]\n"
+            "[dim]Profile page: http://localhost:8000/api/v1/admin/entry/profile[/dim]\n"
+            "[dim]Start with: python manage.py start[/dim]"
+        )
+        
+        if args.no_sample_data:
+            success_message += (
+                "\n\n[yellow]Note:[/yellow] To add sample profile data later, run:\n"
+                "[dim]python scripts/seed_profile_data.py[/dim]"
+            )
+        
         console.print(
             Panel(
-                "[green]✅ Fresh Database Setup Complete![/green]\n\n"
-                "[cyan]•[/cyan] Database tables created with LTREE extension\n"
-                "[cyan]•[/cyan] Alembic migrations applied\n"
-                "[cyan]•[/cyan] Initial users and data seeded\n"
-                "[cyan]•[/cyan] Entry system configured\n"
-                "[cyan]•[/cyan] Profile hierarchy with comprehensive attribute structure created\n"
-                "[cyan]•[/cyan] Sample profile data seeded\n"
-                "[cyan]•[/cyan] Entry pages (profile, accessories, glazing) ready\n\n"
-                "[dim]You can now start the server and use the application![/dim]\n"
-                "[dim]Profile page: http://localhost:8000/api/v1/admin/entry/profile[/dim]\n"
-                "[dim]Start with: python manage.py start[/dim]",
+                success_message,
                 title="[bold green]Setup Complete[/bold green]",
                 border_style="green",
             )
@@ -2931,6 +2959,12 @@ def main():
         "--output",
         type=str,
         help="Output file path for OpenAPI schema (openapi command, default: openapi_schema.json)",
+    )
+
+    parser.add_argument(
+        "--no-sample-data",
+        action="store_true",
+        help="Skip seeding sample profile data (setup_fresh_db command)",
     )
 
     args = parser.parse_args()

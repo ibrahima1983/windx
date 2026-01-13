@@ -13,9 +13,9 @@ Endpoints:
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, Form, Request, status
+from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -27,6 +27,7 @@ from app.api.admin_utils import (
 )
 from app.api.deps import get_admin_context
 from app.api.types import (
+    AllowEmptyStrForm,
     AttributeNodeRepo,
     CurrentSuperuser,
     DBSession,
@@ -35,11 +36,10 @@ from app.api.types import (
     OptionalIntForm,
     OptionalIntQuery,
     OptionalStrForm,
+    OptionalStrOrNoneForm,
     OptionalStrQuery,
     RequiredIntForm,
     RequiredIntQuery,
-    AllowEmptyStrForm,
-    OptionalStrOrNoneForm,
     StrOrIntForm,
 )
 from app.schemas import AttributeNodeCreate, AttributeNodeUpdate

@@ -1695,7 +1695,9 @@ class EntryService(BaseService):
             ValidationException: If option already exists
         """
         from decimal import Decimal
+
         from sqlalchemy import func
+
         from app.models.attribute_node import AttributeNode
 
 

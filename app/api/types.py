@@ -156,7 +156,7 @@ Usage:
     ```
 """
 
-OptionalStrQuery = Annotated[str | None, Query()]
+OptionalStrQuery = Annotated[Optional[str], Query()]
 """Optional string query parameter.
 
 Usage:
@@ -184,7 +184,7 @@ Usage:
     ```
 """
 
-IsSuperuserQuery = Annotated[bool | None, Query()]
+IsSuperuserQuery = Annotated[Optional[bool], Query()]
 """Optional boolean query parameter for filtering by superuser status.
 
 Usage:
@@ -198,7 +198,7 @@ Usage:
     ```
 """
 
-IsActiveQuery = Annotated[bool | None, Query()]
+IsActiveQuery = Annotated[Optional[bool], Query()]
 """Optional boolean query parameter for filtering by active status.
 
 Usage:
@@ -212,7 +212,7 @@ Usage:
     ```
 """
 
-SearchQuery = Annotated[str | None, Query(min_length=1, max_length=200)]
+SearchQuery = Annotated[Optional[str], Query(min_length=1, max_length=200)]
 """Optional string query parameter for search with validation.
 
 Validates that search string is between 1 and 200 characters.
@@ -281,7 +281,7 @@ Usage:
 # Form Parameter Type Aliases
 # ============================================================================
 
-OptionalIntForm = Annotated[int | None, Form()]
+OptionalIntForm = Annotated[Optional[int], Form()]
 """Optional integer form parameter.
 
 Usage:
@@ -309,7 +309,7 @@ Usage:
     ```
 """
 
-OptionalStrForm = Annotated[str | None, Form()]
+OptionalStrForm = Annotated[Optional[str], Form()]
 """Optional string form parameter.
 
 Usage:
@@ -356,7 +356,7 @@ Usage:
     ```
 """
 
-OptionalStrOrNoneForm = Annotated[str | None, Form()]
+OptionalStrOrNoneForm = Annotated[Optional[str], Form()]
 """Optional string form parameter that can be None or string.
 
 Usage:
@@ -370,7 +370,7 @@ Usage:
     ```
 """
 
-StrOrIntForm = Annotated[str | int, Form()]
+StrOrIntForm = Annotated[Union[str, int], Form()]
 """Form parameter that accepts either string or integer.
 
 Usage:

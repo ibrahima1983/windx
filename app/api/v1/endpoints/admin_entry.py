@@ -36,7 +36,6 @@ from app.schemas.entry import (
     ProfilePreviewData,
     ProfileSchema,
 )
-
 from app.schemas.responses import get_common_responses
 
 __all__ = ["router"]
@@ -535,18 +534,18 @@ async def upload_image(
         form_data = await request.form()
         file = form_data.get("file")
 
-        print(f"🦆 [BACKEND DEBUG] Upload endpoint called")
+        print("🦆 [BACKEND DEBUG] Upload endpoint called")
         print(f"🦆 [BACKEND DEBUG] form_data keys: {list(form_data.keys())}")
         print(f"🦆 [BACKEND DEBUG] file object: {file}")
         print(f"🦆 [BACKEND DEBUG] file type: {type(file)}")
 
         if not file:
-            print(f"🦆 [BACKEND DEBUG] ❌ No file in form data")
+            print("🦆 [BACKEND DEBUG] ❌ No file in form data")
             return {"success": False, "error": "No file provided"}
 
         # Check if it's a proper file object
         if not hasattr(file, "filename") or not hasattr(file, "read"):
-            print(f"🦆 [BACKEND DEBUG] ❌ Invalid file object - missing filename or read method")
+            print("🦆 [BACKEND DEBUG] ❌ Invalid file object - missing filename or read method")
             print(f"🦆 [BACKEND DEBUG] file attributes: {dir(file)}")
             return {"success": False, "error": "Invalid file object"}
 
@@ -555,7 +554,7 @@ async def upload_image(
 
         # Use the storage service to handle the upload
         storage_service = get_storage_service()
-        print(f"🦆 [BACKEND DEBUG] Calling storage service upload_file...")
+        print("🦆 [BACKEND DEBUG] Calling storage service upload_file...")
         result = await storage_service.upload_file(file)
 
         print(f"🦆 [BACKEND DEBUG] Upload result: {result}")

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.manufacturing_type import ManufacturingType
 
 
+# noinspection PyTypeChecker
 class ManufacturingTypeResolver:
     """Resolves manufacturing types by stable identifiers instead of hardcoded IDs.
 
@@ -222,7 +223,7 @@ class ManufacturingTypeResolver:
         return fallback_type
 
     @classmethod
-    def validate_page_type(cls, page_type: str | None) -> bool:
+    def validate_page_type(cls, page_type: Optional[str]) -> bool:
         """Validate if page_type is valid.
 
         Args:
