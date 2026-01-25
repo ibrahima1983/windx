@@ -108,7 +108,7 @@ export function prepareSaveData(
     schema: any,
     fieldVisibility: FieldVisibility
 ): Record<string, any> {
-    const saveData = {
+    const saveData: Record<string, any> = {
         ...formData,
         manufacturing_type_id: manufacturingTypeId
     }

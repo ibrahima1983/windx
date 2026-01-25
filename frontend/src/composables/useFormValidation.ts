@@ -5,7 +5,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
+import type { Ref } from 'vue'
 import { FormValidator } from '@/utils/FormValidator'
 import { BusinessRulesEngine } from '@/utils/BusinessRulesEngine'
 import { useDebugLogger } from './useDebugLogger'
@@ -114,9 +114,6 @@ export function useFormValidation(
         () => formData.value,
         () => {
             // Re-validate visible fields when data changes
-            const visibleFields = Object.keys(fieldVisibility.value).filter(
-                key => fieldVisibility.value[key] !== false
-            )
 
             // Clear errors for hidden fields
             const updated = { ...fieldErrors.value }

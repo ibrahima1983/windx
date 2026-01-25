@@ -52,6 +52,7 @@ export interface Configuration {
     calculated_technical_data: Record<string, any> | null
     created_at: string
     updated_at: string
+    [key: string]: any
 }
 
 // Form Schema

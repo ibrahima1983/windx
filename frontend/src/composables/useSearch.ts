@@ -22,7 +22,7 @@ export function useSearch<T extends Record<string, any>>() {
     const searchQuery = ref('')
     const columnFilters = ref<ColumnFilters>({})
     const showAdvancedSearch = ref(false)
-    const originalConfigurations = ref<T[]>([])
+    const originalConfigurations = ref<T[]>([]) as unknown as any
 
     const searchResults = computed<SearchResults>(() => ({
         total: originalConfigurations.value.length,

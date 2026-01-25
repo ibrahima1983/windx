@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
@@ -279,11 +279,14 @@ function onRowEditSave(event: any) {
   
   // Update is handled by DataTable automatically
   // We track it as pending edit
-  Object.keys(newData).forEach(key => {
-    if (newData[key] !== configStore.configurations[index][key]) {
-      configStore.updateCell(newData.id, key, newData[key])
-    }
-  })
+  const config = configStore.configurations[index]
+  if (config) {
+    Object.keys(newData).forEach(key => {
+      if (newData[key] !== config[key]) {
+        configStore.updateCell(newData.id, key, newData[key])
+      }
+    })
+  }
 }
 
 async function commitChanges() {

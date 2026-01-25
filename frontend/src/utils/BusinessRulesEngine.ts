@@ -70,7 +70,7 @@ export class BusinessRulesEngine {
 
         // If field has a specific rule, use it
         if (fieldName in fieldAvailability) {
-            return fieldAvailability[fieldName]
+            return fieldAvailability[fieldName] || false
         }
 
         // Default to true for fields without specific rules
