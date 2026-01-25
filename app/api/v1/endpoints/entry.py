@@ -19,10 +19,7 @@ Features:
 from __future__ import annotations
 
 from typing import Annotated, Any
-
-from fastapi import APIRouter, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, HTTPException, status
 from pydantic import PositiveInt
 
 from app.api.types import CurrentUser, DBSession
@@ -38,8 +35,6 @@ router = APIRouter(
     tags=["Entry Pages"],
     responses=get_common_responses(401, 500),
 )
-
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get(
@@ -361,140 +356,4 @@ async def evaluate_display_conditions(
     return await entry_service.evaluate_display_conditions(form_data, schema)
 
 
-# HTML Page Endpoints
 
-
-@router.get(
-    "/profile",
-    response_class=HTMLResponse,
-    summary="Profile Entry Page",
-    description="Render the profile data entry page",
-    operation_id="profileEntryPage",
-    responses={
-        200: {
-            "description": "Profile entry page rendered successfully",
-            "content": {"text/html": {"example": "<html>...</html>"}},
-        },
-        **get_common_responses(401, 500),
-    },
-)
-async def profile_page(
-    request: Request,
-    current_user: CurrentUser,
-    manufacturing_type_id: Annotated[
-        PositiveInt | None,
-        Query(description="Manufacturing type ID for form generation"),
-    ] = None,
-) -> HTMLResponse:
-    """Render the profile data entry page.
-
-    Displays the profile entry page with dynamic form generation
-    and real-time preview capabilities.
-
-    Args:
-        request (Request): FastAPI request object
-        current_user (User): Current authenticated user
-        manufacturing_type_id (PositiveInt | None): Optional manufacturing type ID
-
-    Returns:
-        HTMLResponse: Rendered HTML page
-
-    Example:
-        GET /api/v1/entry/profile?manufacturing_type_id=1
-    """
-    from app.services.entry import JAVASCRIPT_CONDITION_EVALUATOR
-
-    context = {
-        "request": request,
-        "user": current_user,
-        "manufacturing_type_id": manufacturing_type_id,
-        "page_title": "Profile Entry",
-        "active_page": "profile",
-        "JAVASCRIPT_CONDITION_EVALUATOR": JAVASCRIPT_CONDITION_EVALUATOR,
-    }
-
-    return templates.TemplateResponse("entry/profile.html.jinja", context)
-
-
-@router.get(
-    "/accessories",
-    response_class=HTMLResponse,
-    summary="Accessories Entry Page",
-    description="Render the accessories data entry page (scaffold)",
-    operation_id="accessoriesEntryPage",
-    responses={
-        200: {
-            "description": "Accessories entry page rendered successfully",
-            "content": {"text/html": {"example": "<html>...</html>"}},
-        },
-        **get_common_responses(401, 500),
-    },
-)
-async def accessories_page(
-    request: Request,
-    current_user: CurrentUser,
-) -> HTMLResponse:
-    """Render the accessories data entry page (scaffold).
-
-    Displays a scaffold page for future accessories data entry implementation.
-
-    Args:
-        request (Request): FastAPI request object
-        current_user (User): Current authenticated user
-
-    Returns:
-        HTMLResponse: Rendered HTML page
-
-    Example:
-        GET /api/v1/entry/accessories
-    """
-    context = {
-        "request": request,
-        "user": current_user,
-        "page_title": "Accessories Entry",
-        "active_page": "accessories",
-    }
-
-    return templates.TemplateResponse("entry/accessories.html.jinja", context)
-
-
-@router.get(
-    "/glazing",
-    response_class=HTMLResponse,
-    summary="Glazing Entry Page",
-    description="Render the glazing data entry page (scaffold)",
-    operation_id="glazingEntryPage",
-    responses={
-        200: {
-            "description": "Glazing entry page rendered successfully",
-            "content": {"text/html": {"example": "<html>...</html>"}},
-        },
-        **get_common_responses(401, 500),
-    },
-)
-async def glazing_page(
-    request: Request,
-    current_user: CurrentUser,
-) -> HTMLResponse:
-    """Render the glazing data entry page (scaffold).
-
-    Displays a scaffold page for future glazing data entry implementation.
-
-    Args:
-        request (Request): FastAPI request object
-        current_user (User): Current authenticated user
-
-    Returns:
-        HTMLResponse: Rendered HTML page
-
-    Example:
-        GET /api/v1/entry/glazing
-    """
-    context = {
-        "request": request,
-        "user": current_user,
-        "page_title": "Glazing Entry",
-        "active_page": "glazing",
-    }
-
-    return templates.TemplateResponse("entry/glazing.html.jinja", context)

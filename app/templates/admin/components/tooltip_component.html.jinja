@@ -1,5 +1,0 @@
-{% macro tooltip(content, alpine_binding=None, allow_html=True, attrs="") %}
-<span class="tooltip-icon" 
-      {% if alpine_binding %}x-tooltip="{{ alpine_binding }}"{% else %}x-tooltip="'{{ content|replace("'", "\\'") }}'"{% endif %}
-      {{ attrs }}>!</span>
-{% endmacro %}

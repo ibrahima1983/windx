@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from typing import Annotated, Optional, Union
 
-from fastapi import Depends, Form, Query, Response
+from fastapi import Depends, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -55,7 +55,6 @@ __all__ = [
     "DBSession",
     "CurrentUser",
     "CurrentSuperuser",
-    "UserOrRedirect",
     "UserRepo",
     "SessionRepo",
     "ManufacturingTypeRepo",
@@ -496,66 +495,7 @@ Example:
     ```
 """
 
-UserOrRedirect = Union[User, Response]
-"""Type alias for endpoints that return either a User or a redirect Response.
 
-Used in HTML endpoints where unauthenticated users should be redirected
-to the login page instead of receiving a 401 error.
-
-Usage:
-    ```python
-    from app.api.types import UserOrRedirect
-    from fastapi import Depends, Response
-
-    async def get_user_or_redirect(request: Request) -> UserOrRedirect:
-        try:
-            return await get_current_user(request)
-        except UnauthorizedException:
-            return RedirectResponse(url="/login")
-
-    @router.get("/dashboard")
-    async def dashboard(
-        user_or_redirect: UserOrRedirect = Depends(get_user_or_redirect),
-    ):
-        if isinstance(user_or_redirect, Response):
-            return user_or_redirect
-        # user_or_redirect is User here
-        return render_dashboard(user_or_redirect)
-    ```
-
-Example:
-    ```python
-    from app.api.types import UserOrRedirect
-    from fastapi import Depends, Request, Response
-    from fastapi.responses import RedirectResponse, HTMLResponse
-
-    async def get_superuser_or_redirect(request: Request) -> UserOrRedirect:
-        '''Get current superuser or redirect to login page.'''
-        try:
-            user = await get_current_user(request)
-            if not user.is_superuser:
-                return RedirectResponse(url="/admin/login?error=Not authorized")
-            return user
-        except Exception:
-            return RedirectResponse(url="/admin/login")
-
-    @router.get("/admin/dashboard", response_class=HTMLResponse)
-    async def admin_dashboard(
-        request: Request,
-        user_or_redirect: UserOrRedirect = Depends(get_superuser_or_redirect),
-    ):
-        # Check if we got a redirect response
-        if isinstance(user_or_redirect, Response):
-            return user_or_redirect
-
-        # Otherwise render the dashboard with the authenticated user
-        return templates.TemplateResponse(
-            request,
-            "admin/dashboard.html",
-            {"user": user_or_redirect}
-        )
-    ```
-"""
 
 
 # ============================================================================

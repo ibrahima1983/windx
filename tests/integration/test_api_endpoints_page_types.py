@@ -106,98 +106,6 @@ class TestAPIEndpointsPageTypes:
         await db_session.commit()
         return nodes_by_type
 
-    @pytest.mark.parametrize(
-        "page_type,expected_status",
-        [
-            ("profile", 200),
-            ("accessories", 200),
-            ("glazing", 200),
-        ],
-        ids=["profile_page", "accessories_page", "glazing_page"],
-    )
-    def test_entry_page_endpoints_valid_page_types(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        auth_headers: dict[str, str],
-        page_type: str,
-        expected_status: int,
-    ):
-        """Test entry page endpoints with valid page types."""
-        # Test profile endpoint with page_type parameter
-        if page_type == "profile":
-            response = client.get(
-                f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}&page_type={page_type}",
-                headers=auth_headers,
-            )
-        elif page_type == "accessories":
-            response = client.get(
-                f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}&type=window",
-                headers=auth_headers,
-            )
-        else:  # glazing
-            response = client.get(
-                f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}&type=window",
-                headers=auth_headers,
-            )
-
-        assert response.status_code == expected_status
-        assert "text/html" in response.headers.get("content-type", "")
-
-    @pytest.mark.parametrize(
-        "invalid_page_type",
-        [
-            "invalid",
-            "PROFILE",
-            "Profile",
-            "profiles",
-            "accessory",
-            "glass",
-            "",
-            "123",
-        ],
-        ids=[
-            "random_invalid",
-            "uppercase",
-            "titlecase",
-            "plural",
-            "singular",
-            "different_term",
-            "empty",
-            "numeric",
-        ],
-    )
-    def test_profile_endpoint_invalid_page_types(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        auth_headers: dict[str, str],
-        invalid_page_type: str,
-    ):
-        """Test profile endpoint rejects invalid page types."""
-        response = client.get(
-            f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}&page_type={invalid_page_type}",
-            headers=auth_headers,
-        )
-
-        assert response.status_code == 400
-        assert "Invalid page type" in response.text
-
-    def test_profile_endpoint_default_page_type(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        auth_headers: dict[str, str],
-    ):
-        """Test profile endpoint uses default page_type when not specified."""
-        response = client.get(
-            f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}",
-            headers=auth_headers,
-        )
-
-        assert response.status_code == 200
-        assert "text/html" in response.headers.get("content-type", "")
-
     def test_profile_schema_endpoint(
         self,
         client: TestClient,
@@ -207,7 +115,7 @@ class TestAPIEndpointsPageTypes:
     ):
         """Test profile schema endpoint returns correct structure."""
         response = client.get(
-            f"/api/v1/admin/entry/profile/schema/{test_manufacturing_type.id}",
+            f"/api/v1/entry/profile/schema/{test_manufacturing_type.id}",
             headers=auth_headers,
         )
 
@@ -223,26 +131,6 @@ class TestAPIEndpointsPageTypes:
             assert "fields" in section
             assert isinstance(section["fields"], list)
 
-    def test_profile_headers_endpoint(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        sample_attribute_nodes: dict[str, list[AttributeNode]],
-        auth_headers: dict[str, str],
-    ):
-        """Test profile headers endpoint returns list of headers."""
-        response = client.get(
-            f"/api/v1/admin/entry/profile/headers/{test_manufacturing_type.id}",
-            headers=auth_headers,
-        )
-
-        assert response.status_code == 200
-        headers = response.json()
-
-        assert isinstance(headers, list)
-        # Should include at least the ID column
-        assert "id" in headers
-
     def test_endpoints_without_authentication(
         self,
         client: TestClient,
@@ -250,97 +138,10 @@ class TestAPIEndpointsPageTypes:
     ):
         """Test that endpoints require authentication."""
         endpoints = [
-            f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}",
-            f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}",
-            f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}",
-            f"/api/v1/admin/entry/profile/schema/{test_manufacturing_type.id}",
+            f"/api/v1/entry/profile/schema/{test_manufacturing_type.id}",
         ]
 
         for endpoint in endpoints:
             response = client.get(endpoint)
             assert response.status_code == 401
             assert "Not authenticated" in response.json()["detail"]
-
-    def test_endpoints_with_invalid_manufacturing_type(
-        self,
-        client: TestClient,
-        auth_headers: dict[str, str],
-    ):
-        """Test endpoints with non-existent manufacturing type ID."""
-        invalid_id = 99999
-
-        endpoints = [
-            f"/api/v1/admin/entry/profile?manufacturing_type_id={invalid_id}",
-            f"/api/v1/admin/entry/accessories?manufacturing_type_id={invalid_id}",
-            f"/api/v1/admin/entry/glazing?manufacturing_type_id={invalid_id}",
-        ]
-
-        for endpoint in endpoints:
-            response = client.get(endpoint, headers=auth_headers)
-            # Should either return 503 (no manufacturing types) or handle gracefully
-            assert response.status_code in [503, 200]
-
-    @pytest.mark.parametrize(
-        "manufacturing_category", ["window", "door"], ids=["window_category", "door_category"]
-    )
-    def test_accessories_glazing_endpoints_with_categories(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        auth_headers: dict[str, str],
-        manufacturing_category: str,
-    ):
-        """Test accessories and glazing endpoints with different manufacturing categories."""
-        endpoints = [
-            f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}&type={manufacturing_category}",
-            f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}&type={manufacturing_category}",
-        ]
-
-        for endpoint in endpoints:
-            response = client.get(endpoint, headers=auth_headers)
-            assert response.status_code == 200
-            assert "text/html" in response.headers.get("content-type", "")
-
-    def test_error_template_rendering(
-        self,
-        client: TestClient,
-        auth_headers: dict[str, str],
-    ):
-        """Test that error template renders correctly for various error conditions."""
-        # Test with invalid page type
-        response = client.get(
-            "/api/v1/admin/entry/profile?manufacturing_type_id=1&page_type=invalid",
-            headers=auth_headers,
-        )
-
-        assert response.status_code == 400
-        assert "text/html" in response.headers.get("content-type", "")
-        assert "Invalid page type" in response.text
-
-    def test_navigation_context_in_templates(
-        self,
-        client: TestClient,
-        test_manufacturing_type: ManufacturingType,
-        auth_headers: dict[str, str],
-    ):
-        """Test that templates receive correct navigation context."""
-        endpoints_and_expected_titles = [
-            (
-                f"/api/v1/admin/entry/profile?manufacturing_type_id={test_manufacturing_type.id}",
-                "Profile Entry",
-            ),
-            (
-                f"/api/v1/admin/entry/accessories?manufacturing_type_id={test_manufacturing_type.id}",
-                "Window Accessories Entry",
-            ),
-            (
-                f"/api/v1/admin/entry/glazing?manufacturing_type_id={test_manufacturing_type.id}",
-                "Window Glazing Entry",
-            ),
-        ]
-
-        for endpoint, expected_title in endpoints_and_expected_titles:
-            response = client.get(endpoint, headers=auth_headers)
-            assert response.status_code == 200
-            # Check that the title appears in the response
-            assert expected_title in response.text or "Entry" in response.text
