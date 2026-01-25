@@ -72,6 +72,9 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
+# Add backend directory to sys.path to allow importing 'app'
+sys.path.append(str(Path(__file__).parent / "backend"))
+
 # Fix Windows CMD encoding issues with emojis
 if sys.platform == "win32":
     import io

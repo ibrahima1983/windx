@@ -103,7 +103,7 @@ Issues = "https://github.com/alaamer12/Windx/issues"
 Changelog = "https://github.com/alaamer12/Windx/releases"
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["backend/app"]
 
 [tool.ruff]
 line-length = 100
@@ -133,7 +133,7 @@ ignore = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["backend/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
