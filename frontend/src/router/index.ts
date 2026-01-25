@@ -26,30 +26,6 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/configurations',
-        name: 'Configurations',
-        component: () => import('@/views/ConfigurationsView.vue'),
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/customers',
-        name: 'Customers',
-        component: () => import('@/views/CustomersView.vue'),
-        meta: { requiresAuth: true, requiresSuperuser: true }
-    },
-    {
-        path: '/quotes',
-        name: 'Quotes',
-        component: () => import('@/views/QuotesView.vue'),
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/orders',
-        name: 'Orders',
-        component: () => import('@/views/OrdersView.vue'),
-        meta: { requiresAuth: true }
-    },
-    {
         path: '/:pathMatch(.*)*',
         name: 'NotFound',
         component: () => import('@/views/NotFoundView.vue')
