@@ -47,7 +47,7 @@ export const definitionSchemas: Record<string, DefinitionSchema> = {
             {
                 value: 'opening_system',
                 label: 'Opening System',
-                icon: 'pi pi-door',
+                icon: 'pi pi-cog',
                 hasImage: true,
                 fields: []
             },
@@ -72,7 +72,7 @@ export const definitionSchemas: Record<string, DefinitionSchema> = {
             {
                 value: 'system_series',
                 label: 'System Series',
-                icon: 'pi pi-layer-group',
+                icon: 'pi pi-sitemap',
                 hasImage: true,
                 isLinker: true, // This is the core "Linker" entity
                 fields: [
@@ -87,8 +87,8 @@ export const definitionSchemas: Record<string, DefinitionSchema> = {
         chainStructure: [
             { key: 'company', label: 'Company', icon: 'pi pi-building', entityType: 'company' },
             { key: 'material', label: 'Material', icon: 'pi pi-box', entityType: 'material' },
-            { key: 'opening_system', label: 'Opening', icon: 'pi pi-door', entityType: 'opening_system' },
-            { key: 'system_series', label: 'Series', icon: 'pi pi-layer-group', entityType: 'system_series' },
+            { key: 'opening_system', label: 'Opening', icon: 'pi pi-cog', entityType: 'opening_system' },
+            { key: 'system_series', label: 'Series', icon: 'pi pi-sitemap', entityType: 'system_series' },
             { key: 'color', label: 'Color', icon: 'pi pi-palette', entityType: 'color' }
         ]
     }

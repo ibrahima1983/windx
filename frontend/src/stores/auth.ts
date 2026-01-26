@@ -34,8 +34,16 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.get('/api/v1/auth/me')
             user.value = response.data
-        } catch (error) {
-            logout()
+        } catch (error: any) {
+            const is401 = error.response?.status === 401
+            const isDev = import.meta.env.DEV
+
+            // In development, we only logout on explicit 401 (expired/invalid token)
+            // This prevents logging out when the backend restarts or during HMR.
+            // In production, we might be stricter, but 401 remains the primary reason to clear session.
+            if (is401 || (!isDev && error.response?.status === 403)) {
+                logout()
+            }
             throw error
         }
     }

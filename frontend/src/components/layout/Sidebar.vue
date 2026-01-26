@@ -34,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import PrimeSidebar from 'primevue/sidebar'
 import PanelMenu from 'primevue/panelmenu'
 import Button from 'primevue/button'
@@ -51,6 +51,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const logger = useDebugLogger('Sidebar')
 
@@ -59,20 +60,23 @@ const isVisible = computed({
   set: (value) => emit('update:visible', value)
 })
 
-const menuItems = ref([
+const menuItems = computed(() => [
   {
     label: 'Dashboard',
     icon: 'pi pi-home',
+    class: route.path === '/dashboard' ? 'active-link' : '',
     command: () => router.push('/dashboard')
   },
   {
     label: 'Profile Entry',
     icon: 'pi pi-file-edit',
+    class: route.path === '/profile-entry' ? 'active-link' : '',
     command: () => router.push('/profile-entry')
   },
   {
     label: 'Product Definition',
     icon: 'pi pi-sitemap',
+    class: route.path.startsWith('/admin/definitions') ? 'active-link' : '',
     command: () => router.push('/admin/definitions/profile')
   }
 ])
@@ -83,3 +87,27 @@ function handleLogout() {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+:deep(.active-link) .p-panelmenu-header-content {
+  background-color: #eff6ff !important;
+  border-left: 4px solid #3b82f6 !important;
+  color: #1e40af !important;
+}
+
+:deep(.active-link) .p-panelmenu-header-content i,
+:deep(.active-link) .p-panelmenu-header-content span {
+  color: #1e40af !important;
+  font-weight: 600 !important;
+}
+
+:deep(.p-panelmenu-header-content) {
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+  margin-bottom: 4px;
+}
+
+:deep(.p-panelmenu-header-content:hover) {
+  background-color: #f8fafc !important;
+}
+</style>
