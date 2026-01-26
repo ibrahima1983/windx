@@ -11,8 +11,10 @@
     >
       <Header @toggle-sidebar="sidebarVisible = !sidebarVisible" />
       
-      <main class="flex-1 p-6">
-        <slot />
+      <main class="flex-1 w-full bg-slate-50">
+        <PageContainer>
+          <slot />
+        </PageContainer>
       </main>
     </div>
   </div>
@@ -24,6 +26,7 @@ import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
+import PageContainer from './PageContainer.vue'
 
 const sidebarVisible = ref(true)
 </script>

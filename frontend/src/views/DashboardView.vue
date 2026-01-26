@@ -1,6 +1,5 @@
 <template>
   <AppLayout>
-    <div class="max-w-7xl mx-auto">
       <div class="mb-6">
         <h1 class="text-3xl font-bold text-slate-800">Dashboard</h1>
         <p class="text-slate-600 mt-1">Welcome to Windx Configurator</p>
@@ -63,7 +62,6 @@
       <Message v-if="error" severity="error" class="mt-6">
         {{ error }}
       </Message>
-    </div>
   </AppLayout>
 </template>
 

@@ -64,8 +64,16 @@ const router = createRouter({
     routes
 })
 
+import NProgress from 'nprogress'
+
+// Configure NProgress
+NProgress.configure({ showSpinner: false })
+
 // Navigation guard for authentication
 router.beforeEach((to, _from, next) => {
+    // Start progress bar
+    NProgress.start()
+
     const authStore = useAuthStore()
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
     const requiresSuperuser = to.matched.some(record => record.meta.requiresSuperuser)
@@ -77,6 +85,11 @@ router.beforeEach((to, _from, next) => {
     } else {
         next()
     }
+})
+
+router.afterEach(() => {
+    // Finish progress bar
+    NProgress.done()
 })
 
 export default router
