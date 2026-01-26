@@ -16,10 +16,14 @@ Features:
 """
 
 from __future__ import annotations
-
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
+
+# Add backend directory to sys.path to resolve 'app'
+# This allows running 'python -m uvicorn backend.main:app' from project root
+sys.path.append(str(Path(__file__).resolve().parent))
 
 from fastapi import Depends, FastAPI
 from fastapi.responses import FileResponse

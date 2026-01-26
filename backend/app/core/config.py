@@ -21,6 +21,7 @@ Features:
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -44,6 +45,10 @@ __all__ = [
     "Settings",
     "get_settings",
 ]
+
+# Resolve .env file path relative to this file
+# backend/app/core/config.py -> backend/app/core -> backend/app -> backend
+ENV_FILE_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 class DatabaseSettings(BaseSettings):
@@ -222,7 +227,7 @@ class DatabaseSettings(BaseSettings):
         return self
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         env_prefix="DATABASE_",
         str_strip_whitespace=True,
@@ -267,7 +272,7 @@ class SecuritySettings(BaseSettings):
     ]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         env_prefix="",
         str_strip_whitespace=True,
@@ -370,7 +375,7 @@ class CacheSettings(BaseSettings):
         return RedisDsn(f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}")
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         env_prefix="CACHE_",
         str_strip_whitespace=True,
@@ -483,7 +488,7 @@ class LimiterSettings(BaseSettings):
         return RedisDsn(f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}")
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         env_prefix="LIMITER_",
         str_strip_whitespace=True,
@@ -695,6 +700,7 @@ class FileStorageSettings(BaseSettings):
         return self.enable_compression or self.auto_resize
 
     model_config = SettingsConfigDict(
+        env_file=ENV_FILE_PATH,
         env_prefix="FILE_STORAGE_",
         validate_assignment=True,
         use_attribute_docstrings=True,
@@ -857,7 +863,7 @@ class WindxSettings(BaseSettings):
         return [f.strip() for f in self.formula_allowed_functions.split(",") if f.strip()]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         env_prefix="WINDX_",
         str_strip_whitespace=True,
@@ -1001,7 +1007,7 @@ class Settings(BaseSettings):
         return self
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         case_sensitive=False,
         env_nested_delimiter="__",
