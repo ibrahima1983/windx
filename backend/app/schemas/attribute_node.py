@@ -5,9 +5,24 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class CalculatedFieldMetadata(TypedDict, total=False):
+    """Metadata for auto-calculated fields.
+    
+    Attributes:
+        type: Calculation type (multiply, divide, add, subtract, formula)
+        operands: List of field names to use in calculation (order matters for divide/subtract)
+        trigger_on: List of field names that trigger recalculation when changed
+        precision: Decimal places for rounding (default: 2)
+    """
+    type: Literal["multiply", "divide", "add", "subtract", "formula"]
+    operands: list[str]
+    trigger_on: list[str]
+    precision: int
 
 
 class DisplayCondition(BaseModel):
@@ -96,6 +111,19 @@ class AttributeNodeBase(BaseModel):
     technical_impact_formula: Annotated[
         str | None, Field(default=None, description="Technical calculation formula")
     ]
+    calculated_field: Annotated[
+        CalculatedFieldMetadata | None,
+        Field(
+            default=None,
+            description="Calculation metadata for auto-calculated fields",
+            examples=[{
+                "type": "multiply",
+                "operands": ["price_per_meter", "length_of_beam"],
+                "trigger_on": ["price_per_meter", "length_of_beam"],
+                "precision": 2
+            }]
+        )
+    ] = None
     sort_order: Annotated[int, Field(default=0, description="Display order among siblings")]
     ui_component: Annotated[
         str | None, Field(default=None, max_length=50, description="UI control type")

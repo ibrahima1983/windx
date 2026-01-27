@@ -403,6 +403,7 @@ class EntryService(BaseService):
             help_text=node.help_text,  # Short subtitle below field
             options=options,
             options_data=options_data,
+            calculated_field=node.calculated_field,  # NEW: Pass through calculation metadata
             sort_order=node.sort_order or 0,
         )
 

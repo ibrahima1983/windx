@@ -45,7 +45,7 @@
                 :placeholder="field.required ? '0' : 'Optional'"
                 class="w-full"
                 updateOn="input"
-                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
+                @update:modelValue="() => { validateField(field.name); autoCalculateFields(field.name); }"
               />
 
               <!-- Currency Input -->
@@ -59,7 +59,7 @@
                 :placeholder="field.required ? '$0.00' : '0.00'"
                 class="w-full"
                 updateOn="input"
-                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
+                @update:modelValue="() => { validateField(field.name); autoCalculateFields(field.name); }"
               />
 
               <!-- Percentage Input -->
@@ -73,7 +73,7 @@
                 :placeholder="field.required ? '0%' : '0'"
                 class="w-full"
                 updateOn="input"
-                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
+                @update:modelValue="() => { validateField(field.name); autoCalculateFields(field.name); }"
               />
 
               <!-- Dropdown -->
@@ -345,54 +345,64 @@ function handleClear() {
 }
 
 /**
- * Auto-calculate price fields based on length_of_beam
- * Formula: price_per_beam = price_per_meter * length_of_beam
+ * Auto-calculate fields based on metadata from backend schema
+ * Reads calculated_field metadata and executes calculations generically
  */
-function autoCalculatePriceFields(fieldName: string) {
-  console.log('[DynamicForm] autoCalculatePriceFields triggered for:', fieldName)
+function autoCalculateFields(fieldName: string) {
+  if (!props.schema?.sections) return
+
+  // Find all fields that should recalculate when this field changes
+  const fieldsToCalculate: Array<{field: any, calc: any}> = []
   
-  // Use schema to find actual field names for calculation
-  let lengthKey = 'length_of_beam'
-  let priceMKey = 'price_per_meter'
-  let priceBKey = 'price_per_beam'
-  
-  if (props.schema?.sections) {
-    props.schema.sections.forEach((s: any) => {
-      s.fields.forEach((f: any) => {
-        const label = f.label?.toLowerCase() || ''
-        if (label.includes('length of beam')) lengthKey = f.name
-        else if (label === 'price/m') priceMKey = f.name
-        else if (label.includes('price per beam')) priceBKey = f.name
-      })
+  props.schema.sections.forEach((section: any) => {
+    section.fields.forEach((field: any) => {
+      const calc = field.calculated_field
+      if (calc && calc.trigger_on?.includes(fieldName)) {
+        fieldsToCalculate.push({ field, calc })
+      }
     })
-  }
-
-  const priceFields = [priceMKey, priceBKey, lengthKey]
-  if (!priceFields.includes(fieldName)) return
-
-  const currentData = localForm.value
-  const length = parseDecimal(currentData[lengthKey])
-  const priceM = parseDecimal(currentData[priceMKey])
-  const priceB = parseDecimal(currentData[priceBKey])
-
-  console.log('[DynamicForm] Calc context:', { 
-    fieldName,
-    keys: { lengthKey, priceMKey, priceBKey },
-    values: { length, priceM, priceB }
   })
 
-  if (length === null || length === 0) {
-    console.log('[DynamicForm] Calc skipped: length is null or 0')
-    return
-  }
+  // Execute calculations
+  fieldsToCalculate.forEach(({ field, calc }) => {
+    const result = executeCalculation(calc, localForm.value)
+    if (result !== null) {
+      localForm.value[field.name] = result
+    }
+  })
+}
 
-  if (fieldName === priceMKey && priceM !== null) {
-    localForm.value[priceBKey] = roundToDecimals(priceM * length, 2)
-  } else if (fieldName === priceBKey && priceB !== null) {
-    localForm.value[priceMKey] = roundToDecimals(priceB / length, 2)
-  } else if (fieldName === lengthKey && priceM !== null) {
-    localForm.value[priceBKey] = roundToDecimals(priceM * length, 2)
+function executeCalculation(calc: any, formData: Record<string, any>): number | null {
+  const { type, operands, precision = 2 } = calc
+  
+  // Get operand values
+  const values = operands.map((key: string) => parseDecimal(formData[key]))
+  
+  // Check if all values are available
+  if (values.some((v: number | null) => v === null)) return null
+  
+  // For divide, check for zero divisor
+  if (type === 'divide' && values[1] === 0) return null
+  
+  let result: number
+  switch (type) {
+    case 'multiply':
+      result = values[0]! * values[1]!
+      break
+    case 'divide':
+      result = values[0]! / values[1]!
+      break
+    case 'add':
+      result = values.reduce((a: number, b: number) => a + b, 0)
+      break
+    case 'subtract':
+      result = values[0]! - values[1]!
+      break
+    default:
+      return null
   }
+  
+  return roundToDecimals(result, precision)
 }
 
 function parseDecimal(value: any): number | null {

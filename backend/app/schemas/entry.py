@@ -27,6 +27,8 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
+from app.schemas.attribute_node import CalculatedFieldMetadata
+
 __all__ = [
     "FieldDefinition",
     "FormSection",
@@ -139,6 +141,19 @@ class FieldDefinition(BaseModel):
             default=None,
             description="Detailed option data with IDs and metadata for select/radio fields",
             examples=[[{"id": 1, "name": "Frame", "price_impact_value": 50.0}]],
+        ),
+    ] = None
+    calculated_field: Annotated[
+        CalculatedFieldMetadata | None,
+        Field(
+            default=None,
+            description="Calculation metadata for auto-calculated fields",
+            examples=[{
+                "type": "multiply",
+                "operands": ["price_per_meter", "length_of_beam"],
+                "trigger_on": ["price_per_meter", "length_of_beam"],
+                "precision": 2
+            }]
         ),
     ] = None
     sort_order: Annotated[

@@ -158,6 +158,13 @@ class AttributeNode(Base):
         comment="Technical calculation formula",
     )
 
+    # Calculated field metadata
+    calculated_field: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        comment="Calculation metadata for auto-calculated fields (type, operands, trigger_on, precision)",
+    )
+
     # Hierarchy (LTREE for fast queries)
     ltree_path: Mapped[str] = mapped_column(
         LTREE,

@@ -517,6 +517,12 @@ async def create_attribute_nodes(
             "ui_component": "currency",
             "help_text": "Price per meter in currency units",
             "validation_rules": {"min": 0, "max": 10000},
+            "calculated_field": {
+                "type": "divide",
+                "operands": ["price_per_beam", "length_of_beam"],
+                "trigger_on": ["price_per_beam"],
+                "precision": 2
+            },
         },
         {
             "name": "price_per_beam",
@@ -531,6 +537,12 @@ async def create_attribute_nodes(
             "ui_component": "currency",
             "help_text": "Price per beam in currency units",
             "validation_rules": {"min": 0, "max": 50000},
+            "calculated_field": {
+                "type": "multiply",
+                "operands": ["price_per_meter", "length_of_beam"],
+                "trigger_on": ["price_per_meter", "length_of_beam"],
+                "precision": 2
+            },
         },
         {
             "name": "upvc_profile_discount",
