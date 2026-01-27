@@ -764,14 +764,19 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             progress.update(task, description="[cyan]Running Alembic migrations...")
             import subprocess
 
+            # Use backend/alembic.ini since we are running from root
             result = subprocess.run(
-                [python_exe, "-m", "alembic", "upgrade", "head"], capture_output=True, text=True
+                [python_exe, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"], 
+                capture_output=True, text=True
             )
             if result.returncode != 0:
                 console.print(f"\n[bold red]✗ Alembic migration failed:[/bold red]")
                 console.print(result.stderr)
-                return 1
-            progress.update(task, description="[green]✓ Alembic migrations completed")
+                # Don't fail completely if migrations fail on fresh db setup
+                # We'll create tables via create_all anyway
+                console.print("[yellow]Continuing with create_all...[/yellow]")
+            else:
+                progress.update(task, description="[green]✓ Alembic migrations completed")
 
             # Step 3: Create tables with LTREE extension
             progress.update(task, description="[cyan]Creating tables with LTREE extension...")
@@ -795,7 +800,7 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             # Step 5: Create minimal entry system data
             progress.update(task, description="[cyan]Creating minimal entry system data...")
             result = subprocess.run(
-                [python_exe, "_entry_setup.py", "--create-minimal"], capture_output=True, text=True
+                [python_exe, "backend/_entry_setup.py", "--create-minimal"], capture_output=True, text=True
             )
             if result.returncode != 0:
                 console.print(f"\n[bold red]✗ Entry setup failed:[/bold red]")
@@ -806,7 +811,7 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             # Step 6: Setup profile hierarchy (CRITICAL for profile page)
             progress.update(task, description="[cyan]Setting up profile hierarchy...")
             result = subprocess.run(
-                [python_exe, "scripts/setup_profile_hierarchy.py"], capture_output=True, text=True
+                [python_exe, "backend/scripts/setup_profile_hierarchy.py"], capture_output=True, text=True
             )
             if result.returncode != 0:
                 console.print(f"\n[bold red]✗ Profile hierarchy setup failed:[/bold red]")
@@ -821,7 +826,7 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             if not args.no_sample_data:
                 progress.update(task, description="[cyan]Seeding profile data...")
                 result = subprocess.run(
-                    [python_exe, "scripts/seed_profile_data.py"], capture_output=True, text=True
+                    [python_exe, "backend/scripts/seed_profile_data.py"], capture_output=True, text=True
                 )
                 if result.returncode != 0:
                     console.print(f"\n[bold yellow]⚠ Profile data seeding failed:[/bold yellow]")
@@ -839,7 +844,7 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             # Step 8: Create entry pages
             progress.update(task, description="[cyan]Creating entry pages...")
             result = subprocess.run(
-                [python_exe, "_create_entry_pages.py"], capture_output=True, text=True
+                [python_exe, "backend/_create_entry_pages.py"], capture_output=True, text=True
             )
             if result.returncode != 0:
                 console.print(f"\n[bold red]✗ Entry pages creation failed:[/bold red]")
