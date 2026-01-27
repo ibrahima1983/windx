@@ -22,3 +22,11 @@ and on choosing system Series the material, company, colors should be choosen au
 
 
 الازازين مش لازم يكونوا من نفس النوع
+
+
+now here it out because we have got serious requirement besid the trash icon in Actions colomn, i want you to add new button to edit, on clicking on this button
+it will open totoally a new page [call it PageDefinitionEdit]
+with the row data, now
+in normal Product Definition page it have inputs fields dynamic by Select-input
+ 
+but in this edit page, all inputs will be spreaded out with Section titles and they are filled with respecting to their field type 

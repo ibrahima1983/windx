@@ -18,6 +18,10 @@ export interface EntityTypeDefinition {
     fields: FieldDefinition[]
     hasImage?: boolean
     isLinker?: boolean
+    specialUi?: {
+        type: string
+        config: Record<string, any>
+    }
 }
 
 export interface ChainNodeDefinition {
@@ -91,7 +95,11 @@ export async function fetchAndBuildSchemas(): Promise<Record<string, DefinitionS
                     icon: eData.icon || 'pi pi-box',
                     hasImage: eData.hasImage !== false,
                     fields: fields,
-                    isLinker: entityKey === 'system_series' // TODO: Make dynamic if needed
+                    isLinker: entityKey === 'system_series', // TODO: Make dynamic if needed
+                    specialUi: eData.special_ui ? {
+                        type: eData.special_ui.type,
+                        config: eData.special_ui.config
+                    } : undefined
                 })
             }
 

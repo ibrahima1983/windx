@@ -64,7 +64,7 @@
 
               <!-- Paths / Chains Table -->
               <DataTable 
-                :value="paths" 
+                :value="groupedPaths" 
                 paginator 
                 :rows="10" 
                 class="p-datatable-sm border border-slate-200 rounded-lg overflow-hidden"
@@ -73,7 +73,7 @@
                 <template #header>
                   <div class="flex justify-between items-center px-2">
                     <span class="font-semibold text-lg">Valid Configuration Chains</span>
-                    <span class="text-sm text-slate-500">{{ paths.length }} total chains</span>
+                    <span class="text-sm text-slate-500">{{ groupedPaths.length }} grouped configurations</span>
                   </div>
                 </template>
 
@@ -84,9 +84,25 @@
                   :header="node.label"
                 >
                   <template #body="{ data }">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <i :class="[node.icon, 'text-slate-400 text-xs']"></i>
-                      <span class="font-medium text-slate-700">
+                      
+                      <!-- Handle multiple IDs (Aggregated Leaf) -->
+                      <template v-if="Array.isArray(data[`${node.entityType}_id`])">
+                         <div class="flex flex-wrap gap-1">
+                           <Tag 
+                            v-for="id in data[`${node.entityType}_id`]" 
+                            :key="id"
+                            :value="getEntityName(node.entityType, id)"
+                            severity="info"
+                            rounded
+                            class="px-2 text-[10px] font-semibold"
+                          />
+                         </div>
+                      </template>
+                      
+                      <!-- Handle single ID -->
+                      <span v-else class="font-medium text-slate-700">
                         {{ getEntityName(node.entityType, data[`${node.entityType}_id`]) }}
                       </span>
                     </div>
@@ -190,20 +206,26 @@
                         </div>
                       </div>
 
-                      <!-- Special: Linking Logic (Harder part) -->
-                      <div v-if="selectedEntityDef.value === 'company'" class="border-t border-slate-200 pt-4 mt-4 bg-blue-50/50 -mx-6 px-6 py-4">
+
+                      <!-- Dynamic Special UI (e.g., Relation Selectors) -->
+                      <div v-if="selectedEntityDef.specialUi?.type === 'relation_selector'" class="border-t border-slate-200 pt-4 mt-4 bg-blue-50/50 -mx-6 px-6 py-4">
                         <h3 class="text-sm font-bold text-blue-600 uppercase tracking-wide mb-4">Required Link</h3>
                         <div class="flex flex-col gap-2">
-                          <label class="text-sm font-medium text-slate-700">Linked Material <span class="text-red-500">*</span></label>
+                          <label class="text-sm font-medium text-slate-700">
+                            {{ selectedEntityDef.specialUi.config.label }} 
+                            <span v-if="selectedEntityDef.specialUi.config.required" class="text-red-500">*</span>
+                          </label>
                           <Select 
-                            v-model="formData.linked_material_id"
-                            :options="entities.material || []"
+                            v-model="formData[selectedEntityDef.specialUi.config.field_name]"
+                            :options="entities[selectedEntityDef.specialUi.config.target_entity] || []"
                             optionLabel="name"
                             optionValue="id"
-                            placeholder="Select material..."
+                            :placeholder="`Select ${selectedEntityDef.specialUi.config.label.toLowerCase()}...`"
                             class="w-full"
                           />
-                          <small class="text-slate-500">Companies must be linked to a specific material type.</small>
+                          <small v-if="selectedEntityDef.specialUi.config.help_text" class="text-slate-500">
+                            {{ selectedEntityDef.specialUi.config.help_text }}
+                          </small>
                         </div>
                       </div>
 
@@ -331,6 +353,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Skeleton from 'primevue/skeleton'
 import Card from 'primevue/card'
+import Tag from 'primevue/tag'
 
 const props = defineProps<{
   pageType: string // e.g., 'profile'
@@ -355,7 +378,7 @@ const schemas = ref<Record<string, DefinitionSchema>>({})
 
 // Form State
 const selectedEntityType = ref<string | null>(null)
-const formData = ref({
+const formData = ref<Record<string, any>>({
   name: '',
   price_from: null,
   description: '',
@@ -431,6 +454,45 @@ const companyMaterialOptions = computed(() => {
     }
   }
   return options
+})
+
+const groupedPaths = computed(() => {
+  // Currently only applied to profile scope where we have the multi-color problem
+  if (selectedScope.value !== 'profile' || paths.value.length === 0) return paths.value
+
+  const groups: Record<string, any> = {}
+  const chain = currentSchema.value?.chainStructure || []
+  if (chain.length < 2) return paths.value
+
+  // Identify the leaf entity type (last in chain)
+  const leafNode = chain[chain.length - 1]
+  if (!leafNode) return paths.value
+  const leafKey = leafNode.entityType
+
+  for (const path of paths.value) {
+    // Generate a grouping key based on all properties EXCEPT the leaf and technical metadata (id, ltree)
+    const groupingProperties = chain.slice(0, -1).map(node => path[`${node.entityType}_id`])
+    const groupKey = groupingProperties.join('-')
+    
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        ...path,
+        [`${leafKey}_id`]: [path[`${leafKey}_id`]],
+        _ltree_paths: [path.ltree_path],
+        _ids: [path.id],
+        _is_grouped: true
+      }
+    } else {
+      const leafId = path[`${leafKey}_id`]
+      if (!groups[groupKey][`${leafKey}_id`].includes(leafId)) {
+        groups[groupKey][`${leafKey}_id`].push(leafId)
+        groups[groupKey]._ltree_paths.push(path.ltree_path)
+        groups[groupKey]._ids.push(path.id)
+      }
+    }
+  }
+  
+  return Object.values(groups)
 })
 
 // Initialization
@@ -588,11 +650,21 @@ async function saveEntity() {
       metadata: { ...formData.value.metadata }
     }
 
-    // Special Case: Company Linking
-    if (type === 'company') {
-      if (!formData.value.linked_material_id) throw new Error('Company must be linked to a material')
-      basePayload.metadata['linked_material_id'] = formData.value.linked_material_id
+
+    // Handle Special UI Fields (e.g., relation_selector)
+    if (selectedEntityDef.value?.specialUi?.type === 'relation_selector') {
+      const config = selectedEntityDef.value.specialUi.config
+      const fieldValue = (formData.value as any)[config.field_name]
+      
+      if (config.required && !fieldValue) {
+        throw new Error(`${config.label} is required`)
+      }
+      
+      if (fieldValue) {
+        basePayload.metadata[config.field_name] = fieldValue
+      }
     }
+
 
     // Special Case: System Series (Linker)
     if (selectedEntityDef.value?.isLinker) {
@@ -653,17 +725,25 @@ async function saveEntity() {
 
 // Delete Logic
 function confirmDeletePath(pathData: any) {
-  // Logic to delete path (or group of paths if they share an ltree)
   confirm.require({
-    message: 'Delete this configuration chain?',
+    message: pathData._is_grouped && pathData._ltree_paths?.length > 1
+      ? `Delete this configuration and all ${pathData._ltree_paths.length} associated colors?`
+      : 'Delete this configuration chain?',
     header: 'Confirm Delete',
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
-        await productDefinitionService.deletePath({ ltree_path: pathData.ltree_path })
-        toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration chain removed', life: 3000 })
-        // Optimistic remove
-        paths.value = paths.value.filter(p => p.ltree_path !== pathData.ltree_path)
+        if (pathData._is_grouped && pathData._ltree_paths) {
+          // Delete all paths in the group
+          for (const ltree of pathData._ltree_paths) {
+            await productDefinitionService.deletePath({ ltree_path: ltree })
+          }
+        } else {
+          await productDefinitionService.deletePath({ ltree_path: pathData.ltree_path })
+        }
+        
+        toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration removed', life: 3000 })
+        await loadData() // Refresh state
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete', life: 3000 })
       }

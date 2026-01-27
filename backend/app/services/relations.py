@@ -71,7 +71,17 @@ class RelationsService(BaseService):
                     "icon": "pi pi-building",
                     "metadata_fields": [
                         {"name": "linked_material_id", "type": "number", "hidden": True}
-                    ]
+                    ],
+                    "special_ui": {
+                        "type": "relation_selector",
+                        "config": {
+                            "field_name": "linked_material_id",
+                            "target_entity": "material",
+                            "label": "Linked Material",
+                            "required": True,
+                            "help_text": "Companies must be linked to a specific material type."
+                        }
+                    }
                 },
                 "system_series": {
                     "label": "System Series",
