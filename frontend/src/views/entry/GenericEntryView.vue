@@ -119,7 +119,11 @@ async function saveConfiguration(data: any) {
     })
     
     toast.add({ severity: 'success', summary: 'Success', detail: 'Configuration saved', life: 3000 })
-    clearForm()
+    
+    // Persist data for rapid entry, only clear name if present to avoid duplicates
+    if (formData.value && 'name' in formData.value) {
+      formData.value.name = ''
+    }
     
     // Reload previews
     if (selectedTypeId.value) {

@@ -152,15 +152,13 @@ class RelationsService(BaseService):
                     "metadata_fields": []
                 }
             },
-            "hierarchy": {0: "handle", 1: "hinge", 2: "lock", 3: "accessory"}
+            "hierarchy": {0: "company", 1: "material", 2: "opening_system", 3: "system_series", 4: "color"}
         }
     }
-    
-    # Backward compatibility mappings REMOVED as per request
-    
+
     def __init__(self, db: AsyncSession) -> None:
         """Initialize RelationsService.
-        
+
         Args:
             db: Database session
         """

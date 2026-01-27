@@ -45,12 +45,12 @@
           <TabPanels>
             <!-- OVERVIEW TAB -->
             <TabPanel value="overview">
-              <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                <Skeleton height="100px" v-for="i in 5" :key="i" class="rounded-xl" />
+              <div v-if="isLoading" class="grid gap-4 mb-6" :class="gridColumnsClass">
+                <Skeleton height="100px" v-for="i in skeletonCount" :key="i" class="rounded-xl" />
               </div>
 
               <!-- Stats Cards -->
-              <div v-else-if="currentSchema?.entityTypes" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div v-else-if="currentSchema?.entityTypes" class="grid gap-4 mb-6" :class="gridColumnsClass">
                 <div 
                   v-for="type in currentSchema.entityTypes" 
                   :key="type.value"
@@ -383,6 +383,17 @@ const selectedEntityDef = computed(() => {
   return currentSchema.value.entityTypes.find(t => t.value === selectedEntityType.value)
 })
 
+const gridColumnsClass = computed(() => {
+  const count = currentSchema.value?.entityTypes?.length || 5
+  if (count <= 1) return 'grid-cols-1'
+  if (count === 2) return 'grid-cols-2'
+  if (count === 3) return 'grid-cols-1 md:grid-cols-3'
+  if (count === 4) return 'grid-cols-2 md:grid-cols-4'
+  return 'grid-cols-2 md:grid-cols-5'
+})
+
+const skeletonCount = computed(() => currentSchema.value?.entityTypes?.length || 5)
+
 const companyMaterialOptions = computed(() => {
   if (!entities.value.company || !entities.value.material) return []
   
@@ -628,7 +639,10 @@ async function saveEntity() {
       }
     }
 
-    resetForm()
+    // Clear only primary identity fields to allow rapid repeated entry
+    formData.value.name = ''
+    formData.value.price_from = null
+    clearImage()
   } catch (error: any) {
     logger.error('Save failed', error)
     toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to save', life: 3000 })
