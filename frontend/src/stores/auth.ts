@@ -9,6 +9,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => !!token.value && !!user.value)
     const isSuperuser = computed(() => user.value?.is_superuser ?? false)
+    const isInitialized = ref(false)
+    let initPromise: Promise<void> | null = null
 
     async function login(username: string, password: string) {
         try {
@@ -38,9 +40,6 @@ export const useAuthStore = defineStore('auth', () => {
             const is401 = error.response?.status === 401
             const isDev = import.meta.env.DEV
 
-            // In development, we only logout on explicit 401 (expired/invalid token)
-            // This prevents logging out when the backend restarts or during HMR.
-            // In production, we might be stricter, but 401 remains the primary reason to clear session.
             if (is401 || (!isDev && error.response?.status === 403)) {
                 logout()
             }
@@ -54,19 +53,32 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('access_token')
     }
 
-    // Initialize user on store creation if token exists
-    if (token.value) {
-        fetchCurrentUser().catch(() => {
-            // Token might be expired, clear it
-            logout()
-        })
+    function initialize() {
+        if (initPromise) return initPromise
+
+        if (token.value) {
+            initPromise = fetchCurrentUser()
+                .catch(() => logout())
+                .finally(() => {
+                    isInitialized.value = true
+                })
+        } else {
+            isInitialized.value = true
+            initPromise = Promise.resolve()
+        }
+        return initPromise
     }
+
+    // Start initialization immediately
+    initialize()
 
     return {
         user,
         token,
         isAuthenticated,
         isSuperuser,
+        isInitialized,
+        initialize,
         login,
         logout,
         fetchCurrentUser

@@ -70,11 +70,15 @@ import NProgress from 'nprogress'
 NProgress.configure({ showSpinner: false })
 
 // Navigation guard for authentication
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
     // Start progress bar
     NProgress.start()
 
     const authStore = useAuthStore()
+
+    // Wait for auth to initialize (fetch user from token)
+    await authStore.initialize()
+
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
     const requiresSuperuser = to.matched.some(record => record.meta.requiresSuperuser)
 

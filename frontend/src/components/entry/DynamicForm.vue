@@ -44,7 +44,8 @@
                 v-model="localForm[field.name]"
                 :placeholder="field.required ? '0' : 'Optional'"
                 class="w-full"
-                @blur="validateField(field.name)"
+                updateOn="input"
+                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
               />
 
               <!-- Currency Input -->
@@ -57,7 +58,8 @@
                 locale="en-US"
                 :placeholder="field.required ? '$0.00' : '0.00'"
                 class="w-full"
-                @blur="validateField(field.name)"
+                updateOn="input"
+                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
               />
 
               <!-- Percentage Input -->
@@ -70,7 +72,8 @@
                 :max="100"
                 :placeholder="field.required ? '0%' : '0'"
                 class="w-full"
-                @blur="validateField(field.name)"
+                updateOn="input"
+                @update:modelValue="() => { validateField(field.name); autoCalculatePriceFields(field.name); }"
               />
 
               <!-- Dropdown -->
@@ -339,6 +342,72 @@ function handleSubmit() {
 function handleClear() {
   clearErrors()
   emit('clear')
+}
+
+/**
+ * Auto-calculate price fields based on length_of_beam
+ * Formula: price_per_beam = price_per_meter * length_of_beam
+ */
+function autoCalculatePriceFields(fieldName: string) {
+  console.log('[DynamicForm] autoCalculatePriceFields triggered for:', fieldName)
+  
+  // Use schema to find actual field names for calculation
+  let lengthKey = 'length_of_beam'
+  let priceMKey = 'price_per_meter'
+  let priceBKey = 'price_per_beam'
+  
+  if (props.schema?.sections) {
+    props.schema.sections.forEach((s: any) => {
+      s.fields.forEach((f: any) => {
+        const label = f.label?.toLowerCase() || ''
+        if (label.includes('length of beam')) lengthKey = f.name
+        else if (label === 'price/m') priceMKey = f.name
+        else if (label.includes('price per beam')) priceBKey = f.name
+      })
+    })
+  }
+
+  const priceFields = [priceMKey, priceBKey, lengthKey]
+  if (!priceFields.includes(fieldName)) return
+
+  const currentData = localForm.value
+  const length = parseDecimal(currentData[lengthKey])
+  const priceM = parseDecimal(currentData[priceMKey])
+  const priceB = parseDecimal(currentData[priceBKey])
+
+  console.log('[DynamicForm] Calc context:', { 
+    fieldName,
+    keys: { lengthKey, priceMKey, priceBKey },
+    values: { length, priceM, priceB }
+  })
+
+  if (length === null || length === 0) {
+    console.log('[DynamicForm] Calc skipped: length is null or 0')
+    return
+  }
+
+  if (fieldName === priceMKey && priceM !== null) {
+    localForm.value[priceBKey] = roundToDecimals(priceM * length, 2)
+  } else if (fieldName === priceBKey && priceB !== null) {
+    localForm.value[priceMKey] = roundToDecimals(priceB / length, 2)
+  } else if (fieldName === lengthKey && priceM !== null) {
+    localForm.value[priceBKey] = roundToDecimals(priceM * length, 2)
+  }
+}
+
+function parseDecimal(value: any): number | null {
+  if (value === null || value === undefined || value === '') return null
+  if (typeof value === 'number') return isNaN(value) ? null : value
+  
+  // Remove non-numeric characters except decimal point and minus sign
+  const cleanValue = String(value).replace(/[^\d.-]/g, '')
+  const num = parseFloat(cleanValue)
+  return isNaN(num) ? null : num
+}
+
+function roundToDecimals(value: number, decimals: number): number {
+  const multiplier = Math.pow(10, decimals)
+  return Math.round((value + Number.EPSILON) * multiplier) / multiplier
 }
 </script>
 
