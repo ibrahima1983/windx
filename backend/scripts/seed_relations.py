@@ -27,7 +27,7 @@ from app.services.relations import RelationsService
 async def seed_relations():
     """Seed relations data for testing."""
     print("=" * 60)
-    print("🌱 SEEDING RELATIONS DATA")
+    print("🌱 SEEDING RELATIONS DATA (PROFILE SCOPE)")
     print("=" * 60)
     
     session_maker = get_session_maker()

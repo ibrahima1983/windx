@@ -40,59 +40,123 @@ class RelationsService(BaseService):
     """
     
     # Hierarchy levels mapping
-    RELATION_LEVELS = {
-        0: "company",
-        1: "material",
-        2: "opening_system",
-        3: "system_series",
-        4: "color",
-    }
     
-    LEVEL_BY_TYPE = {v: k for k, v in RELATION_LEVELS.items()}
-    
-    # Entity types with their metadata fields (stored in validation_rules JSONB)
-    ENTITY_METADATA = {
-        "company": ["linked_material_id"],  # Company must be linked to a material
-        "material": ["density"],
-        "opening_system": [],  # Uses description field
-        "system_series": ["width", "number_of_chambers", "u_value", "number_of_seals", "characteristics"],
-        "color": ["code", "has_lamination"],
-        "unit_type": [],  # Independent, uses description field
-    }
-    
-    # UI metadata for each entity type (snake_case keys per Python convention)
-    ENTITY_UI_METADATA = {
-        "company": {
-            "name_placeholder": "e.g. Kompen, Rehau, Veka",
-            "description_placeholder": "Optional company description...",
-            "help_text": "Define manufacturers and suppliers in your catalog"
+    # Definition Scopes: Map scopes to their entities, hierarchy, and metadata
+    DEFINITION_SCOPES = {
+        "profile": {
+            "label": "Profile Definitions",
+            "entities": {
+                "material": {
+                    "label": "Material",
+                    "icon": "pi pi-box",
+                    "metadata_fields": [
+                        {"name": "density", "type": "number", "label": "Density (kg/m³)"}
+                    ]
+                },
+                "opening_system": {
+                    "label": "Opening System",
+                    "icon": "pi pi-cog",
+                    "metadata_fields": []
+                },
+                "color": {
+                    "label": "Color",
+                    "icon": "pi pi-palette",
+                    "metadata_fields": [
+                        {"name": "code", "type": "text", "label": "Color Code"},
+                        {"name": "has_lamination", "type": "boolean", "label": "Has Lamination"}
+                    ]
+                },
+                "company": {
+                    "label": "Company",
+                    "icon": "pi pi-building",
+                    "metadata_fields": [
+                        {"name": "linked_material_id", "type": "number", "hidden": True}
+                    ]
+                },
+                "system_series": {
+                    "label": "System Series",
+                    "icon": "pi pi-sitemap",
+                    "metadata_fields": [
+                        {"name": "width", "type": "number", "label": "Width (mm)"},
+                        {"name": "number_of_chambers", "type": "number", "label": "Chambers"},
+                        {"name": "u_value", "type": "number", "label": "U-Value"},
+                        {"name": "number_of_seals", "type": "number", "label": "Seals"},
+                        {"name": "characteristics", "type": "textarea", "label": "Characteristics"}
+                    ]
+                }
+            },
+            "hierarchy": {0: "company", 1: "material", 2: "opening_system", 3: "system_series", 4: "color"}
         },
-        "material": {
-            "name_placeholder": "e.g. UPVC, Aluminum, Wood",
-            "description_placeholder": "Material type description...",
-            "help_text": "Define material types used in your products"
+        "glazing": {
+            "label": "Glazing Definitions",
+            "entities": {
+                "glass_unit": {
+                    "label": "Glass Unit",
+                    "icon": "pi pi-stop",
+                    "metadata_fields": [
+                        {"name": "u_value", "type": "number", "label": "U-Value (W/m²K)"},
+                        {"name": "thickness", "type": "number", "label": "Total Thickness (mm)"},
+                        {"name": "g_value", "type": "number", "label": "G-Value"}
+                    ]
+                },
+                "spacer": {
+                    "label": "Spacer",
+                    "icon": "pi pi-minus",
+                    "metadata_fields": [
+                        {"name": "material", "type": "text", "label": "Material"},
+                        {"name": "psi_value", "type": "number", "label": "Psi Value"}
+                    ]
+                },
+                "gas": {
+                    "label": "Gas Filling",
+                    "icon": "pi pi-cloud",
+                    "metadata_fields": [
+                        {"name": "density", "type": "number", "label": "Density"},
+                        {"name": "thermal_conductivity", "type": "number", "label": "Thermal Conductivity"}
+                    ]
+                }
+            },
+            "hierarchy": {0: "glass_unit", 1: "spacer", 2: "gas"}
         },
-        "opening_system": {
-            "name_placeholder": "e.g. Casement, Sliding, Tilt & Turn",
-            "description_placeholder": "Opening mechanism description...",
-            "help_text": "Define how windows/doors open and operate"
-        },
-        "system_series": {
-            "name_placeholder": "e.g. Series 7000, Kom800, Premium Line",
-            "description_placeholder": "System series description...",
-            "help_text": "Define product series with specific technical specifications"
-        },
-        "color": {
-            "name_placeholder": "e.g. White, Navy Blue, Anthracite",
-            "description_placeholder": "Color name and finish...",
-            "help_text": "Define colors available in your product catalog"
-        },
-        "unit_type": {
-            "name_placeholder": "e.g. Square Meter, Linear Meter",
-            "description_placeholder": "Unit of measurement...",
-            "help_text": "Define units of measurement for pricing and ordering"
+        "hardware": {
+            "label": "Hardware Definitions",
+            "entities": {
+                "handle": {
+                    "label": "Handle",
+                    "icon": "pi pi-box",
+                    "metadata_fields": [
+                        {"name": "color", "type": "text", "label": "Color"},
+                        {"name": "material", "type": "text", "label": "Material"},
+                        {"name": "lock_type", "type": "text", "label": "Lock Type"}
+                    ]
+                },
+                "hinge": {
+                    "label": "Hinge",
+                    "icon": "pi pi-cog",
+                    "metadata_fields": [
+                        {"name": "max_load", "type": "number", "label": "Max Load (kg)"},
+                        {"name": "material", "type": "text", "label": "Material"}
+                    ]
+                },
+                "lock": {
+                    "label": "Lock",
+                    "icon": "pi pi-lock",
+                    "metadata_fields": [
+                        {"name": "security_level", "type": "text", "label": "Security Level"},
+                        {"name": "type", "type": "text", "label": "Lock Type"}
+                    ]
+                },
+                "accessory": {
+                    "label": "Accessory",
+                    "icon": "pi pi-wrench",
+                    "metadata_fields": []
+                }
+            },
+            "hierarchy": {0: "handle", 1: "hinge", 2: "lock", 3: "accessory"}
         }
     }
+    
+    # Backward compatibility mappings REMOVED as per request
     
     def __init__(self, db: AsyncSession) -> None:
         """Initialize RelationsService.
@@ -125,6 +189,23 @@ class RelationsService(BaseService):
             slug = "n" + slug
         return slug or "unnamed"
     
+    def get_scope_for_entity(self, entity_type: str) -> str:
+        """Resolve definition scope for an entity type."""
+        for scope, data in self.DEFINITION_SCOPES.items():
+            if entity_type in data["entities"]:
+                return scope
+        return "profile"  # Default fallback
+
+    def get_hierarchy_level(self, entity_type: str) -> int:
+        """Get hierarchy level for an entity type within its scope."""
+        scope = self.get_scope_for_entity(entity_type)
+        hierarchy = self.DEFINITION_SCOPES[scope]["hierarchy"]
+        # Reverse lookup level by type
+        for level, type_name in hierarchy.items():
+            if type_name == entity_type:
+                return level
+        return 0  # Default to root if not in hierarchy
+
     async def create_entity(
         self,
         entity_type: str,
@@ -150,11 +231,19 @@ class RelationsService(BaseService):
         Raises:
             ValueError: If entity_type is invalid
         """
-        if entity_type not in self.ENTITY_METADATA:
-            raise ValueError(f"Invalid entity type: {entity_type}")
+        # Resolve scope
+        scope = self.get_scope_for_entity(entity_type)
+        scope_data = self.DEFINITION_SCOPES.get(scope)
         
-        # Determine depth based on entity type
-        depth = self.LEVEL_BY_TYPE.get(entity_type, 0)
+        if not scope_data or entity_type not in scope_data["entities"]:
+             # Fallback check against old metadata for backward compat or fail
+             raise ValueError(f"Invalid entity type: {entity_type}")
+        
+        # Get entity definition
+        entity_def = scope_data["entities"][entity_type]
+        
+        # Determine depth based on hierarchy
+        depth = self.get_hierarchy_level(entity_type)
         
         # Build LTREE path (just the slug for standalone entities)
         slug = self._slugify(name)
@@ -162,12 +251,24 @@ class RelationsService(BaseService):
         # Build validation_rules with metadata
         validation_rules = {"is_relation_entity": True}
         if metadata:
-            for key in self.ENTITY_METADATA.get(entity_type, []):
+            # Validate against allowed metadata fields
+            allowed_fields = entity_def.get("metadata_fields", [])
+            # Extract names if they are objects
+            field_names = [f["name"] if isinstance(f, dict) else f for f in allowed_fields]
+            
+            for key in field_names:
                 if key in metadata:
                     validation_rules[key] = metadata[key]
         
-        # Get UI metadata for this entity type
-        ui_metadata = self.ENTITY_UI_METADATA.get(entity_type, {})
+        # Get UI metadata for this entity type (constructed from definition)
+        ui_metadata = {
+            "label": entity_def.get("label", entity_type),
+            "icon": entity_def.get("icon", "pi pi-box"),
+            "help_text": f"Define {entity_type} for {scope}",
+            # Add placeholders based on name convention if needed
+            "name_placeholder": f"e.g. {entity_def.get('label')} Name",
+            "description_placeholder": f"Optional description for {entity_def.get('label')}"
+        }
         
         # Create the entity
         entity = AttributeNode(
@@ -181,8 +282,8 @@ class RelationsService(BaseService):
             price_impact_type="fixed" if price_from else "fixed",
             description=description,
             validation_rules=validation_rules,
-            metadata_=ui_metadata,  # NEW: UI metadata
-            page_type="relations",  # Mark as relations entity
+            metadata_=ui_metadata,
+            page_type=scope,  # Use scope as page_type
         )
         
         self.db.add(entity)
@@ -265,21 +366,26 @@ class RelationsService(BaseService):
         await self.commit()
         return {"success": True, "message": f"Entity '{entity.name}' deleted"}
     
-    async def get_entities_by_type(self, entity_type: str) -> list[AttributeNode]:
+    async def get_entities_by_type(self, entity_type: str, scope: str = None) -> list[AttributeNode]:
         """Get all entities of a specific type.
         
         Args:
             entity_type: Type of entity (company, material, etc.)
+            scope: Optional scope filter (profile, glazing, etc.). If None, inferred from type.
             
         Returns:
             List of AttributeNode entities
         """
+        # Resolve scope if not provided (though filtering by type usually implies scope)
+        if not scope:
+            scope = self.get_scope_for_entity(entity_type)
+
         result = await self.db.execute(
             select(AttributeNode)
             .where(
                 and_(
                     AttributeNode.node_type == entity_type,
-                    AttributeNode.page_type == "relations",
+                    AttributeNode.page_type == scope,
                 )
             )
             .order_by(AttributeNode.name)
@@ -307,8 +413,10 @@ class RelationsService(BaseService):
             Dict mapping entity type to list of entities
         """
         entities = {}
-        for entity_type in self.ENTITY_METADATA:
-            entities[entity_type] = await self.get_entities_by_type(entity_type)
+        # Iterate over all scopes and their entities
+        for scope_data in self.DEFINITION_SCOPES.values():
+            for entity_type in scope_data["entities"]:
+                entities[entity_type] = await self.get_entities_by_type(entity_type)
         return entities
 
     
@@ -371,7 +479,7 @@ class RelationsService(BaseService):
             select(AttributeNode).where(
                 and_(
                     AttributeNode.ltree_path == full_path,
-                    AttributeNode.page_type == "relations",
+                    AttributeNode.page_type == "profile",
                 )
             )
         )
@@ -402,7 +510,7 @@ class RelationsService(BaseService):
                 "system_series_id": system_series_id,
                 "color_id": color_id,
             },
-            page_type="relations",
+            page_type="profile",
         )
         
         self.db.add(path_node)
@@ -419,10 +527,13 @@ class RelationsService(BaseService):
         
         Creates nodes for each level of the path if they don't exist.
         """
+        # Get profile hierarchy
+        hierarchy = self.DEFINITION_SCOPES["profile"]["hierarchy"]
+        
         # Create intermediate paths (company, company.material, etc.)
         for depth in range(4):  # 0 to 3 (not including the leaf)
             partial_path = ".".join(path_parts[:depth + 1])
-            entity_type = self.RELATION_LEVELS[depth]
+            entity_type = hierarchy[depth]  # Dynamic lookup
             entity = entities[entity_type]
             
             # Check if this path node exists
@@ -430,7 +541,7 @@ class RelationsService(BaseService):
                 select(AttributeNode).where(
                     and_(
                         AttributeNode.ltree_path == partial_path,
-                        AttributeNode.page_type == "relations",
+                        AttributeNode.page_type == "profile",
                         AttributeNode.node_type == f"{entity_type}_path",
                     )
                 )
@@ -452,7 +563,7 @@ class RelationsService(BaseService):
                         "is_dependency_path": True,
                         f"{entity_type}_id": entity.id,
                     },
-                    page_type="relations",
+                    page_type="profile",
                 )
                 self.db.add(path_node)
     
@@ -472,7 +583,7 @@ class RelationsService(BaseService):
         result = await self.db.execute(
             select(AttributeNode).where(
                 and_(
-                    AttributeNode.page_type == "relations",
+                    AttributeNode.page_type == "profile",
                     or_(
                         AttributeNode.ltree_path == ltree_path,
                         # Use text for LTREE descendant operator
@@ -503,7 +614,7 @@ class RelationsService(BaseService):
             select(AttributeNode).where(
                 and_(
                     AttributeNode.node_type == "color_path",
-                    AttributeNode.page_type == "relations",
+                    AttributeNode.page_type == "profile",
                     AttributeNode.depth == 4,
                 )
             ).order_by(AttributeNode.ltree_path)

@@ -177,15 +177,15 @@ async def delete_entity(
 @router.get("/relations/entities/{entity_type}")
 async def get_entities_by_type(
     entity_type: str,
+    scope: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentSuperuser = None,
 ) -> dict[str, Any]:
     """Get all entities of a specific type."""
-    if entity_type not in RelationsService.ENTITY_METADATA:
-        raise HTTPException(status_code=400, detail=f"Invalid entity type: {entity_type}")
+    # service.get_scope_for_entity call inside get_entities_by_type handles validation effectively
     
     service = RelationsService(db)
-    entities = await service.get_entities_by_type(entity_type)
+    entities = await service.get_entities_by_type(entity_type, scope=scope)
     
     return {
         "success": True,
@@ -202,7 +202,18 @@ async def get_entities_by_type(
             }
             for e in entities
         ],
-        "type_metadata": service.ENTITY_UI_METADATA.get(entity_type, {}),
+        "type_metadata": RelationsService.DEFINITION_SCOPES.get(service.get_scope_for_entity(entity_type), {}).get("entities", {}).get(entity_type, {}),
+    }
+
+
+@router.get("/relations/scopes")
+async def get_definition_scopes(
+    current_user: CurrentSuperuser = None,
+) -> dict[str, Any]:
+    """Get available definition scopes with full schema details."""
+    return {
+        "success": True,
+        "scopes": RelationsService.DEFINITION_SCOPES
     }
 
 

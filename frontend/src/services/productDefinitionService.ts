@@ -50,8 +50,10 @@ export interface GetEntitiesResponse {
 
 export const productDefinitionService = {
     // Generic Entity Operations
-    async getEntities(type: string) {
-        const response = await apiClient.get(`/api/v1/admin/relations/entities/${type}`)
+    async getEntities(type: string, scope?: string) {
+        const response = await apiClient.get(`/api/v1/admin/relations/entities/${type}`, {
+            params: scope ? { scope } : {}
+        })
         return response.data
     },
 
@@ -85,6 +87,12 @@ export const productDefinitionService = {
 
     async deletePath(data: PathDeleteRequest) {
         const response = await apiClient.delete('/api/v1/admin/relations/paths', { data })
+        return response.data
+    },
+
+    // Scope Operations
+    async getScopes() {
+        const response = await apiClient.get('/api/v1/admin/relations/scopes')
         return response.data
     },
 

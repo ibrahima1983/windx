@@ -2,9 +2,21 @@
   <AppLayout>
     <div class="max-w-[1400px] mx-auto">
       <div class="mb-6 flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-800">{{ currentSchema.title }}</h1>
-          <p class="text-slate-500 mt-1">Manage definitions and valid product configurations</p>
+        <div class="flex items-center gap-4">
+          <Select 
+            v-if="availableScopes.length > 0"
+            v-model="selectedScope" 
+            :options="availableScopes" 
+            optionLabel="label" 
+            optionValue="value"
+            class="w-48"
+            @change="handleScopeChange"
+            placeholder="Select Scope"
+          />
+          <div>
+            <h1 class="text-3xl font-bold text-slate-800">{{ currentSchema?.title || 'Loading...' }}</h1>
+            <p class="text-slate-500 mt-1">Manage definitions and valid product configurations</p>
+          </div>
         </div>
         <div class="flex gap-2">
           <!-- Refresh Button -->
@@ -38,7 +50,7 @@
               </div>
 
               <!-- Stats Cards -->
-              <div v-else class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div v-else-if="currentSchema?.entityTypes" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <div 
                   v-for="type in currentSchema.entityTypes" 
                   :key="type.value"
@@ -67,7 +79,7 @@
 
                 <!-- Dynamic Columns based on Chain Structure -->
                 <Column 
-                  v-for="node in currentSchema.chainStructure" 
+                  v-for="node in currentSchema?.chainStructure || []" 
                   :key="node.key"
                   :header="node.label"
                 >
@@ -112,7 +124,7 @@
                     <label class="font-semibold text-slate-700">Definition Type</label>
                     <Select 
                       v-model="selectedEntityType" 
-                      :options="currentSchema.entityTypes" 
+                      :options="currentSchema?.entityTypes || []" 
                       optionLabel="label" 
                       optionValue="value"
                       placeholder="Select what to define..."
@@ -297,7 +309,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import camelcaseKeys from 'camelcase-keys'
-import { definitionSchemas } from '@/config/definitionSchemas'
+import { fetchAndBuildSchemas, type DefinitionSchema } from '@/config/definitionSchemas'
 import { productDefinitionService } from '@/services/productDefinitionService'
 import { useDebugLogger } from '@/composables/useDebugLogger'
 
@@ -333,7 +345,13 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const entities = ref<Record<string, any[]>>({})
 const paths = ref<any[]>([])
-const typeMetadata = ref<Record<string, any>>({})  // NEW: UI metadata from backend
+const typeMetadata = ref<Record<string, any>>({}) 
+
+// Scope State
+const selectedScope = ref<string | null>(null)
+const availableScopes = ref<any[]>([])
+const schemas = ref<Record<string, DefinitionSchema>>({})
+
 
 // Form State
 const selectedEntityType = ref<string | null>(null)
@@ -353,15 +371,17 @@ const imagePreview = ref<string | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // Computed
-const currentSchema = computed(() => definitionSchemas[props.pageType] || definitionSchemas.profile || {
-  title: 'Unknown Definition',
-  entityTypes: [],
-  chainStructure: []
+const currentSchema = computed(() => {
+  if (!selectedScope.value || !schemas.value[selectedScope.value]) {
+    return { title: 'Loading...', entityTypes: [], chainStructure: [] }
+  }
+  return schemas.value[selectedScope.value]
 })
 
-const selectedEntityDef = computed(() => 
-  currentSchema.value.entityTypes.find(t => t.value === selectedEntityType.value)
-)
+const selectedEntityDef = computed(() => {
+  if (!currentSchema.value?.entityTypes) return undefined
+  return currentSchema.value.entityTypes.find(t => t.value === selectedEntityType.value)
+})
 
 const companyMaterialOptions = computed(() => {
   if (!entities.value.company || !entities.value.material) return []
@@ -410,29 +430,66 @@ watch(() => props.pageType, loadData)
 async function loadData() {
   isLoading.value = true
   try {
-    // 1. Load entities for all defined types in schema
-    for (const typeDef of currentSchema.value.entityTypes) {
-      const response = await productDefinitionService.getEntities(typeDef.value)
-      if (response.success) {
-        entities.value[typeDef.value] = response.entities
-        // Store type-level UI metadata (normalized to camelCase)
-        if (response.type_metadata) {
-          typeMetadata.value[typeDef.value] = camelcaseKeys(response.type_metadata, { deep: true })
+    // 0. Fetch and build schemas if not already done (or force refresh)
+    if (Object.keys(schemas.value).length === 0) {
+        schemas.value = await fetchAndBuildSchemas()
+        
+        // Populate available scopes
+        availableScopes.value = Object.keys(schemas.value).map(key => {
+            const schema = schemas.value[key]
+            return {
+                label: schema ? schema.title : key,  // Guard access
+                value: key
+            }
+        })
+
+        // Set default scope
+        if (!selectedScope.value && availableScopes.value.length > 0) {
+            selectedScope.value = props.pageType && schemas.value[props.pageType] ? props.pageType : availableScopes.value[0].value
         }
-      }
     }
 
-    // 2. Load paths
-    const pathsData = await productDefinitionService.getPaths()
-    paths.value = pathsData
+    if (!selectedScope.value) return 
 
-    logger.info('Data loaded', { entityTypes: Object.keys(entities.value), paths: paths.value.length })
+    // 1. Load entities
+    if (currentSchema.value && currentSchema.value.entityTypes) {
+        for (const typeDef of currentSchema.value.entityTypes) {
+            const response = await productDefinitionService.getEntities(typeDef.value, selectedScope.value)
+            
+            if (response.success) {
+                entities.value[typeDef.value] = response.entities
+                // Store type-level UI metadata
+                if (response.type_metadata) {
+                    typeMetadata.value[typeDef.value] = camelcaseKeys(response.type_metadata, { deep: true })
+                }
+            }
+        }
+    }
+
+    // 2. Load paths (Only relevant for profile scope currently, but safe to call)
+    // TODO: Make getPaths scope-aware if needed later
+    if (selectedScope.value === 'profile') {
+        const pathsData = await productDefinitionService.getPaths()
+        paths.value = pathsData
+    } else {
+        paths.value = [] // Clear paths for non-profile scopes
+    }
+
+    logger.info('Data loaded', { scope: selectedScope.value, entityTypes: Object.keys(entities.value) })
   } catch (error) {
     logger.error('Failed to load definition data', error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load definitions', life: 5000 })
   } finally {
     isLoading.value = false
   }
+}
+
+async function handleScopeChange() {
+    // Reset selection when scope changes
+    selectedEntityType.value = null
+    resetForm()
+    // Reload data for new scope
+    await loadData()
 }
 
 // Helpers
