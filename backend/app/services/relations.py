@@ -52,7 +52,7 @@ class RelationsService(BaseService):
     
     # Entity types with their metadata fields (stored in validation_rules JSONB)
     ENTITY_METADATA = {
-        "company": [],  # No extra metadata, just name, image_url, price_impact_value
+        "company": ["linked_material_id"],  # Company must be linked to a material
         "material": ["density"],
         "opening_system": [],  # Uses description field
         "system_series": ["width", "number_of_chambers", "u_value", "number_of_seals", "characteristics"],

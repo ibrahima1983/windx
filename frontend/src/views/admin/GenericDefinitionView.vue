@@ -355,22 +355,39 @@ const selectedEntityDef = computed(() =>
   currentSchema.value.entityTypes.find(t => t.value === selectedEntityType.value)
 )
 
-// Helper to get formatted company-material options
 const companyMaterialOptions = computed(() => {
   if (!entities.value.company || !entities.value.material) return []
   
+  // DEBUG: Inspect first company to see structure
+  if (entities.value.company.length > 0) {
+    console.log('[GenericDefinitionView] Company Data:', JSON.parse(JSON.stringify(entities.value.company[0])))
+    console.log('[GenericDefinitionView] Material Data:', JSON.parse(JSON.stringify(entities.value.material)))
+  }
+
   const options = []
-  // Logic: Companies define which Material they use via `validation_rules.linked_material_id`
-  // This is legacy behavior we are preserving
   for (const comp of entities.value.company) {
-    const matId = comp.validation_rules?.linked_material_id
+    // Check various possible locations for the link
+    // TRY ALL: validation_rules, metadata, or just root property
+    const matId = comp.validation_rules?.linked_material_id 
+               || comp.metadata?.linked_material_id 
+               || comp.linked_material_id
+               || (comp.validation_rules && comp.validation_rules['linked_material_id'])
+    
+    console.log(`[GenericDefinitionView] Checking Company: ${comp.name}`, { 
+      validation_rules: JSON.parse(JSON.stringify(comp.validation_rules || {})), 
+      metadata: JSON.parse(JSON.stringify(comp.metadata || {})),
+      extractedMatId: matId 
+    })
+
     if (matId) {
-      const mat = entities.value.material.find(m => m.id === matId)
+      const mat = entities.value.material.find(m => m.id == matId)
       if (mat) {
         options.push({
           label: `${comp.name} → ${mat.name}`,
           value: `${comp.id}:${mat.id}`
         })
+      } else {
+        console.warn(`[GenericDefinitionView] Material ID ${matId} not found in materials list`)
       }
     }
   }
@@ -468,7 +485,7 @@ function clearImage() {
 // Save Logic
 async function saveEntity() {
   if (!formData.value.name || !selectedEntityType.value) {
-    toast.add({ severity: 'warn', summary: 'Validation', detail: 'Name is required' })
+    toast.add({ severity: 'warn', summary: 'Validation', detail: 'Name is required', life: 3000 })
     return
   }
 
@@ -514,6 +531,10 @@ async function saveEntity() {
       // Create Paths
       const [compId, matId] = (formData.value.linked_company_material as string).split(':').map(Number)
       
+      if (!compId || !matId) {
+        throw new Error('Invalid company/material configuration')
+      }
+
       let pathsCreated = 0
       for (const colorId of formData.value.color_ids) {
         await productDefinitionService.createPath({
@@ -526,7 +547,7 @@ async function saveEntity() {
         pathsCreated++
       }
       
-      toast.add({ severity: 'success', summary: 'Success', detail: `Series created with ${pathsCreated} valid configurations` })
+      toast.add({ severity: 'success', summary: 'Success', detail: `Series created with ${pathsCreated} valid configurations`, life: 3000 })
       await loadData() // Refresh full state
     } else {
       // Normal Entity
@@ -534,14 +555,14 @@ async function saveEntity() {
       if (createRes.success) {
         if (!entities.value[type]) entities.value[type] = []
         entities.value[type].push(createRes.entity)
-        toast.add({ severity: 'success', summary: 'Success', detail: `${selectedEntityDef.value?.label} created` })
+        toast.add({ severity: 'success', summary: 'Success', detail: `${selectedEntityDef.value?.label} created`, life: 3000 })
       }
     }
 
     resetForm()
   } catch (error: any) {
     logger.error('Save failed', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to save' })
+    toast.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to save', life: 3000 })
   } finally {
     isSaving.value = false
   }
@@ -557,11 +578,11 @@ function confirmDeletePath(pathData: any) {
     accept: async () => {
       try {
         await productDefinitionService.deletePath({ ltree_path: pathData.ltree_path })
-        toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration chain removed' })
+        toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration chain removed', life: 3000 })
         // Optimistic remove
         paths.value = paths.value.filter(p => p.ltree_path !== pathData.ltree_path)
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete' })
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete', life: 3000 })
       }
     }
   })

@@ -597,25 +597,25 @@ async def seed_data_command(args: argparse.Namespace):
             await session.commit()
 
             # Check if we need to create entry system data
-            from app.models.manufacturing_type import ManufacturingType
+            # from app.models.manufacturing_type import ManufacturingType
 
-            result = await session.execute(select(ManufacturingType).limit(1))
-            if not result.scalar_one_or_none():
-                print("\n📝 Creating entry system data...")
+            # result = await session.execute(select(ManufacturingType).limit(1))
+            # if not result.scalar_one_or_none():
+            #     print("\n📝 Creating entry system data...")
 
-                # Import and create factory manufacturing data
-                from _manager_utils import create_factory_manufacturing_data
+            #     # Import and create factory manufacturing data
+            #     from _manager_utils import create_factory_manufacturing_data
 
-                factory_result = await create_factory_manufacturing_data(
-                    session, depth=2, root_leaves=2
-                )
+            #     factory_result = await create_factory_manufacturing_data(
+            #         session, depth=2, root_leaves=2
+            #     )
 
-                print("✅ Entry system data created:")
-                print(f"   Manufacturing Type: {factory_result['manufacturing_type_name']}")
-                print(f"   Total Nodes: {factory_result['total_nodes']}")
-                print("   Entry pages are now ready to use!")
-            else:
-                print("\n✅ Entry system data already exists")
+            #     print("✅ Entry system data created:")
+            #     print(f"   Manufacturing Type: {factory_result['manufacturing_type_name']}")
+            #     print(f"   Total Nodes: {factory_result['total_nodes']}")
+            #     print("   Entry pages are now ready to use!")
+            # else:
+            #     print("\n✅ Entry system data already exists")
 
             print("\n✅ Sample data seeded successfully!")
         except Exception as e:
@@ -797,16 +797,12 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             await seed_data_command(seed_args)
             progress.update(task, description="[green]✓ Initial data seeded")
 
-            # Step 5: Create minimal entry system data
-            progress.update(task, description="[cyan]Creating minimal entry system data...")
-            result = subprocess.run(
-                [python_exe, "backend/_entry_setup.py", "--create-minimal"], capture_output=True, text=True
-            )
-            if result.returncode != 0:
-                console.print(f"\n[bold red]✗ Entry setup failed:[/bold red]")
-                console.print(result.stderr)
-                return 1
-            progress.update(task, description="[green]✓ Minimal entry system data created")
+            # Step 5: SKIP minimal entry system data (redundant with profile hierarchy)
+            # progress.update(task, description="[cyan]Creating minimal entry system data...")
+            # result = subprocess.run(
+            #     [python_exe, "backend/_entry_setup.py", "--create-minimal"], capture_output=True, text=True
+            # )
+            # ...
 
             # Step 6: Setup profile hierarchy (CRITICAL for profile page)
             progress.update(task, description="[cyan]Setting up profile hierarchy...")
