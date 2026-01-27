@@ -1,5 +1,5 @@
 <template>
-  <PrimeSidebar 
+  <Drawer 
     v-model:visible="isVisible"
     :showCloseIcon="false"
     class="w-[260px] !border-none"
@@ -30,13 +30,13 @@
         />
       </div>
     </template>
-  </PrimeSidebar>
+  </Drawer>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import PrimeSidebar from 'primevue/sidebar'
+import Drawer from 'primevue/drawer'
 import PanelMenu from 'primevue/panelmenu'
 import Button from 'primevue/button'
 import { useAuthStore } from '@/stores/auth'
