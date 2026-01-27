@@ -880,7 +880,8 @@ async def setup_fresh_db_command(args: argparse.Namespace):
         success_message += (
             "[cyan]•[/cyan] Entry pages (profile, accessories, glazing) ready\n\n"
             "[dim]You can now start the server and use the application![/dim]\n"
-            "[dim]Profile page: http://localhost:8000/api/v1/admin/entry/profile[/dim]\n"
+            "[bold white]Frontend: http://localhost:3000[/bold white]\n"
+            "[dim]API Docs: http://localhost:8000/docs[/dim]\n"
             "[dim]Start with: python manage.py start[/dim]"
         )
         
