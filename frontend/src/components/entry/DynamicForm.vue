@@ -89,8 +89,8 @@
                 @change="validateField(field.name)"
               />
 
-              <!-- MultiSelect -->
-              <MultiSelect
+              <!-- MultiSelect (Enhanced with Color Chips) -->
+              <ColorChipMultiSelect
                 v-else-if="field.ui_component === 'multi-select' || field.ui_component === 'multiselect'"
                 :id="field.name"
                 v-model="localForm[field.name]"
@@ -98,7 +98,6 @@
                 :optionLabel="field.options_data ? 'name' : undefined"
                 :optionValue="field.options_data ? 'name' : undefined"
                 :placeholder="`Select ${field.label}`"
-                display="chip"
                 class="w-full"
                 @change="validateField(field.name)"
               />
@@ -231,7 +230,8 @@ import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
-import MultiSelect from 'primevue/multiselect'
+
+import ColorChipMultiSelect from '@/components/common/ColorChipMultiSelect.vue'
 import FileUpload from 'primevue/fileupload'
 import Checkbox from 'primevue/checkbox'
 import RadioButton from 'primevue/radiobutton'

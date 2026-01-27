@@ -225,29 +225,13 @@
 
                           <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium text-slate-700">Available Colors <span class="text-red-500">*</span></label>
-                            <MultiSelect 
+                            <ColorChipMultiSelect 
                               v-model="formData.color_ids"
                               :options="entities.color || []"
                               optionLabel="name"
                               optionValue="id"
                               placeholder="Select Colors..."
-                              class="w-full"
-                              display="chip"
-                            >
-                              <template #chip="slotProps">
-                                <div 
-                                  v-if="entities.color"
-                                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border shadow-sm transition-all hover:brightness-95"
-                                  :style="colorChipStyles[slotProps.value] || {}"
-                                >
-                                  <span>{{ entities.color.find(c => c.id === slotProps.value)?.name || slotProps.value }}</span>
-                                  <i 
-                                    class="pi pi-times text-xs cursor-pointer opacity-70 hover:opacity-100"
-                                    @click.stop="(e) => slotProps.removeCallback(e, slotProps.value)"
-                                  ></i>
-                                </div>
-                              </template>
-                            </MultiSelect>
+                            />
                           </div>
                         </div>
                       </div>
@@ -319,6 +303,7 @@ import { useDebugLogger } from '@/composables/useDebugLogger'
 
 // Components
 import AppLayout from '@/components/layout/AppLayout.vue'
+import ColorChipMultiSelect from '@/components/common/ColorChipMultiSelect.vue'
 import Tabs from 'primevue/tabs'
 import TabList from 'primevue/tablist'
 import Tab from 'primevue/tab'
@@ -326,7 +311,6 @@ import TabPanels from 'primevue/tabpanels'
 import TabPanel from 'primevue/tabpanel'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
-import MultiSelect from 'primevue/multiselect'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
@@ -378,24 +362,6 @@ const currentSchema = computed(() => definitionSchemas[props.pageType] || defini
 const selectedEntityDef = computed(() => 
   currentSchema.value.entityTypes.find(t => t.value === selectedEntityType.value)
 )
-
-// Memoized color chip styles to prevent re-render issues
-const colorChipStyles = computed(() => {
-  const styles: Record<number, { backgroundColor: string; color: string; borderColor: string }> = {}
-  
-  if (entities.value.color) {
-    for (const color of entities.value.color) {
-      const bgColor = getColorForChip(color.name)
-      styles[color.id] = {
-        backgroundColor: bgColor,
-        color: getContrastTextColor(bgColor),
-        borderColor: getBorderColor(bgColor)
-      }
-    }
-  }
-  
-  return styles
-})
 
 const companyMaterialOptions = computed(() => {
   if (!entities.value.company || !entities.value.material) return []
@@ -479,126 +445,6 @@ function getEntityName(type: string, id: number) {
   if (!list) return 'Unknown'
   const found = list.find((e: any) => e.id === id)
   return found ? found.name : 'Unknown'
-}
-
-// Professional Color Management
-const COLOR_PALETTE: Record<string, string> = {
-  // Whites / Off-whites
-  'white': '#F8FAFC', // Slate-50 instead of pure white for depth
-  'snow': '#FFFAFA',
-  'ivory': '#FFFFF0',
-  'cream': '#FFFDD0',
-  'beige': '#F5F5DC',
-  'silver': '#C0C0C0',
-  
-  // Grays / Blacks
-  'black': '#1a1a1a', // Soft black
-  'gray': '#6B7280',
-  'grey': '#6B7280',
-  'slate': '#475569',
-  'charcoal': '#36454F',
-  
-  // Reds / Pinks
-  'red': '#EF4444', // Tailwind Red-500
-  'rose': '#F43F5E',
-  'crimson': '#DC143C',
-  'maroon': '#800000',
-  'pink': '#EC4899',
-  'fuchsia': '#D946EF',
-  
-  // Oranges / Yellows
-  'orange': '#F97316',
-  'amber': '#F59E0B',
-  'yellow': '#EAB308',
-  'gold': '#FFD700',
-  'bronze': '#CD7F32',
-  'brown': '#92400E',
-  
-  // Greens
-  'green': '#22C55E',
-  'emerald': '#10B981',
-  'lime': '#84CC16',
-  'olive': '#808000',
-  'teal': '#14B8A6',
-  
-  // Blues
-  'blue': '#3B82F6',
-  'navy': '#000080',
-  'sky': '#0EA5E9',
-  'cyan': '#06B6D4',
-  'indigo': '#6366F1',
-  'royal': '#4169E1',
-  
-  // Purples
-  'purple': '#A855F7',
-  'violet': '#8B5CF6',
-  'magenta': '#FF00FF',
-}
-
-function getColorForChip(colorName: string): string {
-  const name = colorName.toLowerCase().trim()
-  
-  // 1. Exact match
-  if (COLOR_PALETTE[name]) return COLOR_PALETTE[name]
-  
-  // 2. Fuzzy match (longest match wins to avoid "dark blue" matching "blue")
-  const matches = Object.keys(COLOR_PALETTE).filter(key => name.includes(key))
-  if (matches.length > 0) {
-    // Sort by length descending using a temporary array
-    const sorted = matches.sort((a, b) => b.length - a.length)
-    const bestMatch = sorted[0]
-    if (bestMatch && COLOR_PALETTE[bestMatch]) {
-      return COLOR_PALETTE[bestMatch]
-    }
-  }
-  
-  // 3. Fallback: Hash generation for consistent colors on unknown strings
-  return stringToColor(name)
-}
-
-// Generate consistent unique color from string
-function stringToColor(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const c = (hash & 0x00ffffff).toString(16).toUpperCase()
-  return '#' + '00000'.substring(0, 6 - c.length) + c
-}
-
-// Calculate luminance for best contrast (WCAG guidelines)
-function getContrastTextColor(hexColor: string): string {
-  // Convert hex to RGB
-  const hex = hexColor.replace('#', '')
-  const r = parseInt(hex.substring(0, 2), 16)
-  const g = parseInt(hex.substring(2, 4), 16)
-  const b = parseInt(hex.substring(4, 6), 16)
-  
-  // Calculate relative luminance (per ITU-R BT.709)
-  const uicolors = [r / 255, g / 255, b / 255]
-  const c = uicolors.map((col) => {
-    if (col <= 0.03928) {
-      return col / 12.92
-    }
-    return Math.pow((col + 0.055) / 1.055, 2.4)
-  })
-  
-  // Ensure array has elements (it always does, but TS needs reassurance)
-  const rL = c[0] ?? 0
-  const gL = c[1] ?? 0
-  const bL = c[2] ?? 0
-  
-  const L = 0.2126 * rL + 0.7152 * gL + 0.0722 * bL
-  
-  // Threshold of 0.179 for deciding light vs dark text
-  // Ideally this would check actual contrast ratios of 4.5:1
-  // Dark text for light background, Light text for dark
-  return L > 0.4 ? '#1F2937' : '#FFFFFF' // Slate-800 vs White
-}
-
-function getBorderColor(hexColor: string): string {
-  // Only add border if luminance is high (light color)
-  return getContrastTextColor(hexColor) === '#1F2937' ? '#E2E8F0' : 'transparent' // Slate-200
 }
 
 // Form Actions
@@ -755,7 +601,7 @@ function confirmDeletePath(pathData: any) {
 }
 </script>
 
-<style>
+<style scoped>
 /* Animation Utility */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
@@ -765,4 +611,6 @@ function confirmDeletePath(pathData: any) {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
 </style>
