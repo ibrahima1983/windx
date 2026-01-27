@@ -114,6 +114,7 @@ async def create_entity(
                 "price_impact_value": str(entity.price_impact_value) if entity.price_impact_value else None,
                 "description": entity.description,
                 "validation_rules": entity.validation_rules,
+                "metadata_": entity.metadata_,
             },
         }
     except ValueError as e:
@@ -197,9 +198,11 @@ async def get_entities_by_type(
                 "price_impact_value": str(e.price_impact_value) if e.price_impact_value else None,
                 "description": e.description,
                 "validation_rules": e.validation_rules,
+                "metadata_": e.metadata_,
             }
             for e in entities
         ],
+        "type_metadata": service.ENTITY_UI_METADATA.get(entity_type, {}),
     }
 
 

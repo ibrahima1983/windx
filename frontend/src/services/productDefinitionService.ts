@@ -31,6 +31,23 @@ export interface PathDeleteRequest {
     ltree_path: string
 }
 
+export interface RelationEntity {
+    id: number
+    name: string
+    node_type: string
+    image_url: string | null
+    price_impact_value: string | null
+    description: string | null
+    validation_rules: Record<string, any>
+    metadata_?: Record<string, any>  // UI metadata from backend
+}
+
+export interface GetEntitiesResponse {
+    success: boolean
+    entities: RelationEntity[]
+    type_metadata?: Record<string, any>  // Type-level UI metadata
+}
+
 export const productDefinitionService = {
     // Generic Entity Operations
     async getEntities(type: string) {

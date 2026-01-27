@@ -60,6 +60,40 @@ class RelationsService(BaseService):
         "unit_type": [],  # Independent, uses description field
     }
     
+    # UI metadata for each entity type (snake_case keys per Python convention)
+    ENTITY_UI_METADATA = {
+        "company": {
+            "name_placeholder": "e.g. Kompen, Rehau, Veka",
+            "description_placeholder": "Optional company description...",
+            "help_text": "Define manufacturers and suppliers in your catalog"
+        },
+        "material": {
+            "name_placeholder": "e.g. UPVC, Aluminum, Wood",
+            "description_placeholder": "Material type description...",
+            "help_text": "Define material types used in your products"
+        },
+        "opening_system": {
+            "name_placeholder": "e.g. Casement, Sliding, Tilt & Turn",
+            "description_placeholder": "Opening mechanism description...",
+            "help_text": "Define how windows/doors open and operate"
+        },
+        "system_series": {
+            "name_placeholder": "e.g. Series 7000, Kom800, Premium Line",
+            "description_placeholder": "System series description...",
+            "help_text": "Define product series with specific technical specifications"
+        },
+        "color": {
+            "name_placeholder": "e.g. White, Navy Blue, Anthracite",
+            "description_placeholder": "Color name and finish...",
+            "help_text": "Define colors available in your product catalog"
+        },
+        "unit_type": {
+            "name_placeholder": "e.g. Square Meter, Linear Meter",
+            "description_placeholder": "Unit of measurement...",
+            "help_text": "Define units of measurement for pricing and ordering"
+        }
+    }
+    
     def __init__(self, db: AsyncSession) -> None:
         """Initialize RelationsService.
         
@@ -132,6 +166,9 @@ class RelationsService(BaseService):
                 if key in metadata:
                     validation_rules[key] = metadata[key]
         
+        # Get UI metadata for this entity type
+        ui_metadata = self.ENTITY_UI_METADATA.get(entity_type, {})
+        
         # Create the entity
         entity = AttributeNode(
             name=name,
@@ -144,6 +181,7 @@ class RelationsService(BaseService):
             price_impact_type="fixed" if price_from else "fixed",
             description=description,
             validation_rules=validation_rules,
+            metadata_=ui_metadata,  # NEW: UI metadata
             page_type="relations",  # Mark as relations entity
         )
         

@@ -198,7 +198,15 @@ class AttributeNode(Base):
     help_text: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
-        comment="Additional guidance for users",
+        comment="Additional help text for tooltips",
+    )
+    
+    # UI metadata for frontend display hints
+    metadata_: Mapped[dict | None] = mapped_column(
+        "metadata_",  # Explicit column name
+        JSONB,
+        nullable=True,
+        comment='UI hints and metadata for frontend display (placeholders, help text, icons, etc.). Example: {"name_placeholder": "e.g. White, Navy Blue", "help_text": "Define colors..."}'
     )
     image_url: Mapped[str | None] = mapped_column(
         String(500),

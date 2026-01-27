@@ -142,7 +142,10 @@
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex flex-col gap-2">
                           <label class="text-sm font-medium text-slate-700">Name <span class="text-red-500">*</span></label>
-                          <InputText v-model="formData.name" placeholder="e.g. Standard, Oak, Series 7000" />
+                          <InputText 
+                            v-model="formData.name" 
+                            :placeholder="(selectedEntityType ? typeMetadata[selectedEntityType]?.namePlaceholder : undefined) || 'Enter name'"
+                          />
                         </div>
                         <div class="flex flex-col gap-2">
                           <label class="text-sm font-medium text-slate-700">Base Price</label>
@@ -152,7 +155,12 @@
 
                       <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-slate-700">Description</label>
-                        <Textarea v-model="formData.description" rows="2" placeholder="Optional description..." class="w-full" />
+                        <Textarea 
+                          v-model="formData.description" 
+                          rows="2" 
+                          :placeholder="(selectedEntityType ? typeMetadata[selectedEntityType]?.descriptionPlaceholder : undefined) || 'Optional description...'" 
+                          class="w-full" 
+                        />
                       </div>
 
                       <!-- Type-Specific Fields from Schema -->
@@ -225,7 +233,20 @@
                               placeholder="Select Colors..."
                               class="w-full"
                               display="chip"
-                            />
+                            >
+                              <template #chip="slotProps">
+                                <div 
+                                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border shadow-sm"
+                                  :style="{
+                                    backgroundColor: getColorForChip(slotProps.value.name),
+                                    color: getContrastTextColor(getColorForChip(slotProps.value.name)),
+                                    borderColor: getBorderColor(getColorForChip(slotProps.value.name))
+                                  }"
+                                >
+                                  {{ slotProps.value.name }}
+                                </div>
+                              </template>
+                            </MultiSelect>
                           </div>
                         </div>
                       </div>
@@ -290,6 +311,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
+import camelcaseKeys from 'camelcase-keys'
 import { definitionSchemas } from '@/config/definitionSchemas'
 import { productDefinitionService } from '@/services/productDefinitionService'
 import { useDebugLogger } from '@/composables/useDebugLogger'
@@ -326,6 +348,7 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const entities = ref<Record<string, any[]>>({})
 const paths = ref<any[]>([])
+const typeMetadata = ref<Record<string, any>>({})  // NEW: UI metadata from backend
 
 // Form State
 const selectedEntityType = ref<string | null>(null)
@@ -407,6 +430,10 @@ async function loadData() {
       const response = await productDefinitionService.getEntities(typeDef.value)
       if (response.success) {
         entities.value[typeDef.value] = response.entities
+        // Store type-level UI metadata (normalized to camelCase)
+        if (response.type_metadata) {
+          typeMetadata.value[typeDef.value] = camelcaseKeys(response.type_metadata, { deep: true })
+        }
       }
     }
 
@@ -433,6 +460,126 @@ function getEntityName(type: string, id: number) {
   if (!list) return 'Unknown'
   const found = list.find((e: any) => e.id === id)
   return found ? found.name : 'Unknown'
+}
+
+// Professional Color Management
+const COLOR_PALETTE: Record<string, string> = {
+  // Whites / Off-whites
+  'white': '#F8FAFC', // Slate-50 instead of pure white for depth
+  'snow': '#FFFAFA',
+  'ivory': '#FFFFF0',
+  'cream': '#FFFDD0',
+  'beige': '#F5F5DC',
+  'silver': '#C0C0C0',
+  
+  // Grays / Blacks
+  'black': '#1a1a1a', // Soft black
+  'gray': '#6B7280',
+  'grey': '#6B7280',
+  'slate': '#475569',
+  'charcoal': '#36454F',
+  
+  // Reds / Pinks
+  'red': '#EF4444', // Tailwind Red-500
+  'rose': '#F43F5E',
+  'crimson': '#DC143C',
+  'maroon': '#800000',
+  'pink': '#EC4899',
+  'fuchsia': '#D946EF',
+  
+  // Oranges / Yellows
+  'orange': '#F97316',
+  'amber': '#F59E0B',
+  'yellow': '#EAB308',
+  'gold': '#FFD700',
+  'bronze': '#CD7F32',
+  'brown': '#92400E',
+  
+  // Greens
+  'green': '#22C55E',
+  'emerald': '#10B981',
+  'lime': '#84CC16',
+  'olive': '#808000',
+  'teal': '#14B8A6',
+  
+  // Blues
+  'blue': '#3B82F6',
+  'navy': '#000080',
+  'sky': '#0EA5E9',
+  'cyan': '#06B6D4',
+  'indigo': '#6366F1',
+  'royal': '#4169E1',
+  
+  // Purples
+  'purple': '#A855F7',
+  'violet': '#8B5CF6',
+  'magenta': '#FF00FF',
+}
+
+function getColorForChip(colorName: string): string {
+  const name = colorName.toLowerCase().trim()
+  
+  // 1. Exact match
+  if (COLOR_PALETTE[name]) return COLOR_PALETTE[name]
+  
+  // 2. Fuzzy match (longest match wins to avoid "dark blue" matching "blue")
+  const matches = Object.keys(COLOR_PALETTE).filter(key => name.includes(key))
+  if (matches.length > 0) {
+    // Sort by length descending using a temporary array
+    const sorted = matches.sort((a, b) => b.length - a.length)
+    const bestMatch = sorted[0]
+    if (bestMatch && COLOR_PALETTE[bestMatch]) {
+      return COLOR_PALETTE[bestMatch]
+    }
+  }
+  
+  // 3. Fallback: Hash generation for consistent colors on unknown strings
+  return stringToColor(name)
+}
+
+// Generate consistent unique color from string
+function stringToColor(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const c = (hash & 0x00ffffff).toString(16).toUpperCase()
+  return '#' + '00000'.substring(0, 6 - c.length) + c
+}
+
+// Calculate luminance for best contrast (WCAG guidelines)
+function getContrastTextColor(hexColor: string): string {
+  // Convert hex to RGB
+  const hex = hexColor.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  
+  // Calculate relative luminance (per ITU-R BT.709)
+  const uicolors = [r / 255, g / 255, b / 255]
+  const c = uicolors.map((col) => {
+    if (col <= 0.03928) {
+      return col / 12.92
+    }
+    return Math.pow((col + 0.055) / 1.055, 2.4)
+  })
+  
+  // Ensure array has elements (it always does, but TS needs reassurance)
+  const rL = c[0] ?? 0
+  const gL = c[1] ?? 0
+  const bL = c[2] ?? 0
+  
+  const L = 0.2126 * rL + 0.7152 * gL + 0.0722 * bL
+  
+  // Threshold of 0.179 for deciding light vs dark text
+  // Ideally this would check actual contrast ratios of 4.5:1
+  // Dark text for light background, Light text for dark
+  return L > 0.4 ? '#1F2937' : '#FFFFFF' // Slate-800 vs White
+}
+
+function getBorderColor(hexColor: string): string {
+  // Only add border if luminance is high (light color)
+  return getContrastTextColor(hexColor) === '#1F2937' ? '#E2E8F0' : 'transparent' // Slate-200
 }
 
 // Form Actions

@@ -133,6 +133,21 @@ class AttributeNodeBase(BaseModel):
     help_text: Annotated[
         str | None, Field(default=None, description="Additional guidance for users")
     ]
+    metadata_: Annotated[
+        dict[str, Any] | None,
+        Field(
+            default=None,
+            alias="metadata_",
+            description="UI hints and metadata for frontend display (placeholders, help text, icons, etc.)",
+            examples=[
+                {
+                    "name_placeholder": "e.g. White, Navy Blue, Anthracite",
+                    "description_placeholder": "Optional color description...",
+                    "help_text": "Define colors available in your product catalog"
+                }
+            ]
+        )
+    ]
 
     @field_validator("node_type")
     @classmethod
