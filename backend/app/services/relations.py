@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attribute_node import AttributeNode
 from app.services.base import BaseService
+from app.schemas.definition import ScopeDef
 
 __all__ = ["RelationsService"]
 
@@ -42,7 +43,7 @@ class RelationsService(BaseService):
     # Hierarchy levels mapping
     
     # Definition Scopes: Map scopes to their entities, hierarchy, and metadata
-    DEFINITION_SCOPES = {
+    DEFINITION_SCOPES: dict[str, ScopeDef] = {
         "profile": {
             "label": "Profile Definitions",
             "entities": {
@@ -105,7 +106,41 @@ class RelationsService(BaseService):
                     ]
                 }
             },
-            "hierarchy": {0: "company", 1: "material", 2: "opening_system", 3: "system_series", 4: "color"}
+            "hierarchy": {0: "company", 1: "material", 2: "opening_system", 3: "system_series", 4: "color"},
+            "dependencies": [
+                {
+                    "trigger_field": "system_series",
+                    "actions": [
+                        {
+                            "type": "autofill",
+                            "source_property": "metadata_.opening_system_id",
+                            "target_field": "opening_system",
+                            "disable_target": True,
+                            "lookup_source": None,
+                            "lookup_key": None,
+                            "chain": None
+                        },
+                        {
+                            "type": "autofill",
+                            "source_property": "metadata_.linked_company_material",
+                            "target_field": "company",
+                            "disable_target": True,
+                            "lookup_source": None,
+                            "lookup_key": None,
+                            "chain": {
+                                "type": "autofill",
+                                "target_field": "material",
+                                "lookup_source": "company",
+                                "lookup_key": "id",
+                                "source_property": "metadata_.linked_material_id",
+                                "disable_target": True,
+                                "chain": None,
+                                "source_property": None # Must satisfy all TypedDict keys if strict? No TypedDict optional keys allowed
+                            }
+                        }
+                    ]
+                }
+            ]
         },
         "glazing": {
             "label": "Glazing Definitions",

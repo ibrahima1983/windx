@@ -30,6 +30,7 @@
                 @update:modelValue="autoCalculateFields(field.name)"
                 @blur="validateField(field.name)"
                 @change="validateField(field.name)"
+                :disabled="fieldVisibility[field.name] === false || (disabledFields && disabledFields[field.name])"
               />
             </div>
           </div>
@@ -117,10 +118,25 @@ watch(localForm, (newVal) => {
   emit('update:modelValue', newVal)
 }, { deep: true })
 
+import { useDependencyEngine } from '@/composables/useDependencyEngine'
+
 // Setup validation using the composable
 const schemaRef = computed(() => props.schema)
 const { fieldErrors, fieldVisibility, isValid, validateField, validateAll, clearErrors } = 
   useFormValidation(schemaRef, localForm)
+
+// Field State & Dependencies
+const { disabledFields } = useDependencyEngine(schemaRef, localForm, findField)
+
+// Helper
+function findField(name: string) {
+    if (!props.schema) return null
+    for (const section of props.schema.sections) {
+        const f = section.fields.find((f: any) => f.name === name)
+        if (f) return f
+    }
+    return null
+}
 
 
 

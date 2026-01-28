@@ -19,6 +19,7 @@
       @update:modelValue="(val) => emit('update:modelValue', val)"
       :placeholder="placeholder"
       class="w-full"
+      :disabled="disabled"
       @blur="emit('blur', field.name)"
     />
 
@@ -31,6 +32,7 @@
       :rows="3"
       :placeholder="placeholder"
       class="w-full"
+      :disabled="disabled"
       @blur="emit('blur', field.name)"
     />
 
@@ -43,6 +45,7 @@
       :placeholder="placeholder || '0'"
       class="w-full"
       :maxFractionDigits="field.precision || 2"
+      :disabled="disabled"
       @blur="emit('blur', field.name)"
     />
 
@@ -57,6 +60,7 @@
       locale="en-US"
       :placeholder="placeholder || '$0.00'"
       class="w-full"
+      :disabled="disabled"
       @blur="emit('blur', field.name)"
     />
 
@@ -71,6 +75,7 @@
       :max="100"
       :placeholder="placeholder || '0%'"
       class="w-full"
+      :disabled="disabled"
       @blur="emit('blur', field.name)"
     />
 
@@ -81,6 +86,7 @@
         :modelValue="modelValue"
         @update:modelValue="(val) => emit('update:modelValue', val)"
         :binary="true"
+        :disabled="disabled"
         @change="emit('change', field.name)"
       />
       <label :for="field.name" class="cursor-pointer text-slate-600">{{ field.label || 'Enabled' }}</label>
@@ -98,6 +104,7 @@
       :placeholder="placeholder || 'Select...'"
       class="w-full"
       showClear
+      :disabled="disabled"
       @change="emit('change', field.name)"
     />
 
@@ -112,6 +119,7 @@
       :optionValue="optionValue"
       :placeholder="placeholder || 'Select items...'"
       class="w-full"
+      :disabled="disabled"
       @change="emit('change', field.name)"
     />
 
@@ -124,6 +132,7 @@
           @update:modelValue="(val) => emit('update:modelValue', val)"
           :name="field.name" 
           :value="optionValue ? option[optionValue] : option" 
+          :disabled="disabled"
           @change="emit('change', field.name)"
         />
         <label :for="`${field.name}_${getErrorKey(option)}`" class="ml-2 cursor-pointer">
@@ -140,6 +149,7 @@
         class="w-full"
         :min="field.validation_rules?.min || 0"
         :max="field.validation_rules?.max || 100"
+        :disabled="disabled"
         @slideend="emit('change', field.name)"
       />
       <div class="flex justify-between text-xs text-slate-500 mt-2">
@@ -183,6 +193,7 @@
           :auto="true"
           :chooseLabel="modelValue ? 'Change Image' : 'Upload Image'"
           class="p-button-sm"
+          :disabled="disabled"
         />
         <small v-if="modelValue" class="text-slate-400 text-xs truncate max-w-[150px]">
           {{ modelValue }}
@@ -199,6 +210,7 @@
       @update:modelValue="(val) => emit('update:modelValue', val)"
       :placeholder="`Type unknown (${field.ui_component || field.type})`"
       class="w-full border-dashed border-slate-300"
+      :disabled="disabled"
     />
 
     <!-- Error Message -->
@@ -228,6 +240,7 @@ const props = defineProps<{
   modelValue: any
   options?: any[]
   error?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue', 'change', 'blur'])
