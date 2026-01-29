@@ -40,6 +40,7 @@
           title="Saved Configurations"
           @row-save="onRowEditSave"
           @delete="confirmDelete"
+          @bulk-delete="confirmBulkDelete"
           @commit="commitChanges"
           @cell-update="onCellUpdate"
         />
@@ -51,7 +52,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
 import Card from 'primevue/card'
 import SmartSelect from '@/components/common/SmartSelect.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -68,7 +68,6 @@ const props = defineProps<{
 
 const logger = useDebugLogger(`GenericEntryView:${props.pageType}`)
 const toast = useToast()
-const confirm = useConfirm()
 
 const manufacturingStore = useManufacturingTypeStore()
 const configStore = useConfigurationStore()
@@ -194,20 +193,70 @@ async function commitChanges() {
   }
 }
 
-function confirmDelete(data: any) {
-  confirm.require({
-    message: `Delete configuration "${data.name || data.id}"?`,
-    header: 'Confirm Delete',
-    icon: 'pi pi-exclamation-triangle',
-    accept: async () => {
-      try {
-        await configStore.deleteConfiguration(data.id)
-        toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration deleted', life: 3000 })
-      } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete', life: 5000 })
+function confirmBulkDelete(selectedRows: any[]) {
+  const count = selectedRows.length
+  const configIds = selectedRows.map(row => row.id)
+  
+  // Handle the bulk delete directly since the table component shows the confirmation
+  handleBulkDelete(configIds, count)
+}
+
+async function handleBulkDelete(configIds: number[], count: number) {
+  try {
+    const result = await configStore.bulkDeleteConfigurations(configIds)
+    
+    if (result.success) {
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Bulk Delete Completed', 
+        detail: `Successfully deleted ${result.deleted_count} configuration${result.deleted_count > 1 ? 's' : ''}`, 
+        life: 4000 
+      })
+      
+      // Reload configurations to refresh the table
+      if (selectedTypeId.value) {
+        await configStore.loadPreviews(selectedTypeId.value)
       }
+    } else {
+      toast.add({ 
+        severity: 'warn', 
+        summary: 'Partial Success', 
+        detail: `Deleted ${result.deleted_count}, failed ${result.error_count}`, 
+        life: 5000 
+      })
     }
-  })
+  } catch (error: any) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Bulk Delete Failed', 
+      detail: error.message || 'Failed to delete configurations', 
+      life: 5000 
+    })
+  }
+}
+
+function confirmDelete(data: any) {
+  // Handle single delete directly since the table component shows the confirmation
+  handleSingleDelete(data)
+}
+
+async function handleSingleDelete(data: any) {
+  try {
+    await configStore.deleteConfiguration(data.id)
+    toast.add({ 
+      severity: 'success', 
+      summary: 'Configuration Deleted', 
+      detail: `"${data.name || `Configuration #${data.id}`}" has been deleted`, 
+      life: 3000 
+    })
+  } catch (error: any) {
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Delete Failed', 
+      detail: error.message || 'Failed to delete configuration', 
+      life: 5000 
+    })
+  }
 }
 </script>
 

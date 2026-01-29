@@ -160,6 +160,36 @@ export const useConfigurationStore = defineStore('configuration', () => {
         }
     }
 
+    async function bulkDeleteConfigurations(ids: number[]) {
+        isLoading.value = true
+        error.value = null
+
+        try {
+            logger.info('Bulk deleting configurations', { ids, count: ids.length })
+            const result = await configurationService.bulkDelete(ids)
+            
+            // Remove deleted configurations from local state
+            configurations.value = configurations.value.filter(c => !ids.includes(c.id))
+            
+            // Clear pending edits for deleted configurations
+            ids.forEach(id => pendingEdits.value.delete(id))
+            
+            logger.info('Bulk delete completed', { 
+                deleted: result.deleted_count, 
+                errors: result.error_count 
+            })
+            
+            return result
+        } catch (err: any) {
+            const msg = err.response?.data?.detail || err.message || 'Failed to bulk delete configurations'
+            error.value = msg
+            logger.error('Failed to bulk delete configurations', { error: msg, err })
+            throw err
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     function clearPendingEdits() {
         pendingEdits.value.clear()
         logger.debug('Pending edits cleared')
@@ -178,6 +208,7 @@ export const useConfigurationStore = defineStore('configuration', () => {
         updateCell,
         commitPendingChanges,
         deleteConfiguration,
+        bulkDeleteConfigurations,
         clearPendingEdits
     }
 })

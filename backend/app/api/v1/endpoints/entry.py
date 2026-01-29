@@ -498,4 +498,73 @@ async def upload_image(
         )
 
 
+@router.delete(
+    "/profile/configurations/bulk",
+    summary="Bulk Delete Profile Configurations",
+    description="Delete multiple profile configurations at once (superuser only)",
+    response_description="Bulk delete operation result",
+    operation_id="bulkDeleteProfileConfigurations",
+    responses={
+        200: {
+            "description": "Bulk delete completed",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "message": "Bulk delete completed",
+                        "deleted_count": 3,
+                        "error_count": 0,
+                        "total_requested": 3
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Invalid request (empty ID list)",
+        },
+        403: {
+            "description": "Not authorized (superuser required)",
+        },
+        **get_common_responses(401, 500),
+    },
+)
+async def bulk_delete_profile_configurations(
+    configuration_ids: list[PositiveInt],
+    current_user: CurrentUser,
+    db: DBSession,
+) -> dict[str, Any]:
+    """Bulk delete multiple profile configurations.
+
+    Deletes multiple configurations at once. Only superusers can perform
+    bulk delete operations. The operation will attempt to delete all
+    provided configurations and return a summary of the results.
+
+    Args:
+        configuration_ids (list[PositiveInt]): List of configuration IDs to delete
+        current_user (User): Current authenticated user (must be superuser)
+        db (AsyncSession): Database session
+
+    Returns:
+        dict[str, Any]: Bulk delete operation result with counts
+
+    Raises:
+        HTTPException: If user is not superuser or request is invalid
+
+    Example:
+        DELETE /api/v1/admin/entry/profile/configurations/bulk
+        [1, 2, 3, 4, 5]
+    """
+    from app.services.entry import EntryService
+
+    # Validate request
+    if not configuration_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="No configuration IDs provided for bulk delete"
+        )
+
+    entry_service = EntryService(db)
+    return await entry_service.bulk_delete_profile_configurations(configuration_ids, current_user)
+
+
 
