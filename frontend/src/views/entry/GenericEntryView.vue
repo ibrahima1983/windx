@@ -35,10 +35,12 @@
           :headers="manufacturingStore.headers"
           :loading="configStore.isLoading"
           :has-pending-changes="configStore.hasPendingChanges"
+          :schema="manufacturingStore.schema"
           title="Saved Configurations"
           @row-save="onRowEditSave"
           @delete="confirmDelete"
           @commit="commitChanges"
+          @cell-update="onCellUpdate"
         />
       </div>
     </div>
@@ -150,6 +152,30 @@ function onRowEditSave(event: any) {
       if (newData[key] !== config[key]) {
         configStore.updateCell(newData.id, key, newData[key])
       }
+    })
+  }
+}
+
+function onCellUpdate(data: { rowId: any, field: string, value: any, calculatedFields?: string[] }) {
+  const { rowId, field, value, calculatedFields } = data
+  
+  // Update the main field
+  configStore.updateCell(rowId, field, value)
+  
+  // Update any calculated fields
+  if (calculatedFields && calculatedFields.length > 0) {
+    const config = configStore.configurations.find(c => c.id === rowId)
+    if (config) {
+      calculatedFields.forEach(calcField => {
+        configStore.updateCell(rowId, calcField, config[calcField])
+      })
+    }
+    
+    // Log the auto-calculation for user feedback
+    logger.info('Auto-calculated fields', { 
+      trigger: field, 
+      calculated: calculatedFields,
+      rowId 
     })
   }
 }

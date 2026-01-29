@@ -45,16 +45,16 @@ attributes:
     help_text: Select the type of glass based on performance requirements
     validation_rules:
       options:
-        - Clear
-        - Tinted
-        - Reflective
-        - Low-E
-        - Laminated
-        - Tempered
-        - Insulated
-        - Acoustic
-        - Security
-        - Other
+        - clear
+        - tinted
+        - reflective
+        - low_e
+        - laminated
+        - tempered
+        - insulated
+        - acoustic
+        - security
+        - other
     metadata:
       placeholder: "Select Glass Type"
 
@@ -143,10 +143,10 @@ attributes:
     help_text: Select the number of glass panes for optimal performance
     validation_rules:
       options:
-        - Single Pane
-        - Double Pane
-        - Triple Pane
-        - Quadruple Pane
+        - single_pane
+        - double_pane
+        - triple_pane
+        - quadruple_pane
     metadata:
       placeholder: "Select Configuration"
 
@@ -188,7 +188,7 @@ attributes:
     display_condition:
       operator: not_equals
       field: pane_configuration
-      value: Single Pane
+      value: single_pane
 
   # Glass Treatments and Coatings
   - name: low_e_coating
@@ -256,10 +256,10 @@ attributes:
     help_text: Position of the Low-E coating (only if Low-E coating is selected)
     validation_rules:
       options:
-        - Surface 1 (Outside)
-        - Surface 2 (Inside outer pane)
-        - Surface 3 (Outside inner pane)
-        - Surface 4 (Inside)
+        - surface_1_outside
+        - surface_2_inside_outer_pane
+        - surface_3_outside_inner_pane
+        - surface_4_inside
     metadata:
       placeholder: "Select Position"
     display_condition:
@@ -302,14 +302,14 @@ attributes:
     help_text: Select tint color for glare reduction and aesthetics
     validation_rules:
       options:
-        - None
-        - Bronze
-        - Gray
-        - Green
-        - Blue
-        - Silver
-        - Gold
-        - Other
+        - none
+        - bronze
+        - gray
+        - green
+        - blue
+        - silver
+        - gold
+        - other
     metadata:
       placeholder: "Select Tint Color"
 
@@ -568,12 +568,12 @@ attributes:
     help_text: Safety classification based on glass treatment and performance
     validation_rules:
       options:
-        - Standard
-        - Tempered
-        - Laminated
-        - Security
-        - Bulletproof
-        - Fire Rated
+        - standard
+        - tempered
+        - laminated
+        - security
+        - bulletproof
+        - fire_rated
     metadata:
       placeholder: "Select Rating"
 
@@ -624,10 +624,10 @@ attributes:
     help_text: Impact resistance classification for safety and security
     validation_rules:
       options:
-        - Class 1 (Basic)
-        - Class 2 (Enhanced)
-        - Class 3 (High)
-        - Class 4 (Maximum)
+        - class_1_basic
+        - class_2_enhanced
+        - class_3_high
+        - class_4_maximum
     metadata:
       placeholder: "Select Class"
 
@@ -759,12 +759,12 @@ attributes:
     help_text: Type of edge finishing for safety and appearance
     validation_rules:
       options:
-        - Polished
-        - Ground
-        - Cut
-        - Beveled
-        - Rounded
-        - Other
+        - polished
+        - ground
+        - cut
+        - beveled
+        - rounded
+        - other
     metadata:
       placeholder: "Select Edge Finish"
 

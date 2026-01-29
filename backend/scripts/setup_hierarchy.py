@@ -67,6 +67,9 @@ class HierarchySetup:
         print(f"  [PAGE] Page Type: {page_type}")
         print(f"  [MFG] Manufacturing Type: {manufacturing_type_name}")
 
+        # Validate configuration for potential case-sensitivity issues
+        self.validate_configuration(config, yaml_file.name)
+
         # Get or create manufacturing type
         manufacturing_type = await self.get_or_create_manufacturing_type(
             manufacturing_type_name, 
@@ -79,6 +82,61 @@ class HierarchySetup:
             page_type, 
             config['attributes']
         )
+
+    def validate_configuration(self, config: Dict[str, Any], filename: str) -> None:
+        """Validate configuration for potential issues and inconsistencies."""
+        print(f"  [VALIDATE] Validating configuration for potential issues...")
+        
+        # Collect all option values and display condition values
+        option_values = set()
+        display_condition_values = set()
+        
+        for attr in config.get('attributes', []):
+            # Collect option values
+            if 'options' in attr:
+                for option in attr['options']:
+                    normalized = self.normalize_option_value(option)
+                    option_values.add(normalized)
+            
+            # Collect display condition values
+            if 'display_condition' in attr:
+                condition_values = self.extract_condition_values(attr['display_condition'])
+                display_condition_values.update(condition_values)
+        
+        # Check for potential mismatches
+        mismatches = display_condition_values - option_values
+        if mismatches:
+            print(f"  [WARNING] Potential case-sensitivity issues in {filename}:")
+            for mismatch in mismatches:
+                print(f"    - Display condition value '{mismatch}' may not match any option")
+                # Try to find similar values
+                for option in option_values:
+                    if mismatch.lower() == option.lower() and mismatch != option:
+                        print(f"      Did you mean '{option}' instead of '{mismatch}'?")
+        else:
+            print(f"  [OK] No case-sensitivity issues detected")
+
+    def extract_condition_values(self, condition: Dict[str, Any]) -> set:
+        """Extract all values from display conditions recursively."""
+        values = set()
+        
+        if not condition:
+            return values
+            
+        # Handle single condition
+        if 'value' in condition and isinstance(condition['value'], str):
+            values.add(self.normalize_option_value(condition['value']))
+        
+        # Handle nested conditions (AND/OR)
+        if 'conditions' in condition:
+            for cond in condition['conditions']:
+                values.update(self.extract_condition_values(cond))
+        
+        # Handle single nested condition (NOT)
+        if 'condition' in condition:
+            values.update(self.extract_condition_values(condition['condition']))
+            
+        return values
 
     async def get_or_create_manufacturing_type(
         self, 
@@ -132,8 +190,16 @@ class HierarchySetup:
         existing_nodes = result.scalars().all()
 
         if existing_nodes:
-            print(f"    [SKIP] Found {len(existing_nodes)} existing {page_type} nodes, skipping creation")
-            return
+            print(f"    [DELETE] Found {len(existing_nodes)} existing {page_type} nodes, deleting them...")
+            # Delete existing nodes to recreate with updated configuration
+            from sqlalchemy import delete
+            delete_stmt = delete(AttributeNode).where(
+                AttributeNode.manufacturing_type_id == manufacturing_type.id,
+                AttributeNode.page_type == page_type,
+            )
+            await self.session.execute(delete_stmt)
+            await self.session.commit()
+            print(f"    [DELETE] Deleted existing {page_type} nodes")
 
         # Create attribute nodes
         created_count = 0
@@ -171,6 +237,21 @@ class HierarchySetup:
         calculated_field = config.get('calculated_field')
         metadata = config.get('metadata')
 
+        # Normalize display condition values to prevent case-sensitivity issues
+        if display_condition:
+            display_condition = self.normalize_display_condition(display_condition)
+
+        # Extract pricing and weight impact fields
+        price_impact_type = config.get('price_impact_type', 'fixed')
+        price_impact_value = config.get('price_impact_value')
+        price_formula = config.get('price_formula')
+        weight_impact = config.get('weight_impact', 0)
+        weight_formula = config.get('weight_formula')
+        
+        # Extract technical property fields
+        technical_property_type = config.get('technical_property_type')
+        technical_impact_formula = config.get('technical_impact_formula')
+
         # Create attribute node
         node = AttributeNode(
             manufacturing_type_id=manufacturing_type_id,
@@ -191,36 +272,96 @@ class HierarchySetup:
             calculated_field=calculated_field,
             metadata_=metadata,
             page_type=page_type,
+            # Add pricing and weight impact fields
+            price_impact_type=price_impact_type,
+            price_impact_value=Decimal(str(price_impact_value)) if price_impact_value is not None else None,
+            price_formula=price_formula,
+            weight_impact=Decimal(str(weight_impact)),
+            weight_formula=weight_formula,
+            # Add technical property fields
+            technical_property_type=technical_property_type,
+            technical_impact_formula=technical_impact_formula,
         )
 
         self.session.add(node)
 
-        # Create option nodes if validation_rules contains options
+        # Create option nodes if validation_rules contains options OR if options are defined directly
+        options_list = None
         if validation_rules and 'options' in validation_rules:
+            options_list = validation_rules['options']
+            print(f"    [DEBUG] Found options in validation_rules for {name}: {len(options_list)} options")
+        elif 'options' in config:
+            options_list = config['options']
+            print(f"    [DEBUG] Found direct options for {name}: {len(options_list)} options")
+        else:
+            print(f"    [DEBUG] No options found for {name}")
+        
+        if options_list:
             await self.session.flush()  # Ensure node has an ID
-            await self.create_option_nodes(node, validation_rules['options'])
+            await self.create_option_nodes(node, options_list)
 
         return node
 
+    def normalize_display_condition(self, condition: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize display condition values to match option values format.
+        
+        This prevents case-sensitivity issues between display conditions and option values.
+        """
+        if not condition:
+            return condition
+            
+        # Create a copy to avoid modifying the original
+        normalized = condition.copy()
+        
+        # Handle single condition
+        if 'value' in normalized and isinstance(normalized['value'], str):
+            normalized['value'] = self.normalize_option_value(normalized['value'])
+            print(f"    [NORMALIZE] Display condition value: {condition['value']} -> {normalized['value']}")
+        
+        # Handle nested conditions (AND/OR)
+        if 'conditions' in normalized:
+            normalized['conditions'] = [
+                self.normalize_display_condition(cond) for cond in normalized['conditions']
+            ]
+        
+        # Handle single nested condition (NOT)
+        if 'condition' in normalized:
+            normalized['condition'] = self.normalize_display_condition(normalized['condition'])
+            
+        return normalized
+
     async def create_option_nodes(self, parent_node: AttributeNode, options: List[str]) -> None:
         """Create option nodes for dropdown/select attributes."""
+        print(f"    [OPTIONS] Creating {len(options)} option nodes for {parent_node.name}")
+        
         for i, option_value in enumerate(options):
+            option_name = self.normalize_option_value(option_value)
             option_node = AttributeNode(
                 manufacturing_type_id=parent_node.manufacturing_type_id,
                 parent_node_id=parent_node.id,
-                name=option_value.lower().replace(' ', '_').replace('(', '').replace(')', ''),
+                name=option_name,
                 display_name=option_value,
                 description=f"Option: {option_value}",
                 node_type="option",
                 data_type="string",
                 required=False,
-                ltree_path=f"{parent_node.ltree_path}.{option_value.lower().replace(' ', '_')}",
+                ltree_path=f"{parent_node.ltree_path}.{option_name}",
                 depth=parent_node.depth + 1,
                 sort_order=i + 1,
                 ui_component="option",
                 page_type=parent_node.page_type,
             )
             self.session.add(option_node)
+            print(f"      [OPTION] Created: {option_value} -> {option_name}")
+        
+        print(f"    [OPTIONS] Completed creating options for {parent_node.name}")
+
+    def normalize_option_value(self, option_value: str) -> str:
+        """Normalize option values to consistent format for database storage and comparison.
+        
+        This prevents case-sensitivity issues between option values and display conditions.
+        """
+        return option_value.lower().replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
 
 
 async def setup_page(page_type: str) -> None:

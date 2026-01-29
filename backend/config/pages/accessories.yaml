@@ -68,16 +68,16 @@ attributes:
     help_text: Select the accessory category
     validation_rules:
       options:
-        - Hinge
-        - Handle
-        - Lock
-        - Espagnolette
-        - Hardware Set
-        - Wheel Set
-        - Track
-        - Drain Cover
-        - Nail Stud
-        - Other
+        - hinge
+        - handle
+        - lock
+        - espagnolette
+        - hardware_set
+        - wheel_set
+        - track
+        - drain_cover
+        - nail_stud
+        - other
     metadata:
       placeholder: "Select Category"
 
@@ -134,14 +134,14 @@ attributes:
     help_text: Select material and finish
     validation_rules:
       options:
-        - Stainless Steel
-        - Aluminum
-        - Brass
-        - Chrome
-        - White
-        - Black
-        - Bronze
-        - Other
+        - stainless_steel
+        - aluminum
+        - brass
+        - chrome
+        - white
+        - black
+        - bronze
+        - other
     metadata:
       placeholder: "Select Finish"
 
@@ -177,7 +177,7 @@ attributes:
     display_condition:
       operator: in
       field: accessory_type
-      value: [Hinge, Wheel Set]
+      value: [hinge, wheel_set]
 
   - name: opening_angle
     display_name: Maximum Opening Angle (degrees)
@@ -210,7 +210,7 @@ attributes:
     display_condition:
       operator: equals
       field: accessory_type
-      value: Hinge
+      value: hinge
 
   - name: locking_points
     display_name: Number of Locking Points
@@ -243,7 +243,7 @@ attributes:
     display_condition:
       operator: in
       field: accessory_type
-      value: [Lock, Espagnolette]
+      value: [lock, espagnolette]
 
   - name: operation_type
     display_name: Operation Type
@@ -267,13 +267,13 @@ attributes:
     help_text: How the accessory operates
     validation_rules:
       options:
-        - Manual
-        - Key Lock
-        - Push Button
-        - Lever
-        - Tilt & Turn
-        - Sliding
-        - Other
+        - manual
+        - key_lock
+        - push_button
+        - lever
+        - tilt_and_turn
+        - sliding
+        - other
     metadata:
       placeholder: "Select Operation Type"
 
@@ -337,15 +337,15 @@ attributes:
     help_text: Where this accessory is installed
     validation_rules:
       options:
-        - Frame
-        - Sash
-        - Both
-        - Track
-        - Bottom
-        - Top
-        - Side
-        - Corner
-        - Other
+        - frame
+        - sash
+        - both
+        - track
+        - bottom
+        - top
+        - side
+        - corner
+        - other
     metadata:
       placeholder: "Select Position"
 

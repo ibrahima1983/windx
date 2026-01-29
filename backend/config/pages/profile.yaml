@@ -297,7 +297,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Frame
+      value: frame
 
   - name: builtin_flyscreen_track
     display_name: Built-in Flyscreen Track
@@ -328,7 +328,7 @@ attributes:
       conditions:
         - operator: equals
           field: type
-          value: Frame
+          value: frame
         - operator: contains
           field: opening_system
           value: sliding
@@ -544,7 +544,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Frame
+      value: frame
 
   - name: glazing_undercut_height
     display_name: Glazing Undercut Height (mm)
@@ -576,7 +576,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Glazing bead
+      value: glazing_bead
 
   # Technical Specifications Section
   - name: pic
@@ -639,7 +639,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Sash
+      value: sash
 
   - name: flying_mullion_horizontal_clearance
     display_name: Flying Mullion Horizontal Clearance (mm)
@@ -671,7 +671,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Flying mullion
+      value: flying_mullion
 
   - name: flying_mullion_vertical_clearance
     display_name: Flying Mullion Vertical Clearance (mm)
@@ -703,7 +703,7 @@ attributes:
     display_condition:
       operator: equals
       field: type
-      value: Flying mullion
+      value: flying_mullion
 
   - name: steel_material_thickness
     display_name: Steel Material Thickness (mm)

@@ -66,6 +66,8 @@ import Skeleton from 'primevue/skeleton'
 import FormFieldRenderer from '@/components/common/FormFieldRenderer.vue'
 import FormSection from '@/components/common/FormSection.vue'
 import { useFormValidation } from '@/composables/useFormValidation'
+import { useDependencyEngine } from '@/composables/useDependencyEngine'
+import { useAutoCalculation } from '@/composables/useAutoCalculation'
 
 const props = defineProps({
   schema: {
@@ -89,7 +91,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit', 'clear'])
 
 const localForm = ref<Record<string, any>>({})
-const isCalculating = ref(false) // Prevent infinite loops during auto-calculation
+
+// Setup auto-calculation using the composable
+const schemaRef = computed(() => props.schema)
+const { autoCalculateFields } = useAutoCalculation(schemaRef, localForm)
 
 // Sync local form with props
 watch(() => props.modelValue, (newVal) => {
@@ -131,10 +136,7 @@ watch(localForm, (newVal) => {
   emit('update:modelValue', newVal)
 }, { deep: true })
 
-import { useDependencyEngine } from '@/composables/useDependencyEngine'
-
 // Setup validation using the composable
-const schemaRef = computed(() => props.schema)
 const { fieldErrors, fieldVisibility, isValid, validateField, validateAll, clearErrors } = 
   useFormValidation(schemaRef, localForm)
 
@@ -162,90 +164,6 @@ function handleSubmit() {
 function handleClear() {
   clearErrors()
   emit('clear')
-}
-
-/**
- * Auto-calculate fields based on metadata from backend schema
- * Reads calculated_field metadata and executes calculations generically
- */
-function autoCalculateFields(fieldName: string) {
-  // Prevent infinite loops - don't calculate if we're already calculating
-  if (isCalculating.value) return
-  if (!props.schema?.sections) return
-
-  isCalculating.value = true
-  try {
-    // Find all fields that should recalculate when this field changes
-    const fieldsToCalculate: Array<{field: any, calc: any}> = []
-    
-    props.schema.sections.forEach((section: any) => {
-      section.fields.forEach((field: any) => {
-        const calc = field.calculated_field
-        if (calc && calc.trigger_on?.includes(fieldName)) {
-          fieldsToCalculate.push({ field, calc })
-        }
-      })
-    })
-
-    // Execute calculations
-    fieldsToCalculate.forEach(({ field, calc }) => {
-      const result = executeCalculation(calc, localForm.value)
-      if (result !== null) {
-        localForm.value[field.name] = result
-      }
-    })
-  } finally {
-    // Always reset the flag, even if there's an error
-    isCalculating.value = false
-  }
-}
-
-function executeCalculation(calc: any, formData: Record<string, any>): number | null {
-  const { type, operands, precision = 2 } = calc
-  
-  // Get operand values
-  const values = operands.map((key: string) => parseDecimal(formData[key]))
-  
-  // Check if all values are available
-  if (values.some((v: number | null) => v === null)) return null
-  
-  // For divide, check for zero divisor
-  if (type === 'divide' && values[1] === 0) return null
-  
-  let result: number
-  switch (type) {
-    case 'multiply':
-      result = values[0]! * values[1]!
-      break
-    case 'divide':
-      result = values[0]! / values[1]!
-      break
-    case 'add':
-      result = values.reduce((a: number, b: number) => a + b, 0)
-      break
-    case 'subtract':
-      result = values[0]! - values[1]!
-      break
-    default:
-      return null
-  }
-  
-  return roundToDecimals(result, precision)
-}
-
-function parseDecimal(value: any): number | null {
-  if (value === null || value === undefined || value === '') return null
-  if (typeof value === 'number') return isNaN(value) ? null : value
-  
-  // Remove non-numeric characters except decimal point and minus sign
-  const cleanValue = String(value).replace(/[^\d.-]/g, '')
-  const num = parseFloat(cleanValue)
-  return isNaN(num) ? null : num
-}
-
-function roundToDecimals(value: number, decimals: number): number {
-  const multiplier = Math.pow(10, decimals)
-  return Math.round((value + Number.EPSILON) * multiplier) / multiplier
 }
 </script>
 
