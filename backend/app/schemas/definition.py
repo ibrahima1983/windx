@@ -1,5 +1,11 @@
 from typing import TypedDict, List, Optional, Any, Union, Dict
 
+class EntityPlaceholders(TypedDict):
+    """Standard placeholders for entity fields."""
+    name: str
+    description: str
+    price: str
+
 class MetadataField(TypedDict):
     name: str
     type: str  # text, number, boolean, textarea
@@ -33,8 +39,7 @@ class DependencyRule(TypedDict):
 class EntityDef(TypedDict):
     label: str
     icon: str
-    name_placeholder: Optional[str]
-    description_placeholder: Optional[str]
+    placeholders: EntityPlaceholders
     metadata_fields: List[MetadataField]
     special_ui: Optional[SpecialUI]
 

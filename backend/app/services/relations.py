@@ -21,8 +21,8 @@ from app.models.attribute_node import AttributeNode
 from app.services.base import BaseService
 from app.schemas.definition import ScopeDef
 
-__all__ = ["RelationsService"]
 
+__all__ = ["RelationsService"]
 
 class RelationsService(BaseService):
     """Service for managing hierarchical option dependencies.
@@ -50,34 +50,46 @@ class RelationsService(BaseService):
                 "material": {
                     "label": "Material",
                     "icon": "pi pi-box",
-                    "name_placeholder": "Enter material name (e.g., Aluminum, PVC)",
-                    "description_placeholder": "Describe the material properties...",
+                    "placeholders": {
+                        "name": "Enter material name (e.g., Aluminum, PVC)",
+                        "description": "Describe the material properties...",
+                        "price": "e.g. 15.50"
+                    },
                     "metadata_fields": [
-                        {"name": "density", "type": "number", "label": "Density (kg/m³)"}
+                        {"name": "density", "type": "number", "label": "Density (kg/m³)", "placeholder": "e.g. 1.4"}
                     ]
                 },
                 "opening_system": {
                     "label": "Opening System",
                     "icon": "pi pi-cog",
-                    "name_placeholder": "Enter opening system name (e.g., Tilt & Turn, Sliding)",
-                    "description_placeholder": "Describe how this opening system works...",
+                    "placeholders": {
+                        "name": "Enter opening system name (e.g., Tilt & Turn, Sliding)",
+                        "description": "Describe how this opening system works...",
+                        "price": "e.g. 0.00"
+                    },
                     "metadata_fields": []
                 },
                 "color": {
                     "label": "Color",
                     "icon": "pi pi-palette",
-                    "name_placeholder": "Enter color name (e.g., White, Anthracite Grey)",
-                    "description_placeholder": "Describe the color finish...",
+                    "placeholders": {
+                        "name": "Enter color name (e.g., White, Anthracite Grey)",
+                        "description": "Describe the color finish...",
+                        "price": "e.g. 25.00"
+                    },
                     "metadata_fields": [
-                        {"name": "code", "type": "text", "label": "Color Code"},
+                        {"name": "code", "type": "text", "label": "Color Code", "placeholder": "e.g. RAL9016"},
                         {"name": "has_lamination", "type": "boolean", "label": "Has Lamination"}
                     ]
                 },
                 "company": {
                     "label": "Company",
                     "icon": "pi pi-building",
-                    "name_placeholder": "Enter company name (e.g., Schüco, Reynaers)",
-                    "description_placeholder": "Describe the company and their products...",
+                    "placeholders": {
+                        "name": "Enter company name (e.g., Schüco, Reynaers)",
+                        "description": "Describe the company and their products...",
+                        "price": "e.g. 0.00"
+                    },
                     "metadata_fields": [
                         {"name": "linked_material_id", "type": "number", "hidden": True}
                     ],
@@ -95,14 +107,17 @@ class RelationsService(BaseService):
                 "system_series": {
                     "label": "System Series",
                     "icon": "pi pi-sitemap",
-                    "name_placeholder": "Enter series name (e.g., AWS 75, CW 50)",
-                    "description_placeholder": "Describe the system series specifications...",
+                    "placeholders": {
+                        "name": "Enter series name (e.g., AWS 75, CW 50)",
+                        "description": "Describe the system series specifications...",
+                        "price": "e.g. 150.00"
+                    },
                     "metadata_fields": [
-                        {"name": "width", "type": "number", "label": "Width (mm)"},
-                        {"name": "number_of_chambers", "type": "number", "label": "Chambers"},
-                        {"name": "u_value", "type": "number", "label": "U-Value"},
-                        {"name": "number_of_seals", "type": "number", "label": "Seals"},
-                        {"name": "characteristics", "type": "textarea", "label": "Characteristics"}
+                        {"name": "width", "type": "number", "label": "Width (mm)", "placeholder": "e.g. 70"},
+                        {"name": "number_of_chambers", "type": "number", "label": "Chambers", "placeholder": "e.g. 5"},
+                        {"name": "u_value", "type": "number", "label": "U-Value", "placeholder": "e.g. 1.3"},
+                        {"name": "number_of_seals", "type": "number", "label": "Seals", "placeholder": "e.g. 2"},
+                        {"name": "characteristics", "type": "textarea", "label": "Characteristics", "placeholder": "e.g. High thermal performance, suitable for residential use"}
                     ]
                 }
             },
@@ -148,32 +163,41 @@ class RelationsService(BaseService):
                 "glass_unit": {
                     "label": "Glass Unit",
                     "icon": "pi pi-stop",
-                    "name_placeholder": "Enter glass unit name (e.g., Double Glazed, Triple Glazed)",
-                    "description_placeholder": "Describe the glass unit specifications...",
+                    "placeholders": {
+                        "name": "Enter glass unit name (e.g., Double Glazed, Triple Glazed)",
+                        "description": "Describe the glass unit specifications...",
+                        "price": "e.g. 85.00"
+                    },
                     "metadata_fields": [
-                        {"name": "u_value", "type": "number", "label": "U-Value (W/m²K)"},
-                        {"name": "thickness", "type": "number", "label": "Total Thickness (mm)"},
-                        {"name": "g_value", "type": "number", "label": "G-Value"}
+                        {"name": "u_value", "type": "number", "label": "U-Value (W/m²K)", "placeholder": "e.g. 1.1"},
+                        {"name": "thickness", "type": "number", "label": "Total Thickness (mm)", "placeholder": "e.g. 24"},
+                        {"name": "g_value", "type": "number", "label": "G-Value", "placeholder": "e.g. 0.63"}
                     ]
                 },
                 "spacer": {
                     "label": "Spacer",
                     "icon": "pi pi-minus",
-                    "name_placeholder": "Enter spacer name (e.g., Warm Edge, Aluminum)",
-                    "description_placeholder": "Describe the spacer type...",
+                    "placeholders": {
+                        "name": "Enter spacer name (e.g., Warm Edge, Aluminum)",
+                        "description": "Describe the spacer type...",
+                        "price": "e.g. 12.00"
+                    },
                     "metadata_fields": [
-                        {"name": "material", "type": "text", "label": "Material"},
-                        {"name": "psi_value", "type": "number", "label": "Psi Value"}
+                        {"name": "material", "type": "text", "label": "Material", "placeholder": "e.g. Stainless Steel"},
+                        {"name": "psi_value", "type": "number", "label": "Psi Value", "placeholder": "e.g. 0.04"}
                     ]
                 },
                 "gas": {
                     "label": "Gas Filling",
                     "icon": "pi pi-cloud",
-                    "name_placeholder": "Enter gas type (e.g., Argon, Krypton, Air)",
-                    "description_placeholder": "Describe the gas filling properties...",
+                    "placeholders": {
+                        "name": "Enter gas type (e.g., Argon, Krypton, Air)",
+                        "description": "Describe the gas filling properties...",
+                        "price": "e.g. 8.00"
+                    },
                     "metadata_fields": [
-                        {"name": "density", "type": "number", "label": "Density"},
-                        {"name": "thermal_conductivity", "type": "number", "label": "Thermal Conductivity"}
+                        {"name": "density", "type": "number", "label": "Density", "placeholder": "e.g. 1.78"},
+                        {"name": "thermal_conductivity", "type": "number", "label": "Thermal Conductivity", "placeholder": "e.g. 0.0177"}
                     ]
                 }
             },
@@ -186,25 +210,25 @@ class RelationsService(BaseService):
                     "label": "Handle",
                     "icon": "pi pi-box",
                     "metadata_fields": [
-                        {"name": "color", "type": "text", "label": "Color"},
-                        {"name": "material", "type": "text", "label": "Material"},
-                        {"name": "lock_type", "type": "text", "label": "Lock Type"}
+                        {"name": "color", "type": "text", "label": "Color", "placeholder": "e.g. White"},
+                        {"name": "material", "type": "text", "label": "Material", "placeholder": "e.g. Aluminum"},
+                        {"name": "lock_type", "type": "text", "label": "Lock Type", "placeholder": "e.g. Key Lock"}
                     ]
                 },
                 "hinge": {
                     "label": "Hinge",
                     "icon": "pi pi-cog",
                     "metadata_fields": [
-                        {"name": "max_load", "type": "number", "label": "Max Load (kg)"},
-                        {"name": "material", "type": "text", "label": "Material"}
+                        {"name": "max_load", "type": "number", "label": "Max Load (kg)", "placeholder": "e.g. 80"},
+                        {"name": "material", "type": "text", "label": "Material", "placeholder": "e.g. Stainless Steel"}
                     ]
                 },
                 "lock": {
                     "label": "Lock",
                     "icon": "pi pi-lock",
                     "metadata_fields": [
-                        {"name": "security_level", "type": "text", "label": "Security Level"},
-                        {"name": "type", "type": "text", "label": "Lock Type"}
+                        {"name": "security_level", "type": "text", "label": "Security Level", "placeholder": "e.g. RC2"},
+                        {"name": "type", "type": "text", "label": "Lock Type", "placeholder": "e.g. Multi-point"}
                     ]
                 },
                 "accessory": {

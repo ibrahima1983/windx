@@ -6,9 +6,9 @@ export interface FieldDefinition {
     label: string
     type: 'text' | 'number' | 'boolean' | 'textarea' | 'checkbox' // Enhanced types
     required?: boolean
-    placeholder?: string
     options?: { label: string; value: any }[]
     hidden?: boolean
+    metadata_?: { placeholder?: string }
 }
 
 export interface EntityTypeDefinition {
@@ -81,9 +81,9 @@ export async function fetchAndBuildSchemas(): Promise<Record<string, DefinitionS
                                 label: field.label || (field.name ? field.name.replace(/_/g, ' ') : 'Unknown'),
                                 type: (field.type || 'text') as FieldDefinition['type'],
                                 required: !!field.required,
-                                placeholder: field.placeholder,
                                 options: field.options,
-                                hidden: !!field.hidden
+                                hidden: !!field.hidden,
+                                metadata_: field.placeholder ? { placeholder: field.placeholder } : undefined
                             }
                         })
                         .filter(f => !f.hidden)

@@ -173,8 +173,10 @@
                             name: 'name', 
                             label: 'Name', 
                             type: 'text', 
-                            required: true, 
-                            placeholder: (selectedEntityType ? typeMetadata[selectedEntityType]?.namePlaceholder : undefined) || 'Enter name' 
+                            required: true,
+                            metadata_: {
+                              placeholder: (selectedEntityType ? typeMetadata[selectedEntityType]?.placeholders?.name : undefined) || 'Enter name'
+                            }
                           }"
                           v-model="formData.name"
                         />
@@ -183,7 +185,10 @@
                             name: 'price_from', 
                             label: 'Base Price', 
                             ui_component: 'currency', 
-                            required: false 
+                            required: false,
+                            metadata_: {
+                              placeholder: (selectedEntityType ? typeMetadata[selectedEntityType]?.placeholders?.price : undefined) || 'e.g. 25.00'
+                            }
                           }"
                           v-model="formData.price_from"
                         />
@@ -195,7 +200,9 @@
                           label: 'Description', 
                           type: 'textarea', 
                           required: false,
-                          placeholder: (selectedEntityType ? typeMetadata[selectedEntityType]?.descriptionPlaceholder : undefined) || 'Optional description...' 
+                          metadata_: {
+                            placeholder: (selectedEntityType ? typeMetadata[selectedEntityType]?.placeholders?.description : undefined) || 'Optional description...'
+                          }
                         }"
                         v-model="formData.description"
                       />
@@ -527,6 +534,7 @@ async function loadData() {
                 // Store type-level UI metadata
                 if (response.type_metadata) {
                     typeMetadata.value[typeDef.value] = camelcaseKeys(response.type_metadata, { deep: true })
+                    logger.debug('Type metadata for', typeDef.value, ':', typeMetadata.value[typeDef.value])
                 }
             }
         }
