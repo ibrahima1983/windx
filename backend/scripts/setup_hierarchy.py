@@ -18,6 +18,12 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Fix Windows CMD encoding issues
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+
 import yaml
 
 # Add project root to path
@@ -46,7 +52,7 @@ class HierarchySetup:
             with open(yaml_file, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
         except Exception as e:
-            print(f"  ❌ Error loading YAML file: {e}")
+            print(f"  [ERROR] Error loading YAML file: {e}")
             raise
 
         # Validate required fields
@@ -58,8 +64,8 @@ class HierarchySetup:
         page_type = config['page_type']
         manufacturing_type_name = config['manufacturing_type']
         
-        print(f"  📄 Page Type: {page_type}")
-        print(f"  🏭 Manufacturing Type: {manufacturing_type_name}")
+        print(f"  [PAGE] Page Type: {page_type}")
+        print(f"  [MFG] Manufacturing Type: {manufacturing_type_name}")
 
         # Get or create manufacturing type
         manufacturing_type = await self.get_or_create_manufacturing_type(
@@ -80,7 +86,7 @@ class HierarchySetup:
         config: Dict[str, Any]
     ) -> ManufacturingType:
         """Get existing or create new manufacturing type."""
-        print(f"  🔍 Getting manufacturing type: {name}")
+        print(f"  [SEARCH] Getting manufacturing type: {name}")
 
         # Check if it already exists
         stmt = select(ManufacturingType).where(ManufacturingType.name == name)
@@ -88,7 +94,7 @@ class HierarchySetup:
         existing = result.scalar_one_or_none()
 
         if existing:
-            print(f"    ✅ Using existing manufacturing type (ID: {existing.id})")
+            print(f"    [OK] Using existing manufacturing type (ID: {existing.id})")
             return existing
 
         # Create new manufacturing type
@@ -105,7 +111,7 @@ class HierarchySetup:
         await self.session.commit()
         await self.session.refresh(manufacturing_type)
 
-        print(f"    ✅ Created manufacturing type (ID: {manufacturing_type.id})")
+        print(f"    [OK] Created manufacturing type (ID: {manufacturing_type.id})")
         return manufacturing_type
 
     async def create_attributes_from_config(
@@ -115,7 +121,7 @@ class HierarchySetup:
         attributes: List[Dict[str, Any]]
     ) -> None:
         """Create attribute nodes from configuration."""
-        print(f"  🔧 Creating {len(attributes)} attribute nodes for {page_type}...")
+        print(f"  [CREATE] Creating {len(attributes)} attribute nodes for {page_type}...")
 
         # Check if attributes already exist for this page type
         stmt = select(AttributeNode).where(
@@ -126,7 +132,7 @@ class HierarchySetup:
         existing_nodes = result.scalars().all()
 
         if existing_nodes:
-            print(f"    ⚠️  Found {len(existing_nodes)} existing {page_type} nodes, skipping creation")
+            print(f"    [SKIP] Found {len(existing_nodes)} existing {page_type} nodes, skipping creation")
             return
 
         # Create attribute nodes
@@ -136,7 +142,7 @@ class HierarchySetup:
             created_count += 1
 
         await self.session.commit()
-        print(f"    ✅ Created {created_count} attribute nodes")
+        print(f"    [OK] Created {created_count} attribute nodes")
 
     async def create_attribute_node(
         self, 
@@ -223,7 +229,7 @@ async def setup_page(page_type: str) -> None:
     yaml_file = config_dir / f"{page_type}.yaml"
     
     if not yaml_file.exists():
-        print(f"❌ Configuration file not found: {yaml_file}")
+        print(f"[ERROR] Configuration file not found: {yaml_file}")
         return False
 
     engine = get_engine()
@@ -234,11 +240,11 @@ async def setup_page(page_type: str) -> None:
             setup = HierarchySetup(session)
             await setup.setup_from_yaml_file(yaml_file)
         
-        print(f"✅ {page_type.title()} setup completed successfully!")
+        print(f"[OK] {page_type.title()} setup completed successfully!")
         return True
 
     except Exception as e:
-        print(f"❌ Error during {page_type} setup: {e}")
+        print(f"[ERROR] Error during {page_type} setup: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -251,19 +257,19 @@ async def setup_all_pages() -> None:
     config_dir = Path(__file__).parent.parent / "config" / "pages"
     
     if not config_dir.exists():
-        print(f"❌ Configuration directory not found: {config_dir}")
+        print(f"[ERROR] Configuration directory not found: {config_dir}")
         return
 
     # Find all YAML files in the config directory
     yaml_files = list(config_dir.glob("*.yaml"))
     
     if not yaml_files:
-        print(f"❌ No YAML configuration files found in {config_dir}")
+        print(f"[ERROR] No YAML configuration files found in {config_dir}")
         return
 
     print(f"Found {len(yaml_files)} configuration files:")
     for yaml_file in yaml_files:
-        print(f"  📄 {yaml_file.name}")
+        print(f"  [FILE] {yaml_file.name}")
 
     success_count = 0
     for yaml_file in yaml_files:

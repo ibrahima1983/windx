@@ -764,9 +764,10 @@ async def setup_fresh_db_command(args: argparse.Namespace):
             progress.update(task, description="[cyan]Running Alembic migrations...")
             import subprocess
 
-            # Use backend/alembic.ini since we are running from root
+            # Run Alembic from the backend directory with proper working directory
             result = subprocess.run(
-                [python_exe, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"], 
+                [python_exe, "-m", "alembic", "upgrade", "head"], 
+                cwd="backend",  # Set working directory to backend
                 capture_output=True, text=True
             )
             if result.returncode != 0:
