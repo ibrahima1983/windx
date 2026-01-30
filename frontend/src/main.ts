@@ -8,9 +8,9 @@ import Aura from '@primevue/themes/aura'
 
 import App from './App.vue'
 import router from './router'
-import './assets/css/main.css'
 import 'nprogress/nprogress.css'
 import 'primeicons/primeicons.css'
+import './assets/css/main.css' // Load Tailwind AFTER other CSS
 
 const app = createApp(App)
 

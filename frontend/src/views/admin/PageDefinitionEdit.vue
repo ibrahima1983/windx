@@ -1,11 +1,11 @@
 <template>
   <AppLayout>
-    <div class="min-h-screen bg-slate-50">
+    <div class="page-wrapper bg-slate-50">
       <!-- Header -->
-      <div class="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div class="max-w-4xl mx-auto px-8 py-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
+      <div class="header-container bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="header-content px-8 py-6">
+          <div class="header-flex flex items-center justify-between">
+            <div class="header-left flex items-center gap-4">
               <Button 
                 icon="pi pi-arrow-left" 
                 text 
@@ -19,7 +19,7 @@
                 <p class="text-base text-slate-600 mt-2">{{ pathData?.ltree_path || 'Loading...' }}</p>
               </div>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="header-right flex items-center gap-4">
               <Button 
                 label="Cancel" 
                 severity="secondary" 
@@ -41,9 +41,9 @@
       </div>
 
       <!-- Content -->
-      <div class="max-w-4xl mx-auto px-8 py-8">
+      <div class="content-container px-8 py-8">
         <!-- Loading State -->
-        <div v-if="isLoading" class="space-y-8">
+        <div v-if="isLoading" class="loading-container space-y-8">
           <div class="bg-white rounded-xl p-8 shadow-sm">
             <Skeleton height="2.5rem" width="16rem" class="mb-6" />
             <div class="space-y-6">
@@ -56,14 +56,14 @@
         </div>
 
         <!-- Error State -->
-        <div v-else-if="loadError" class="flex items-center justify-center min-h-[400px]">
-          <div class="text-center max-w-md">
+        <div v-else-if="loadError" class="error-container flex items-center justify-center min-h-[400px]">
+          <div class="error-content text-center max-w-md">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <i class="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
             </div>
             <h3 class="text-xl font-semibold text-slate-900 mb-3">Failed to Load Configuration</h3>
             <p class="text-slate-600 mb-6">{{ loadError }}</p>
-            <div class="flex gap-4 justify-center">
+            <div class="error-buttons flex gap-4 justify-center">
               <Button 
                 label="Try Again" 
                 icon="pi pi-refresh" 
@@ -83,17 +83,17 @@
         </div>
 
         <!-- Edit Form -->
-        <div v-else-if="pathData" class="space-y-8">
+        <div v-else-if="pathData" class="form-container space-y-8">
           <!-- Overview Card -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-slate-50">
+          <div class="overview-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overview-header px-8 py-6 border-b border-slate-200 bg-slate-50">
               <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-info-circle text-blue-500"></i>
                 Configuration Overview
               </h2>
             </div>
-            <div class="p-8">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="overview-content p-8">
+              <div class="overview-grid grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-3">
                   <label class="block text-sm font-semibold text-slate-700 uppercase tracking-wide">Configuration ID</label>
                   <div class="px-4 py-3 bg-slate-100 rounded-lg text-slate-700 font-mono text-lg">
@@ -125,14 +125,14 @@
           <!-- Configuration Components - Single Column Layout -->
           
           <!-- Company -->
-          <div v-if="entityData.company" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-blue-50">
+          <div v-if="entityData.company" class="company-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="company-header px-8 py-6 border-b border-slate-200 bg-blue-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-building text-blue-600"></i>
                 Company Information
               </h3>
             </div>
-            <div class="p-8 space-y-6">
+            <div class="company-content p-8 space-y-6">
               <FormFieldRenderer 
                 :field="{ name: 'company_name', label: 'Company Name', type: 'text' }"
                 v-model="formData.company_name"
@@ -149,14 +149,14 @@
           </div>
 
           <!-- Material -->
-          <div v-if="entityData.material" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-green-50">
+          <div v-if="entityData.material" class="material-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="material-header px-8 py-6 border-b border-slate-200 bg-green-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-box text-green-600"></i>
                 Material Specifications
               </h3>
             </div>
-            <div class="p-8 space-y-6">
+            <div class="material-content p-8 space-y-6">
               <FormFieldRenderer 
                 :field="{ name: 'material_name', label: 'Material Name', type: 'text' }"
                 v-model="formData.material_name"
@@ -178,14 +178,14 @@
           </div>
 
           <!-- Opening System -->
-          <div v-if="entityData.opening_system" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-orange-50">
+          <div v-if="entityData.opening_system" class="opening-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="opening-header px-8 py-6 border-b border-slate-200 bg-orange-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-cog text-orange-600"></i>
                 Opening System
               </h3>
             </div>
-            <div class="p-8 space-y-6">
+            <div class="opening-content p-8 space-y-6">
               <FormFieldRenderer 
                 :field="{ name: 'opening_system_name', label: 'System Name', type: 'text' }"
                 v-model="formData.opening_system_name"
@@ -202,14 +202,14 @@
           </div>
 
           <!-- System Series -->
-          <div v-if="entityData.system_series" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-purple-50">
+          <div v-if="entityData.system_series" class="series-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="series-header px-8 py-6 border-b border-slate-200 bg-purple-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-sitemap text-purple-600"></i>
                 System Series
               </h3>
             </div>
-            <div class="p-8 space-y-6">
+            <div class="series-content p-8 space-y-6">
               <FormFieldRenderer 
                 :field="{ name: 'system_series_name', label: 'Series Name', type: 'text' }"
                 v-model="formData.system_series_name"
@@ -224,9 +224,9 @@
               />
               
               <!-- Technical Specifications -->
-              <div class="border-t border-slate-200 pt-8 mt-8">
+              <div class="tech-specs border-t border-slate-200 pt-8 mt-8">
                 <h4 class="text-lg font-bold text-slate-800 mb-6">Technical Specifications</h4>
-                <div class="space-y-6">
+                <div class="tech-fields space-y-6">
                   <FormFieldRenderer 
                     v-if="entityData.system_series.validation_rules?.width"
                     :field="{ name: 'system_series_width', label: 'Width (mm)', type: 'number' }"
@@ -258,21 +258,21 @@
           </div>
 
           <!-- Colors Section -->
-          <div v-if="entityData.colors && entityData.colors.length > 0" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-pink-50">
+          <div v-if="entityData.colors && entityData.colors.length > 0" class="colors-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="colors-header px-8 py-6 border-b border-slate-200 bg-pink-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-palette text-pink-600"></i>
                 Color Options ({{ entityData.colors.length }})
               </h3>
             </div>
-            <div class="p-8">
-              <div class="space-y-8">
+            <div class="colors-content p-8">
+              <div class="colors-list space-y-8">
                 <div 
                   v-for="(color, index) in entityData.colors" 
                   :key="color.id"
-                  class="border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors"
+                  class="color-item border border-slate-200 rounded-lg p-6 hover:border-slate-300 transition-colors"
                 >
-                  <div class="flex items-center gap-4 mb-6">
+                  <div class="color-header flex items-center gap-4 mb-6">
                     <div 
                       class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
                       :style="{ backgroundColor: getColorValue(color) }"
@@ -280,7 +280,7 @@
                     <h4 class="text-xl font-bold text-slate-900">{{ color.name }}</h4>
                   </div>
                   
-                  <div class="space-y-6">
+                  <div class="color-fields space-y-6">
                     <FormFieldRenderer 
                       :field="{ name: `color_${index}_name`, label: 'Color Name', type: 'text' }"
                       v-model="formData[`color_${index}_name`]"
@@ -306,15 +306,15 @@
           </div>
 
           <!-- Summary Card -->
-          <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-8 py-6 border-b border-slate-200 bg-slate-50">
+          <div class="summary-card bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="summary-header px-8 py-6 border-b border-slate-200 bg-slate-50">
               <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <i class="pi pi-calculator text-slate-600"></i>
                 Configuration Summary
               </h3>
             </div>
-            <div class="p-8">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="summary-content p-8">
+              <div class="summary-grid grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div class="text-center p-6 bg-green-50 rounded-lg">
                   <div class="text-3xl font-bold text-green-700">${{ calculateTotalPrice().toFixed(2) }}</div>
                   <div class="text-base text-green-600 mt-2">Total Price</div>
@@ -537,5 +537,171 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-/* Custom styles if needed */
+/* Layout CSS - converted from Tailwind */
+.page-wrapper {
+  min-height: 100vh;
+}
+
+.header-container {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-content {
+  max-width: 64rem; /* max-w-4xl */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.content-container {
+  max-width: 64rem; /* max-w-4xl */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.error-content {
+  text-align: center;
+  max-width: 28rem;
+}
+
+.error-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.overview-card {
+  overflow: hidden;
+}
+
+.overview-header {
+  padding: 1.5rem 2rem;
+}
+
+.overview-content {
+  padding: 2rem;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.company-card,
+.material-card,
+.opening-card,
+.series-card,
+.colors-card,
+.summary-card {
+  overflow: hidden;
+}
+
+.company-header,
+.material-header,
+.opening-header,
+.series-header,
+.colors-header,
+.summary-header {
+  padding: 1.5rem 2rem;
+}
+
+.company-content,
+.material-content,
+.opening-content,
+.series-content,
+.colors-content,
+.summary-content {
+  padding: 2rem;
+}
+
+.tech-specs {
+  padding-top: 2rem;
+  margin-top: 2rem;
+}
+
+.tech-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.colors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.color-item {
+  padding: 1.5rem;
+}
+
+.color-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.color-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 </style>
