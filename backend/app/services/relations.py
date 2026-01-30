@@ -223,6 +223,11 @@ class RelationsService(BaseService):
             "description_placeholder": f"Optional description for {entity_def.get('label')}"
         }
         
+        # Merge provided metadata into ui_metadata so it is stored in the metadata_ column
+        # This is critical for Dependency Engine fields (linked_company_material, etc.)
+        if metadata:
+            ui_metadata.update(metadata)
+        
         # Create the entity
         entity = AttributeNode(
             name=name,
@@ -290,9 +295,15 @@ class RelationsService(BaseService):
             entity.description = description
         
         if metadata is not None:
+            # Update validation_rules
             current_rules = entity.validation_rules or {}
             current_rules.update(metadata)
             entity.validation_rules = current_rules
+            
+            # Update metadata_ (Critical for Dependency Engine)
+            current_meta = entity.metadata_ or {}
+            current_meta.update(metadata)
+            entity.metadata_ = current_meta
         
         await self.commit()
         await self.refresh(entity)

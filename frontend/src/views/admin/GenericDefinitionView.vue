@@ -394,7 +394,7 @@ import camelcaseKeys from 'camelcase-keys'
 import { fetchAndBuildSchemas, type DefinitionSchema } from '@/config/definitionSchemas'
 import { productDefinitionService } from '@/services/productDefinitionService'
 import { useDebugLogger } from '@/composables/useDebugLogger'
-import { parseApiError, getErrorMessage } from '@/utils/errorHandler'
+import { parseApiError } from '@/utils/errorHandler'
 
 // Components
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -743,7 +743,29 @@ async function saveEntity() {
         throw new Error('Please fill all link fields and select at least one color')
       }
       
-      // Create Series Entity first
+      // Parse company and material IDs from the combined value
+      const [compId, matId] = (formData.value.linked_company_material as string).split(':').map(Number)
+      
+      if (!compId || !matId) {
+        throw new Error('Invalid company/material configuration')
+      }
+      
+      // Lookup Names for Metadata (Dependency Engine requires Names)
+      const company = entities.value.company?.find((c: any) => c.id === compId)
+      const material = entities.value.material?.find((m: any) => m.id === matId)
+      const openingSystem = entities.value.opening_system?.find((os: any) => os.id === formData.value.opening_system_id)
+      
+      if (company) basePayload.metadata.linked_company_material = company.name
+      if (material) basePayload.metadata.linked_material_id = material.name
+      if (openingSystem) basePayload.metadata.opening_system_id = openingSystem.name
+      
+      console.log('[SystemSeries] Creating Series with Metadata:', {
+          company: basePayload.metadata.linked_company_material,
+          material: basePayload.metadata.linked_material_id,
+          opening: basePayload.metadata.opening_system_id
+      })
+      
+      // Create Series Entity
       const createRes = await productDefinitionService.createEntity(basePayload)
       if (!createRes.success) throw new Error('Failed to create series entity')
       
@@ -752,12 +774,6 @@ async function saveEntity() {
       entities.value[type].push(createRes.entity) // Optimistic update
 
       // Create Paths
-      const [compId, matId] = (formData.value.linked_company_material as string).split(':').map(Number)
-      
-      if (!compId || !matId) {
-        throw new Error('Invalid company/material configuration')
-      }
-
       let pathsCreated = 0
       for (const colorId of formData.value.color_ids) {
         await productDefinitionService.createPath({
