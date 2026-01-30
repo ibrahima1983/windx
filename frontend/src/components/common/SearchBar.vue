@@ -3,12 +3,12 @@
     <!-- Main Search Input -->
     <div class="flex items-center gap-2 mb-3">
       <div class="flex-1 relative">
-        <IconField iconPosition="left">
+        <IconField iconPosition="left" class="w-full">
           <InputIcon class="pi pi-search" />
           <InputText
             v-model="searchQuery"
             placeholder="Search across all columns..."
-            class="w-full"
+            class="w-full pr-10"
             @input="onSearchInput"
             @keyup.escape="clearSearch"
           />
@@ -16,7 +16,7 @@
         <Button
           v-if="searchQuery"
           icon="pi pi-times"
-          class="absolute right-2 top-1/2 transform -translate-y-1/2"
+          class="absolute right-2 top-1/2 -translate-y-1/2 z-10"
           text
           rounded
           size="small"
@@ -94,7 +94,7 @@
             <Button
               v-if="columnFilters[header]"
               icon="pi pi-times"
-              class="absolute right-1 top-1/2 transform -translate-y-1/2"
+              class="absolute right-1 top-1/2 -translate-y-1/2"
               text
               rounded
               size="small"
@@ -204,35 +204,25 @@ function exportResults() {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 .search-bar {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  @apply bg-white border border-gray-200 rounded-lg p-4 mb-4;
 }
 
 .advanced-search-panel {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  border: 1px solid #f3f4f6;
+  @apply mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100;
 }
 
 /* Search term highlighting */
 :deep(.search-term-highlight) {
-  background-color: #fef3c7;
-  color: #92400e;
-  padding: 0 0.25rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
+  @apply bg-amber-100 text-amber-900 px-1 rounded font-medium;
 }
 
 /* Row highlighting animation */
 @keyframes searchHighlight {
   0% {
-    background-color: rgba(251, 191, 36, 0.3);
+    background-color: rgb(251 191 36 / 0.3);
   }
   100% {
     background-color: transparent;
@@ -240,135 +230,7 @@ function exportResults() {
 }
 
 :deep(.search-highlight) {
-  background-color: rgba(254, 243, 199, 0.5) !important;
+  background-color: rgb(254 243 199 / 0.5) !important;
   animation: searchHighlight 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Utility classes */
-.flex {
-  display: flex;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.gap-3 {
-  gap: 0.75rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.mb-3 {
-  margin-bottom: 0.75rem;
-}
-
-.mt-3 {
-  margin-top: 0.75rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.flex-1 {
-  flex: 1 1 0%;
-}
-
-.flex-wrap {
-  flex-wrap: wrap;
-}
-
-.relative {
-  position: relative;
-}
-
-.absolute {
-  position: absolute;
-}
-
-.right-1 {
-  right: 0.25rem;
-}
-
-.right-2 {
-  right: 0.5rem;
-}
-
-.top-1\/2 {
-  top: 50%;
-}
-
-.transform {
-  transform: var(--tw-transform);
-}
-
-.-translate-y-1\/2 {
-  --tw-translate-y: -50%;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.w-full {
-  width: 100%;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
-.font-medium {
-  font-weight: 500;
-}
-
-.text-gray-600 {
-  color: #4b5563;
-}
-
-.text-gray-500 {
-  color: #6b7280;
-}
-
-.grid {
-  display: grid;
-}
-
-.grid-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-@media (min-width: 768px) {
-  .md\:grid-cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .lg\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.flex-col {
-  flex-direction: column;
-}
-
-.gap-1 {
-  gap: 0.25rem;
 }
 </style>

@@ -155,7 +155,7 @@
                           <span>{{ slotProps.option.label }}</span>
                         </div>
                       </template>
-                    </Select>
+                    </SmartSelect>
                   </div>
 
                   <div v-if="selectedEntityDef" class="bg-slate-50 p-6 rounded-xl border border-slate-200 animate-fade-in">
