@@ -94,15 +94,18 @@
 
               <!-- Stats Cards -->
               <div v-else-if="currentSchema?.entityTypes" class="grid gap-4 mb-6" :class="gridColumnsClass">
-                <div 
+                <button
                   v-for="type in currentSchema.entityTypes" 
                   :key="type.value"
-                  class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                  class="entity-type-card bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  @click="navigateToDefinition(type.value)"
+                  :title="`Click to manage ${type.label} definitions`"
                 >
                   <i :class="[type.icon, 'text-2xl mb-2 text-blue-500']"></i>
                   <span class="text-2xl font-bold text-slate-800">{{ getEntityCount(type.value) }}</span>
                   <span class="text-xs text-slate-500 uppercase tracking-wider mt-1">{{ type.label }}</span>
-                </div>
+                  <i class="pi pi-external-link text-xs text-slate-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </button>
               </div>
 
               <!-- Paths / Chains Table -->
@@ -844,6 +847,14 @@ function editPath(pathData: any) {
   })
 }
 
+function navigateToDefinition(entityType: string) {
+  logger.info('Navigating to definition page', { entityType })
+  router.push({
+    name: 'Definition',
+    params: { entityType }
+  })
+}
+
 function confirmDeletePath(pathData: any) {
   confirm.require({
     message: pathData._is_grouped && pathData._ltree_paths?.length > 1
@@ -887,6 +898,41 @@ function confirmDeletePath(pathData: any) {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Entity Type Cards */
+.entity-type-card {
+  /* Reset button styles */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  
+  /* Card styles */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+.entity-type-card:hover {
+  transform: translateY(-2px);
+}
+
+.entity-type-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.entity-type-card:active {
+  transform: translateY(0);
 }
 
 
