@@ -166,6 +166,8 @@
                 <div class="text-center p-6 bg-blue-50 rounded-lg">
                   <div class="text-3xl font-bold text-blue-700">{{ calculateTotalWeight().toFixed(1) }} kg</div>
                   <div class="text-base text-blue-600 mt-2">Total Weight</div>
+                  <!-- TODO: Weight calculation is currently using density values directly -->
+                  <!-- Future: Calculate actual weight using volume × density formulas -->
                 </div>
                 <div class="text-center p-6 bg-purple-50 rounded-lg">
                   <div class="text-3xl font-bold text-purple-700">{{ Object.keys(entityData).length }}</div>
@@ -326,9 +328,75 @@ function calculateTotalPrice(): number {
 }
 
 function calculateTotalWeight(): number {
-  // This would be calculated based on actual weight formulas from backend
-  // For now, return a placeholder value
-  return 45.2
+  // TODO: This is a simplified weight calculation using density values
+  // In the future, this should be updated to use proper weight formulas
+  // that consider dimensions, material properties, and manufacturing specifications
+  
+  let totalWeight = 0
+  
+  // Calculate weight from all entity density values
+  Object.entries(entityData.value).forEach(([entityType, entity]: [string, any]) => {
+    if (Array.isArray(entity)) {
+      entity.forEach((item: any, index: number) => {
+        const densityWeight = extractDensityWeight(item, `${entityType}_${index}`)
+        totalWeight += densityWeight
+      })
+    } else {
+      const densityWeight = extractDensityWeight(entity, entityType)
+      totalWeight += densityWeight
+    }
+  })
+  
+  return totalWeight
+}
+
+function extractDensityWeight(entity: any, prefix: string): number {
+  // TODO: This is a temporary implementation that treats density as weight
+  // Future implementation should:
+  // 1. Calculate volume from dimensions (width × height × depth)
+  // 2. Multiply volume by material density to get actual weight
+  // 3. Consider manufacturing processes that affect weight
+  // 4. Account for hollow sections, reinforcements, etc.
+  
+  // Check for density in validation rules (common for materials)
+  if (entity.validation_rules?.density) {
+    const density = parseFloat(entity.validation_rules.density)
+    if (!isNaN(density)) {
+      logger.debug(`Using density as weight for ${prefix}`, { density })
+      return density
+    }
+  }
+  
+  // Check for density in form data (user-modified values)
+  const densityField = `${prefix}_validation_density`
+  if (formData.value[densityField]) {
+    const density = parseFloat(formData.value[densityField])
+    if (!isNaN(density)) {
+      logger.debug(`Using form density as weight for ${prefix}`, { density })
+      return density
+    }
+  }
+  
+  // Check for other weight-related properties in metadata
+  if (entity.metadata_?.weight) {
+    const weight = parseFloat(entity.metadata_.weight)
+    if (!isNaN(weight)) {
+      logger.debug(`Using metadata weight for ${prefix}`, { weight })
+      return weight
+    }
+  }
+  
+  // Check for weight in validation rules
+  if (entity.validation_rules?.weight) {
+    const weight = parseFloat(entity.validation_rules.weight)
+    if (!isNaN(weight)) {
+      logger.debug(`Using validation weight for ${prefix}`, { weight })
+      return weight
+    }
+  }
+  
+  logger.debug(`No weight/density found for ${prefix}, using 0`)
+  return 0
 }
 
 function getEntityTitle(entityType: string): string {
