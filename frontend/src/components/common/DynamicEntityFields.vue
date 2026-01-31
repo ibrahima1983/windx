@@ -105,7 +105,13 @@ function getFieldName(fieldName: string): string {
 }
 
 function getFieldValue(fieldName: string): any {
-  return props.modelValue[getFieldName(fieldName)] || props.entity[fieldName]
+  const fullFieldName = getFieldName(fieldName)
+  // Check if the field exists in modelValue (even if it's empty)
+  if (fullFieldName in props.modelValue) {
+    return props.modelValue[fullFieldName]
+  }
+  // Only fallback to entity value if the field hasn't been touched yet
+  return props.entity[fieldName]
 }
 
 function updateField(fieldName: string, value: any): void {
@@ -145,7 +151,12 @@ function getValidationRuleField(ruleKey: string, value: any): any {
 
 function getValidationRuleValue(ruleKey: string): any {
   const fieldName = getFieldName(`validation_${ruleKey}`)
-  return props.modelValue[fieldName] || props.entity.validation_rules?.[ruleKey]
+  // Check if the field exists in modelValue (even if it's empty)
+  if (fieldName in props.modelValue) {
+    return props.modelValue[fieldName]
+  }
+  // Only fallback to entity value if the field hasn't been touched yet
+  return props.entity.validation_rules?.[ruleKey]
 }
 
 function updateValidationRule(ruleKey: string, value: any): void {
