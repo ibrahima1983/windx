@@ -9,50 +9,25 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastapi import Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.api.types import CurrentSuperuser
+from app.schemas.product_definition import (
+    GlazingComponentCreate,
+    GlazingUnitCreate,
+    BaseResponse
+)
 from .base import BaseProductDefinitionEndpoints, EntityCreateRequest, EntityUpdateRequest
 
 __all__ = ["GlazingProductDefinitionEndpoints"]
 
 
 # ============================================================================
-# Glazing-Specific Schemas
+# Additional Glazing-Specific Schemas (not in main schema package yet)
 # ============================================================================
 
-class GlazingComponentCreateRequest(EntityCreateRequest):
-    """Schema for creating glazing components (glass_type, spacer, gas)."""
-    
-    # Override entity_type to be more specific for glazing
-    entity_type: Literal["glass_type", "spacer", "gas"] = Field(..., description="Type of glazing component")
-    
-    # Component-specific properties (stored in metadata)
-    thickness: float | None = Field(None, description="Thickness in mm (glass/spacer)")
-    light_transmittance: float | None = Field(None, description="Light transmittance % (glass)")
-    u_value: float | None = Field(None, description="U-Value W/m²K (glass)")
-    material: str | None = Field(None, description="Material type (spacer)")
-    thermal_conductivity: float | None = Field(None, description="Thermal conductivity (spacer/gas)")
-    density: float | None = Field(None, description="Density kg/m³ (gas)")
-
-
-class GlazingUnitCreateRequest(BaseModel):
-    """Schema for creating glazing units (single/double/triple)."""
-    
-    name: str = Field(..., min_length=1, max_length=200)
-    glazing_type: Literal["single", "double", "triple"]
-    description: str | None = None
-    
-    # Component references
-    outer_glass_id: int | None = Field(None, description="Outer glass component ID")
-    middle_glass_id: int | None = Field(None, description="Middle glass component ID (triple only)")
-    inner_glass_id: int | None = Field(None, description="Inner glass component ID (double/triple)")
-    spacer1_id: int | None = Field(None, description="First spacer ID (double/triple)")
-    spacer2_id: int | None = Field(None, description="Second spacer ID (triple only)")
-    gas_id: int | None = Field(None, description="Gas filling ID (optional)")
-
+from pydantic import BaseModel, Field
 
 class GlazingCalculationRequest(BaseModel):
     """Schema for calculating glazing unit properties."""
@@ -82,7 +57,7 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         
         @self.router.post("/glazing-units")
         async def create_glazing_unit(
-                data: GlazingUnitCreateRequest,
+                data: GlazingUnitCreate,
                 db: AsyncSession = Depends(get_db),
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
@@ -205,8 +180,8 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         # Prepare metadata for glazing components
         metadata = data.metadata or {}
         
-        # If this is a GlazingComponentCreateRequest, extract component-specific properties
-        if isinstance(data, GlazingComponentCreateRequest):
+        # If this is a GlazingComponentCreate, extract component-specific properties
+        if isinstance(data, GlazingComponentCreate):
             if data.thickness is not None:
                 metadata["thickness"] = data.thickness
             if data.light_transmittance is not None:

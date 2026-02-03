@@ -6,61 +6,34 @@ This module provides the foundation for scope-specific product definition endpoi
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.api.types import CurrentSuperuser
+from app.schemas.product_definition import (
+    BaseEntityCreate,
+    BaseEntityUpdate,
+    BaseEntityResponse,
+    BaseResponse,
+    ErrorResponse
+)
 
 __all__ = [
-    "BaseProductDefinitionEndpoints",
-    "EntityCreateRequest", 
-    "EntityUpdateRequest",
-    "BaseResponse"
+    "BaseProductDefinitionEndpoints"
 ]
 
 
 # ============================================================================
-# Common Pydantic Schemas
+# Type Aliases for Backward Compatibility
 # ============================================================================
 
-class EntityCreateRequest(BaseModel):
-    """Base schema for creating a product definition entity."""
-
-    entity_type: str = Field(...,
-                             description="Type of entity (varies by scope)")
-    name: str = Field(..., min_length=1, max_length=200)
-    image_url: str | None = Field(None, max_length=500)
-    price_from: Decimal | None = Field(None, ge=0)
-    description: str | None = Field(None)
-    metadata: dict[str, Any] | None = Field(None, description="Extra metadata")
-
-
-class EntityUpdateRequest(BaseModel):
-    """Base schema for updating a product definition entity."""
-
-    name: str | None = Field(None, min_length=1, max_length=200)
-    image_url: str | None = Field(None, max_length=500)
-    price_from: Decimal | None = Field(None, ge=0)
-    description: str | None = Field(None)
-    metadata: dict[str, Any] | None = Field(None)
-
-
-class BaseResponse(BaseModel):
-    """Base response schema."""
-    
-    success: bool
-    message: str
-
-
-class EntityResponse(BaseResponse):
-    """Response schema for entity operations."""
-    
-    entity: dict[str, Any] | None = None
+# Use the new schema classes
+EntityCreateRequest = BaseEntityCreate
+EntityUpdateRequest = BaseEntityUpdate
+EntityResponse = BaseEntityResponse
 
 
 # ============================================================================
@@ -96,23 +69,13 @@ class BaseProductDefinitionEndpoints(ABC):
                 data: EntityCreateRequest,
                 db: AsyncSession = Depends(get_db),
                 current_user: CurrentSuperuser = None,
-        ) -> EntityResponse:
+        ) -> BaseResponse:
             """Create a new entity for this scope."""
             try:
                 entity = await self.create_entity_impl(data, db)
-                return EntityResponse(
+                return BaseResponse(
                     success=True,
-                    message=f"{data.entity_type.replace('_', ' ').title()} '{data.name}' created",
-                    entity={
-                        "id": entity.id,
-                        "name": entity.name,
-                        "node_type": entity.node_type,
-                        "image_url": entity.image_url,
-                        "price_impact_value": str(entity.price_impact_value) if entity.price_impact_value else None,
-                        "description": entity.description,
-                        "validation_rules": entity.validation_rules,
-                        "metadata_": entity.metadata_,
-                    }
+                    message=f"{data.entity_type.replace('_', ' ').title()} '{data.name}' created"
                 )
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
@@ -125,26 +88,16 @@ class BaseProductDefinitionEndpoints(ABC):
                 data: EntityUpdateRequest,
                 db: AsyncSession = Depends(get_db),
                 current_user: CurrentSuperuser = None,
-        ) -> EntityResponse:
+        ) -> BaseResponse:
             """Update an existing entity."""
             try:
                 entity = await self.update_entity_impl(entity_id, data, db)
                 if not entity:
                     raise HTTPException(status_code=404, detail="Entity not found")
 
-                return EntityResponse(
+                return BaseResponse(
                     success=True,
-                    message=f"Entity '{entity.name}' updated successfully",
-                    entity={
-                        "id": entity.id,
-                        "name": entity.name,
-                        "node_type": entity.node_type,
-                        "image_url": entity.image_url,
-                        "price_impact_value": str(entity.price_impact_value) if entity.price_impact_value else None,
-                        "description": entity.description,
-                        "validation_rules": entity.validation_rules,
-                        "metadata_": entity.metadata_,
-                    }
+                    message=f"Entity '{entity.name}' updated successfully"
                 )
             except HTTPException:
                 raise

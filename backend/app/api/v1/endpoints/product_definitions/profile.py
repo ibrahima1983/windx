@@ -9,43 +9,30 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.api.types import CurrentSuperuser
+from app.schemas.product_definition import (
+    ProfilePathCreate,
+    ProfileDependentOptionsRequest,
+    BaseResponse
+)
 from .base import BaseProductDefinitionEndpoints, EntityCreateRequest, EntityUpdateRequest
 
 __all__ = ["ProfileProductDefinitionEndpoints"]
 
 
 # ============================================================================
-# Profile-Specific Schemas
+# Additional Profile-Specific Schemas (not in main schema package yet)
 # ============================================================================
 
-class PathCreateRequest(BaseModel):
-    """Schema for creating a profile dependency path."""
-
-    company_id: int = Field(..., gt=0)
-    material_id: int = Field(..., gt=0)
-    opening_system_id: int = Field(..., gt=0)
-    system_series_id: int = Field(..., gt=0)
-    color_id: int = Field(..., gt=0)
-
+from pydantic import BaseModel, Field
 
 class PathDeleteRequest(BaseModel):
     """Schema for deleting a profile dependency path."""
 
     ltree_path: str = Field(..., min_length=1)
-
-
-class DependentOptionsRequest(BaseModel):
-    """Schema for requesting dependent options in profile hierarchy."""
-
-    company_id: int | None = None
-    material_id: int | None = None
-    opening_system_id: int | None = None
-    system_series_id: int | None = None
 
 
 # ============================================================================
@@ -68,7 +55,7 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         
         @self.router.post("/paths")
         async def create_path(
-                data: PathCreateRequest,
+                data: ProfilePathCreate,
                 db: AsyncSession = Depends(get_db),
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
@@ -167,7 +154,7 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
 
         @self.router.post("/options")
         async def get_dependent_options(
-                data: DependentOptionsRequest,
+                data: ProfileDependentOptionsRequest,
                 db: AsyncSession = Depends(get_db),
         ) -> dict[str, Any]:
             """Get dependent options based on parent selections.
