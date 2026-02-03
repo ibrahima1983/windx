@@ -395,7 +395,8 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import camelcaseKeys from 'camelcase-keys'
 import { fetchAndBuildSchemas, type DefinitionSchema } from '@/config/definitionSchemas'
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
+import type { ProfileProductDefinitionService } from '@/services/productDefinition'
 import { useDebugLogger } from '@/composables/useDebugLogger'
 import { parseApiError } from '@/utils/errorHandler'
 
@@ -454,6 +455,14 @@ const formData = ref<Record<string, any>>({
   opening_system_id: null,
   color_ids: []
 })
+
+// Helper function to get the appropriate service for the current scope
+const getService = () => {
+  if (!selectedScope.value) {
+    throw new Error('No scope selected')
+  }
+  return productDefinitionServiceFactory.getService(selectedScope.value)
+}
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 
@@ -612,7 +621,8 @@ async function loadData() {
     // 1. Load entities
     if (currentSchema.value && currentSchema.value.entityTypes) {
         for (const typeDef of currentSchema.value.entityTypes) {
-            const response = await productDefinitionService.getEntities(typeDef.value, selectedScope.value)
+            const service = getService()
+            const response = await service.getEntities(typeDef.value)
             
             if (response.success) {
                 entities.value[typeDef.value] = response.entities
@@ -625,10 +635,10 @@ async function loadData() {
         }
     }
 
-    // 2. Load paths (Only relevant for profile scope currently, but safe to call)
-    // TODO: Make getPaths scope-aware if needed later
+    // 2. Load paths (Only relevant for profile scope currently)
     if (selectedScope.value === 'profile') {
-        const pathsData = await productDefinitionService.getPaths()
+        const profileService = getService() as ProfileProductDefinitionService
+        const pathsData = await profileService.getPaths()
         paths.value = pathsData
     } else {
         paths.value = [] // Clear paths for non-profile scopes
@@ -710,7 +720,8 @@ async function saveEntity() {
     // 1. Upload Image if present
     let imageUrl = null
     if (imageFile.value) {
-      const uploadRes = await productDefinitionService.uploadImage(imageFile.value)
+      const service = getService()
+      const uploadRes = await service.uploadImage(imageFile.value)
       if (uploadRes.success) imageUrl = uploadRes.url
     }
 
@@ -769,7 +780,8 @@ async function saveEntity() {
       })
       
       // Create Series Entity
-      const createRes = await productDefinitionService.createEntity(basePayload)
+      const service = getService()
+      const createRes = await service.createEntity(basePayload)
       if (!createRes.success) throw new Error('Failed to create series entity')
       
       const seriesId = createRes.entity.id
@@ -779,7 +791,8 @@ async function saveEntity() {
       // Create Paths
       let pathsCreated = 0
       for (const colorId of formData.value.color_ids) {
-        await productDefinitionService.createPath({
+        const profileService = service as ProfileProductDefinitionService
+        await profileService.createPath({
           company_id: compId,
           material_id: matId,
           opening_system_id: formData.value.opening_system_id,
@@ -793,7 +806,8 @@ async function saveEntity() {
       await loadData() // Refresh full state
     } else {
       // Normal Entity
-      const createRes = await productDefinitionService.createEntity(basePayload)
+      const service = getService()
+      const createRes = await service.createEntity(basePayload)
       if (createRes.success) {
         if (!entities.value[type]) entities.value[type] = []
         entities.value[type].push(createRes.entity)
@@ -864,13 +878,14 @@ function confirmDeletePath(pathData: any) {
     icon: 'pi pi-exclamation-triangle',
     accept: async () => {
       try {
+        const profileService = getService() as ProfileProductDefinitionService
         if (pathData._is_grouped && pathData._ltree_paths) {
           // Delete all paths in the group
           for (const ltree of pathData._ltree_paths) {
-            await productDefinitionService.deletePath({ ltree_path: ltree })
+            await profileService.deletePath({ ltree_path: ltree })
           }
         } else {
-          await productDefinitionService.deletePath({ ltree_path: pathData.ltree_path })
+          await profileService.deletePath({ ltree_path: pathData.ltree_path })
         }
         
         toast.add({ severity: 'success', summary: 'Deleted', detail: 'Configuration removed', life: 3000 })

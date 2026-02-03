@@ -16,7 +16,6 @@ from fastapi import APIRouter
 
 from app.api.v1 import policy
 from app.api.v1.endpoints import (
-    admin_product_definitions,
     attribute_nodes,
     auth,
     configurations,
@@ -50,14 +49,9 @@ api_router.include_router(templates.router, prefix="/templates")
 api_router.include_router(customers.router, prefix="/customers")
 api_router.include_router(orders.router, prefix="/orders")
 
-# New scope-based product definition endpoints
+# Scope-based product definition endpoints
 api_router.include_router(
-    get_product_definition_router(), prefix="/admin", tags=["Product Definitions (New)"]
-)
-
-# Legacy product definition endpoints (deprecated)
-api_router.include_router(
-    admin_product_definitions.router, prefix="/admin", tags=["Admin Product Definitions (Deprecated)"]
+    get_product_definition_router(), prefix="/admin", tags=["Product Definitions"]
 )
 
 api_router.include_router(policy.router, prefix="/admin")

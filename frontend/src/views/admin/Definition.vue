@@ -131,7 +131,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
+import type { ProfileProductDefinitionService } from '@/services/productDefinition'
 import { parseApiError } from '@/utils/errorHandler'
 import { useDebugLogger } from '@/composables/useDebugLogger'
 
@@ -161,6 +162,11 @@ const definitionOptions = ref<any[]>([])
 const formData = ref<Record<string, any>>({})
 const originalData = ref<Record<string, any>>({})
 
+// Helper function to get profile service (this view is profile-specific)
+const getProfileService = (): ProfileProductDefinitionService => {
+  return productDefinitionServiceFactory.getService('profile') as ProfileProductDefinitionService
+}
+
 // Computed
 const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== JSON.stringify(originalData.value)
@@ -172,7 +178,8 @@ async function loadDefinitions() {
   logger.info('Loading definitions', { entityType: entityType.value })
   
   try {
-    const response = await productDefinitionService.getEntities(entityType.value)
+    const profileService = getProfileService()
+    const response = await profileService.getEntities(entityType.value)
     
     if (response.success && response.entities) {
       definitionOptions.value = response.entities.map((entity: any) => ({
@@ -331,7 +338,8 @@ async function saveChanges() {
       updateData 
     })
     
-    const response = await productDefinitionService.updateEntity(selectedDefinition.value.id, updateData)
+    const profileService = getProfileService()
+    const response = await profileService.updateEntity(selectedDefinition.value.id, updateData)
     
     if (!response.success) {
       throw new Error(response.message || 'Update failed')

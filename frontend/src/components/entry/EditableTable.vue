@@ -328,7 +328,7 @@ import { useAutoCalculation } from '@/composables/useAutoCalculation'
 import { useTableSearch } from '@/composables/useTableSearch'
 import { useDebugLogger } from '@/composables/useDebugLogger'
 import { useToast } from 'primevue/usetoast'
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
 
 const props = defineProps<{
   data: any[]
@@ -348,6 +348,13 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const logger = useDebugLogger('EditableTable')
+
+// Helper function to get a service (defaults to profile for image upload)
+const getService = () => {
+  return productDefinitionServiceFactory.getService('profile')
+}
+
 const editingRows = ref([])
 const selectedRows = ref<any[]>([])
 const selectAll = ref(false)
@@ -358,7 +365,6 @@ const showImagePreview = ref(false)
 const previewImageUrl = ref('')
 const itemToDelete = ref<any>(null)
 const bulkDeleteLoading = ref(false)
-const logger = useDebugLogger('EditableTable')
 
 // Helper function to safely get field values
 function getFieldValue(data: any, field: string | number): any {
@@ -586,7 +592,7 @@ async function handleImageUpload(event: any, rowData: any, field: string) {
       fileName: file.name 
     })
 
-    const result = await productDefinitionService.uploadImage(file)
+    const result = await getService().uploadImage(file)
     
     if (result.success) {
       const imageUrl = result.image_url || result.url || result.filename

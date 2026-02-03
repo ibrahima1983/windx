@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
 import Skeleton from 'primevue/skeleton'
 import Button from 'primevue/button'
 
@@ -53,13 +53,19 @@ async function loadScopes() {
   error.value = null
   
   try {
-    const response = await productDefinitionService.getScopes()
+    // Get available scopes from factory
+    const availableScopes = productDefinitionServiceFactory.getAvailableScopes()
     
-    if (response.success) {
-      scopes.value = response.scopes
-    } else {
-      error.value = 'Failed to load scopes'
+    // Create scope info object
+    const scopeInfo: Record<string, any> = {}
+    for (const scope of availableScopes) {
+      scopeInfo[scope] = {
+        label: scope.charAt(0).toUpperCase() + scope.slice(1) + ' System',
+        service: productDefinitionServiceFactory.getService(scope)
+      }
     }
+    
+    scopes.value = scopeInfo
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Unknown error occurred'
   } finally {

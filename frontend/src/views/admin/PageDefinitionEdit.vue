@@ -186,7 +186,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
+import type { ProfileProductDefinitionService } from '@/services/productDefinition'
 import { parseApiError } from '@/utils/errorHandler'
 import { useDebugLogger } from '@/composables/useDebugLogger'
 
@@ -210,6 +211,11 @@ const entityData = ref<any>({})
 const formData = ref<Record<string, any>>({})
 const originalData = ref<Record<string, any>>({})
 
+// Helper function to get profile service (this view is profile-specific)
+const getProfileService = (): ProfileProductDefinitionService => {
+  return productDefinitionServiceFactory.getService('profile') as ProfileProductDefinitionService
+}
+
 // Computed
 const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== JSON.stringify(originalData.value)
@@ -229,7 +235,8 @@ async function loadData() {
     }
     
     // Load path data and related entities from backend
-    const response = await productDefinitionService.getPathDetails(parseInt(pathId))
+    const profileService = getProfileService()
+    const response = await profileService.getPathDetails(parseInt(pathId))
     
     if (!response.success) {
       throw new Error('Failed to load path details')
@@ -501,7 +508,8 @@ async function saveChanges() {
         
         logger.debug(`Updating entity ${entityId} (${entityType})`, { updateData })
         
-        const response = await productDefinitionService.updateEntity(entityId, updateData)
+        const profileService = getProfileService()
+        const response = await profileService.updateEntity(entityId, updateData)
         
         if (!response.success) {
           throw new Error(`Failed to update entity ${entityId}: ${response.message || 'Unknown error'}`)

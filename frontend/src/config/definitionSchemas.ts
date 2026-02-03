@@ -1,4 +1,4 @@
-import { productDefinitionService } from '@/services/productDefinitionService'
+import { productDefinitionServiceFactory } from '@/services/productDefinition'
 import { parseApiError } from '@/utils/errorHandler'
 
 // Types for schema definition
@@ -41,107 +41,135 @@ export interface DefinitionSchema {
 // Dynamic Schema Builder
 export async function fetchAndBuildSchemas(): Promise<Record<string, DefinitionSchema>> {
     try {
-        const response = await productDefinitionService.getScopes()
-
-        if (!response || !response.success || !response.scopes) {
-            console.error('Invalid response format from getScopes', response)
-            return {}
-        }
-
-        const scopes = response.scopes
+        // Get available scopes from factory
+        const availableScopes = productDefinitionServiceFactory.getAvailableScopes()
         const schemas: Record<string, DefinitionSchema> = {}
 
-        for (const [scopeKey, scopeData] of Object.entries(scopes)) {
-            // Safety check
-            if (!scopeData || typeof scopeData !== 'object') continue
-            const data = scopeData as any
-
-            const entityTypes: EntityTypeDefinition[] = []
-
-            // Handle entities
-            const entities = data.entities || {}
-            for (const [entityKey, entityData] of Object.entries(entities)) {
-                if (!entityData || typeof entityData !== 'object') continue
-                const eData = entityData as any
-
-                // robust field mapping
-                const rawFields = eData.metadata_fields || []
-                const fields: FieldDefinition[] = Array.isArray(rawFields)
-                    ? rawFields
-                        .map((field: string | any): FieldDefinition => {
-                            if (typeof field === 'string') {
-                                return {
-                                    name: field,
-                                    label: field.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                                    type: 'text',
-                                    hidden: false
-                                }
-                            }
-                            return {
-                                name: field.name || 'unknown',
-                                label: field.label || (field.name ? field.name.replace(/_/g, ' ') : 'Unknown'),
-                                type: (field.type || 'text') as FieldDefinition['type'],
-                                required: !!field.required,
-                                options: field.options,
-                                hidden: !!field.hidden,
-                                metadata_: field.placeholder ? { placeholder: field.placeholder } : undefined
-                            }
-                        })
-                        .filter(f => !f.hidden)
-                    : []
-
-                entityTypes.push({
-                    value: entityKey,
-                    label: eData.label || entityKey.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                    icon: eData.icon || 'pi pi-box',
-                    hasImage: eData.hasImage !== false,
-                    fields: fields,
-                    isLinker: entityKey === 'system_series', // TODO: Make dynamic if needed
-                    specialUi: eData.special_ui ? {
-                        type: eData.special_ui.type,
-                        config: eData.special_ui.config
-                    } : undefined
-                })
-            }
-
-            // Chain structure from backend hierarchy
-            let chainStructure: ChainNodeDefinition[] = []
-            const hierarchy = data.hierarchy || {}
-            
-            // Convert hierarchy to chain structure
-            // Sort by level (0, 1, 2, etc.) and build chain nodes
-            const sortedLevels = Object.keys(hierarchy).sort((a, b) => parseInt(a) - parseInt(b))
-            
-            for (const level of sortedLevels) {
-                const entityType = hierarchy[level]
-                const entityData = entities[entityType]
-                
-                if (entityData) {
-                    chainStructure.push({
-                        key: entityType,
-                        label: entityData.label || entityType.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
-                        icon: entityData.icon || 'pi pi-box',
-                        entityType: entityType
-                    })
+        // For now, create basic schemas for each scope
+        // In the future, this could be enhanced to fetch schema definitions from the backend
+        for (const scope of availableScopes) {
+            if (scope === 'profile') {
+                schemas[scope] = {
+                    title: 'Profile System',
+                    entityTypes: [
+                        {
+                            value: 'company',
+                            label: 'Company',
+                            icon: 'pi pi-building',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'price_from', label: 'Price From', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'material',
+                            label: 'Material',
+                            icon: 'pi pi-box',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'price_from', label: 'Price From', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'opening_system',
+                            label: 'Opening System',
+                            icon: 'pi pi-arrows-alt',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'price_from', label: 'Price From', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'system_series',
+                            label: 'System Series',
+                            icon: 'pi pi-list',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'price_from', label: 'Price From', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'color',
+                            label: 'Color',
+                            icon: 'pi pi-palette',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'price_from', label: 'Price From', type: 'number' }
+                            ],
+                            hasImage: true
+                        }
+                    ],
+                    chainStructure: [
+                        { key: 'company', entityType: 'company', label: 'Company', icon: 'pi pi-building' },
+                        { key: 'material', entityType: 'material', label: 'Material', icon: 'pi pi-box' },
+                        { key: 'opening_system', entityType: 'opening_system', label: 'Opening System', icon: 'pi pi-arrows-alt' },
+                        { key: 'system_series', entityType: 'system_series', label: 'System Series', icon: 'pi pi-list' },
+                        { key: 'color', entityType: 'color', label: 'Color', icon: 'pi pi-palette' }
+                    ]
                 }
-            }
-
-            schemas[scopeKey] = {
-                title: data.label || `${scopeKey} Definitions`,
-                entityTypes: entityTypes,
-                chainStructure: chainStructure
+            } else if (scope === 'glazing') {
+                schemas[scope] = {
+                    title: 'Glazing System',
+                    entityTypes: [
+                        {
+                            value: 'glass_type',
+                            label: 'Glass Type',
+                            icon: 'pi pi-stop',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'thickness', label: 'Thickness (mm)', type: 'number' },
+                                { name: 'u_value', label: 'U-Value', type: 'number' },
+                                { name: 'light_transmittance', label: 'Light Transmittance', type: 'number' },
+                                { name: 'price_per_sqm', label: 'Price per m²', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'spacer',
+                            label: 'Spacer',
+                            icon: 'pi pi-minus',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'material', label: 'Material', type: 'text' },
+                                { name: 'thickness', label: 'Thickness (mm)', type: 'number' },
+                                { name: 'thermal_conductivity', label: 'Thermal Conductivity', type: 'number' },
+                                { name: 'price_per_sqm', label: 'Price per m²', type: 'number' }
+                            ],
+                            hasImage: true
+                        },
+                        {
+                            value: 'gas',
+                            label: 'Gas Filling',
+                            icon: 'pi pi-cloud',
+                            fields: [
+                                { name: 'name', label: 'Name', type: 'text', required: true },
+                                { name: 'description', label: 'Description', type: 'textarea' },
+                                { name: 'density', label: 'Density', type: 'number' },
+                                { name: 'price_per_sqm', label: 'Price per m²', type: 'number' }
+                            ],
+                            hasImage: true
+                        }
+                    ],
+                    chainStructure: [] // Glazing doesn't use chain structure like profile
+                }
             }
         }
 
         return schemas
     } catch (error) {
-        const apiError = parseApiError(error)
-        console.error('Failed to fetch and build schemas:', {
-            error: apiError,
-            originalError: error
-        })
-        
-        // Re-throw with more context for the calling component
-        throw new Error(`Schema loading failed: ${apiError.message}`)
+        console.error('Error fetching schemas:', error)
+        const errorMessage = parseApiError(error)
+        throw new Error(`Failed to load definition schemas: ${errorMessage}`)
     }
 }
