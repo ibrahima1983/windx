@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+                        GLAZING ENTRY - MOCKUP
+================================================================================
+
+OVERVIEW:
+---------
+This is a mockup/prototype for the Glazing Entry feature in Windx.
+It demonstrates how users would create actual glazing configurations for projects
+using the glazing units defined in the glazing-builder-mockup.html
+
+PURPOSE:
+--------
+- Allow users to create glazing configurations for specific projects
+- Select from pre-built glazing units (created in builder)
+- Add project-specific details (dimensions, quantity, location, etc.)
+- Calculate total costs and specifications
+- Save configurations in an editable table
+
+WORKFLOW:
+---------
+1. Admin uses glazing-builder-mockup.html to define glazing components and units
+2. Users use this page to create actual glazing configurations for projects
+3. Similar to how GenericEntryView works for profiles
+
+================================================================================
+                              GLAZING CONFIGURATION
+================================================================================
+
+A glazing configuration includes:
+- Project details (name, description, location)
+- Selected glazing unit (from pre-built units)
+- Dimensions (width, height, area)
+- Quantity
+- Installation details
+- Calculated totals (price, weight, technical specs)
+
+================================================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glazing Entry - Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #f8fafc; }
+        .form-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .glazing-unit-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .glazing-unit-card:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        .glazing-unit-card.selected {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .calculation-result {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22c55e;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .editable-cell {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 4px 8px;
+            min-width: 80px;
+        }
+        .editable-cell:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div id="app" class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Glazing Entry</h1>
+            <p class="text-gray-600">Create glazing configurations for your projects using pre-built glazing units.</p>
+        </div>
+
+        <!-- Configuration Form -->
+        <div class="form-card p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">New Glazing Configuration</h3>
+            
+            <!-- Basic Project Info -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Configuration Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="configName" placeholder="e.g. Living Room Window" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Project Location</label>
+                    <input type="text" id="configLocation" placeholder="e.g. Villa, Floor 2" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Client Name</label>
+                    <input type="text" id="configClient" placeholder="e.g. Ahmed Mohamed" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Glazing Unit Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Glazing Unit <span class="text-red-500">*</span></label>
+                <div id="glazingUnitsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Glazing units will be populated here -->
+                </div>
+            </div>
+
+            <!-- Dimensions and Quantity -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Width (mm) <span class="text-red-500">*</span></label>
+                    <input type="number" id="configWidth" placeholder="1200" onchange="calculateTotals()" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Height (mm) <span class="text-red-500">*</span></label>
+                    <input type="number" id="configHeight" placeholder="1500" onchange="calculateTotals()" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity <span class="text-red-500">*</span></label>
+                    <input type="number" id="configQuantity" placeholder="1" value="1" min="1" onchange="calculateTotals()" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Area (m²)</label>
+                    <input type="text" id="configArea" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                </div>
+            </div>
+
+            <!-- Installation Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Installation Type</label>
+                    <select id="configInstallationType" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select installation type...</option>
+                        <option value="new_construction">New Construction</option>
+                        <option value="replacement">Replacement</option>
+                        <option value="renovation">Renovation</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Frame Color</label>
+                    <select id="configFrameColor" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select frame color...</option>
+                        <option value="white">White</option>
+                        <option value="brown">Brown</option>
+                        <option value="anthracite">Anthracite Grey</option>
+                        <option value="black">Black</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea id="configNotes" rows="3" placeholder="Additional notes or special requirements..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <!-- Calculated Results -->
+            <div id="calculatedResults" class="hidden calculation-result mb-6">
+                <h4 class="font-semibold text-green-700 mb-3"><i class="fa-solid fa-calculator mr-1"></i> Calculated Totals</h4>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="totalArea">0</div>
+                        <div class="text-gray-600">Total Area (m²)</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="totalPrice">€0</div>
+                        <div class="text-gray-600">Total Price</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="totalWeight">0</div>
+                        <div class="text-gray-600">Total Weight (kg)</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="avgUValue">0</div>
+                        <div class="text-gray-600">U-Value (W/m²K)</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="totalThickness">0</div>
+                        <div class="text-gray-600">Thickness (mm)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="saveConfiguration()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                    <i class="fa-solid fa-save mr-1"></i> Save Configuration
+                </button>
+                <button onclick="clearForm()" class="px-6 py-2 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600">
+                    <i class="fa-solid fa-eraser mr-1"></i> Clear Form
+                </button>
+            </div>
+        </div>
+        <!-- Saved Configurations Table -->
+        <div class="form-card overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-semibold text-gray-800"><i class="fa-solid fa-table mr-2"></i>Saved Configurations (<span id="configCount">0</span>)</h3>
+                <div class="flex gap-2">
+                    <button onclick="exportConfigurations()" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                        <i class="fa-solid fa-download mr-1"></i> Export
+                    </button>
+                    <button onclick="deleteSelectedConfigurations()" class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                        <i class="fa-solid fa-trash mr-1"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+            
+            <div id="configurationsTable" class="overflow-x-auto hidden">
+                <table class="w-full">
+                    <thead class="bg-gray-50 text-left text-sm text-gray-600">
+                        <tr>
+                            <th class="px-4 py-3 w-12">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="rounded">
+                            </th>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Glazing Unit</th>
+                            <th class="px-4 py-3">Dimensions</th>
+                            <th class="px-4 py-3">Qty</th>
+                            <th class="px-4 py-3">Area (m²)</th>
+                            <th class="px-4 py-3">Total Price</th>
+                            <th class="px-4 py-3">U-Value</th>
+                            <th class="px-4 py-3">Client</th>
+                            <th class="px-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="configurationsTableBody" class="text-sm">
+                        <!-- Configurations will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noConfigurations" class="p-8 text-center text-gray-500">
+                <i class="fa-solid fa-table text-4xl text-gray-300 mb-4"></i>
+                <p>No glazing configurations created yet.</p>
+                <p class="text-sm mt-1">Create your first configuration using the form above.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // ============================================
+        // DATA STORE
+        // ============================================
+        
+        // Pre-built glazing units (would come from glazing-builder-mockup.html in real app)
+        const availableGlazingUnits = [
+            {
+                id: 1,
+                name: 'Standard Double Glazing',
+                glazing_type: 'double',
+                total_thickness: 24,
+                u_value: 2.8,
+                price_per_sqm: 85.50,
+                weight_per_sqm: 25.5,
+                description: 'Clear float 6mm + Argon + Low-E 4mm',
+                components: {
+                    outer_glass: 'Clear Float 6mm',
+                    inner_glass: 'Low-E 4mm',
+                    spacer: 'Aluminum 16mm',
+                    gas: 'Argon'
+                }
+            },
+            {
+                id: 2,
+                name: 'Premium Triple Glazing',
+                glazing_type: 'triple',
+                total_thickness: 44,
+                u_value: 0.8,
+                price_per_sqm: 145.00,
+                weight_per_sqm: 35.8,
+                description: 'Low-E 4mm + Argon + Clear 6mm + Argon + Low-E 4mm',
+                components: {
+                    outer_glass: 'Low-E 4mm',
+                    middle_glass: 'Clear Float 6mm',
+                    inner_glass: 'Low-E 4mm',
+                    spacer1: 'Warm Edge 12mm',
+                    spacer2: 'Warm Edge 12mm',
+                    gas: 'Argon'
+                }
+            },
+            {
+                id: 3,
+                name: 'Basic Single Glazing',
+                glazing_type: 'single',
+                total_thickness: 6,
+                u_value: 5.8,
+                price_per_sqm: 35.00,
+                weight_per_sqm: 15.0,
+                description: 'Clear float 6mm',
+                components: {
+                    glass: 'Clear Float 6mm'
+                }
+            },
+            {
+                id: 4,
+                name: 'Acoustic Double Glazing',
+                glazing_type: 'double',
+                total_thickness: 28,
+                u_value: 2.6,
+                price_per_sqm: 125.00,
+                weight_per_sqm: 32.0,
+                description: 'Laminated 8mm + Argon + Clear 6mm',
+                components: {
+                    outer_glass: 'Laminated 8mm',
+                    inner_glass: 'Clear Float 6mm',
+                    spacer: 'Warm Edge 16mm',
+                    gas: 'Argon'
+                }
+            }
+        ];
+
+        // Saved configurations
+        const savedConfigurations = [];
+        let selectedGlazingUnit = null;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            populateGlazingUnits();
+            refreshConfigurationsTable();
+        });
+
+        function populateGlazingUnits() {
+            const grid = document.getElementById('glazingUnitsGrid');
+            
+            if (availableGlazingUnits.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        <i class="fa-solid fa-layer-group text-4xl text-gray-300 mb-4"></i>
+                        <p>No glazing units available.</p>
+                        <p class="text-sm mt-1">Please create glazing units first using the Glazing Builder.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = availableGlazingUnits.map(unit => `
+                <div class="glazing-unit-card" onclick="selectGlazingUnit(${unit.id})">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-800">${unit.name}</h4>
+                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                            ${unit.glazing_type.charAt(0).toUpperCase() + unit.glazing_type.slice(1)}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">${unit.description}</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                        <div><strong>Thickness:</strong> ${unit.total_thickness}mm</div>
+                        <div><strong>U-Value:</strong> ${unit.u_value} W/m²K</div>
+                        <div><strong>Price:</strong> €${unit.price_per_sqm}/m²</div>
+                        <div><strong>Weight:</strong> ${unit.weight_per_sqm} kg/m²</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectGlazingUnit(unitId) {
+            // Update visual selection
+            document.querySelectorAll('.glazing-unit-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.glazing-unit-card').classList.add('selected');
+            
+            // Store selection
+            selectedGlazingUnit = availableGlazingUnits.find(unit => unit.id === unitId);
+            
+            // Trigger calculation
+            calculateTotals();
+        }
+        // ============================================
+        // CALCULATIONS
+        // ============================================
+        function calculateTotals() {
+            const width = parseFloat(document.getElementById('configWidth').value) || 0;
+            const height = parseFloat(document.getElementById('configHeight').value) || 0;
+            const quantity = parseInt(document.getElementById('configQuantity').value) || 1;
+            
+            if (!selectedGlazingUnit || !width || !height) {
+                document.getElementById('calculatedResults').classList.add('hidden');
+                document.getElementById('configArea').value = '';
+                return;
+            }
+            
+            // Calculate area
+            const areaPerUnit = (width * height) / 1000000; // Convert mm² to m²
+            const totalArea = areaPerUnit * quantity;
+            
+            // Calculate totals
+            const totalPrice = totalArea * selectedGlazingUnit.price_per_sqm;
+            const totalWeight = totalArea * selectedGlazingUnit.weight_per_sqm;
+            
+            // Update display
+            document.getElementById('configArea').value = areaPerUnit.toFixed(2);
+            document.getElementById('totalArea').textContent = totalArea.toFixed(2);
+            document.getElementById('totalPrice').textContent = '€' + totalPrice.toFixed(2);
+            document.getElementById('totalWeight').textContent = totalWeight.toFixed(1);
+            document.getElementById('avgUValue').textContent = selectedGlazingUnit.u_value;
+            document.getElementById('totalThickness').textContent = selectedGlazingUnit.total_thickness;
+            
+            document.getElementById('calculatedResults').classList.remove('hidden');
+        }
+
+        // ============================================
+        // FORM MANAGEMENT
+        // ============================================
+        function saveConfiguration() {
+            const name = document.getElementById('configName').value.trim();
+            const width = parseFloat(document.getElementById('configWidth').value);
+            const height = parseFloat(document.getElementById('configHeight').value);
+            const quantity = parseInt(document.getElementById('configQuantity').value) || 1;
+            
+            if (!name || !selectedGlazingUnit || !width || !height) {
+                showToast('Please fill in all required fields and select a glazing unit', 'error');
+                return;
+            }
+            
+            // Check for duplicates
+            if (savedConfigurations.some(config => config.name.toLowerCase() === name.toLowerCase())) {
+                showToast(`Configuration "${name}" already exists`, 'error');
+                return;
+            }
+            
+            const areaPerUnit = (width * height) / 1000000;
+            const totalArea = areaPerUnit * quantity;
+            const totalPrice = totalArea * selectedGlazingUnit.price_per_sqm;
+            const totalWeight = totalArea * selectedGlazingUnit.weight_per_sqm;
+            
+            const configuration = {
+                id: Date.now(),
+                name: name,
+                location: document.getElementById('configLocation').value.trim() || null,
+                client: document.getElementById('configClient').value.trim() || null,
+                glazing_unit_id: selectedGlazingUnit.id,
+                glazing_unit_name: selectedGlazingUnit.name,
+                width: width,
+                height: height,
+                quantity: quantity,
+                area_per_unit: areaPerUnit,
+                total_area: totalArea,
+                total_price: totalPrice,
+                total_weight: totalWeight,
+                u_value: selectedGlazingUnit.u_value,
+                thickness: selectedGlazingUnit.total_thickness,
+                installation_type: document.getElementById('configInstallationType').value || null,
+                frame_color: document.getElementById('configFrameColor').value || null,
+                notes: document.getElementById('configNotes').value.trim() || null,
+                created_at: new Date().toISOString()
+            };
+            
+            savedConfigurations.push(configuration);
+            showToast(`Configuration "${name}" saved successfully`, 'success');
+            
+            // Clear form but keep glazing unit selection
+            clearForm(false);
+            refreshConfigurationsTable();
+        }
+
+        function clearForm(clearGlazingUnit = true) {
+            document.getElementById('configName').value = '';
+            document.getElementById('configLocation').value = '';
+            document.getElementById('configClient').value = '';
+            document.getElementById('configWidth').value = '';
+            document.getElementById('configHeight').value = '';
+            document.getElementById('configQuantity').value = '1';
+            document.getElementById('configArea').value = '';
+            document.getElementById('configInstallationType').value = '';
+            document.getElementById('configFrameColor').value = '';
+            document.getElementById('configNotes').value = '';
+            
+            if (clearGlazingUnit) {
+                selectedGlazingUnit = null;
+                document.querySelectorAll('.glazing-unit-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+            }
+            
+            document.getElementById('calculatedResults').classList.add('hidden');
+        }
+
+        // ============================================
+        // TABLE MANAGEMENT
+        // ============================================
+        function refreshConfigurationsTable() {
+            const table = document.getElementById('configurationsTable');
+            const tableBody = document.getElementById('configurationsTableBody');
+            const noConfigurations = document.getElementById('noConfigurations');
+            const configCount = document.getElementById('configCount');
+            
+            configCount.textContent = savedConfigurations.length;
+            
+            if (savedConfigurations.length === 0) {
+                table.classList.add('hidden');
+                noConfigurations.classList.remove('hidden');
+                return;
+            }
+            
+            table.classList.remove('hidden');
+            noConfigurations.classList.add('hidden');
+            
+            tableBody.innerHTML = savedConfigurations.map(config => `
+                <tr class="border-t border-gray-100 hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <input type="checkbox" class="config-checkbox rounded" value="${config.id}">
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-medium text-gray-800">${config.name}</div>
+                        ${config.location ? `<div class="text-xs text-gray-500">${config.location}</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-medium">${config.glazing_unit_name}</div>
+                        <div class="text-xs text-gray-500">${config.thickness}mm, U=${config.u_value}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div>${config.width} × ${config.height} mm</div>
+                        <div class="text-xs text-gray-500">${config.area_per_unit.toFixed(2)} m² each</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                            ${config.quantity}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 font-medium">${config.total_area.toFixed(2)}</td>
+                    <td class="px-4 py-3 font-medium text-green-600">€${config.total_price.toFixed(2)}</td>
+                    <td class="px-4 py-3">${config.u_value} W/m²K</td>
+                    <td class="px-4 py-3">${config.client || '-'}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex gap-1">
+                            <button onclick="editConfiguration(${config.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Edit">
+                                <i class="fa-solid fa-edit"></i>
+                            </button>
+                            <button onclick="duplicateConfiguration(${config.id})" class="text-green-500 hover:text-green-700 p-1" title="Duplicate">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                            <button onclick="deleteConfiguration(${config.id})" class="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.config-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function deleteConfiguration(id) {
+            if (!confirm('Are you sure you want to delete this configuration?')) return;
+            
+            const index = savedConfigurations.findIndex(config => config.id === id);
+            if (index > -1) {
+                const configName = savedConfigurations[index].name;
+                savedConfigurations.splice(index, 1);
+                showToast(`Configuration "${configName}" deleted`, 'info');
+                refreshConfigurationsTable();
+            }
+        }
+
+        function deleteSelectedConfigurations() {
+            const selectedIds = Array.from(document.querySelectorAll('.config-checkbox:checked')).map(cb => parseInt(cb.value));
+            
+            if (selectedIds.length === 0) {
+                showToast('Please select configurations to delete', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${selectedIds.length} configuration(s)?`)) return;
+            
+            selectedIds.forEach(id => {
+                const index = savedConfigurations.findIndex(config => config.id === id);
+                if (index > -1) {
+                    savedConfigurations.splice(index, 1);
+                }
+            });
+            
+            showToast(`${selectedIds.length} configuration(s) deleted`, 'info');
+            document.getElementById('selectAll').checked = false;
+            refreshConfigurationsTable();
+        }
+
+        function editConfiguration(id) {
+            const config = savedConfigurations.find(c => c.id === id);
+            if (!config) return;
+            
+            // Populate form with configuration data
+            document.getElementById('configName').value = config.name;
+            document.getElementById('configLocation').value = config.location || '';
+            document.getElementById('configClient').value = config.client || '';
+            document.getElementById('configWidth').value = config.width;
+            document.getElementById('configHeight').value = config.height;
+            document.getElementById('configQuantity').value = config.quantity;
+            document.getElementById('configInstallationType').value = config.installation_type || '';
+            document.getElementById('configFrameColor').value = config.frame_color || '';
+            document.getElementById('configNotes').value = config.notes || '';
+            
+            // Select the glazing unit
+            selectedGlazingUnit = availableGlazingUnits.find(unit => unit.id === config.glazing_unit_id);
+            if (selectedGlazingUnit) {
+                document.querySelectorAll('.glazing-unit-card').forEach((card, index) => {
+                    card.classList.remove('selected');
+                    if (availableGlazingUnits[index].id === selectedGlazingUnit.id) {
+                        card.classList.add('selected');
+                    }
+                });
+            }
+            
+            // Remove the original configuration (will be re-added when saved)
+            const index = savedConfigurations.findIndex(c => c.id === id);
+            if (index > -1) {
+                savedConfigurations.splice(index, 1);
+                refreshConfigurationsTable();
+            }
+            
+            calculateTotals();
+            showToast('Configuration loaded for editing', 'info');
+            
+            // Scroll to form
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function duplicateConfiguration(id) {
+            const config = savedConfigurations.find(c => c.id === id);
+            if (!config) return;
+            
+            // Create a copy with modified name
+            const duplicatedConfig = {
+                ...config,
+                id: Date.now(),
+                name: config.name + ' (Copy)',
+                created_at: new Date().toISOString()
+            };
+            
+            savedConfigurations.push(duplicatedConfig);
+            showToast(`Configuration duplicated as "${duplicatedConfig.name}"`, 'success');
+            refreshConfigurationsTable();
+        }
+
+        function exportConfigurations() {
+            if (savedConfigurations.length === 0) {
+                showToast('No configurations to export', 'error');
+                return;
+            }
+            
+            // Simple CSV export
+            const headers = ['Name', 'Glazing Unit', 'Width (mm)', 'Height (mm)', 'Quantity', 'Total Area (m²)', 'Total Price (€)', 'U-Value', 'Client', 'Location'];
+            const csvContent = [
+                headers.join(','),
+                ...savedConfigurations.map(config => [
+                    `"${config.name}"`,
+                    `"${config.glazing_unit_name}"`,
+                    config.width,
+                    config.height,
+                    config.quantity,
+                    config.total_area.toFixed(2),
+                    config.total_price.toFixed(2),
+                    config.u_value,
+                    `"${config.client || ''}"`,
+                    `"${config.location || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `glazing-configurations-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showToast('Configurations exported successfully', 'success');
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle Enter key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement.closest('.form-card')) {
+                e.preventDefault();
+                saveConfiguration();
+            }
+        });
+    </script>
+</body>
+</html>

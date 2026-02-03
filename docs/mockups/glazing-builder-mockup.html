@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+                        GLAZING BUILDER - MOCKUP
+================================================================================
+
+OVERVIEW:
+---------
+This is a mockup/prototype for the Glazing Builder feature in Windx.
+It demonstrates the compositional approach for building glazing units.
+
+PURPOSE:
+--------
+- Allow data entry staff to create glazing components (glass types, spacers, gases)
+- Build complex glazing units from components (single, double, triple)
+- Auto-calculate technical specifications and pricing
+
+================================================================================
+                              COMPONENT TYPES
+================================================================================
+
+1. GLASS TYPE (Independent)
+   - Examples: Clear Float, Low-E, Tinted, Laminated
+   - Properties: thickness, light_transmittance, solar_heat_gain_coefficient, 
+     u_value, acoustic_performance, price_per_sqm, weight_per_sqm, color
+   - Used by: All glazing units
+
+2. SPACER (Independent)  
+   - Examples: Aluminum, Warm Edge, Stainless Steel
+   - Properties: material, thickness, color, thermal_conductivity, 
+     price_per_linear_meter, weight_per_linear_meter
+   - Used by: Double and Triple glazing
+
+3. GAS (Independent)
+   - Examples: Air, Argon, Krypton
+   - Properties: density, thermal_conductivity, price_per_sqm
+   - Used by: Double and Triple glazing (optional)
+
+4. GLAZING UNIT (Composed)
+   - Single: 1 glass type
+   - Double: outer glass + inner glass + spacer + optional gas
+   - Triple: outer + middle + inner glass + 2 spacers + optional gas
+   - Auto-calculated: total_thickness, u_value, price, weight
+
+================================================================================
+                              GLAZING COMPOSITION
+================================================================================
+
+SINGLE GLAZING:
+  - Select glass type
+  - Inherit all properties from selected glass
+
+DOUBLE GLAZING:
+  - Select outer glass
+  - Select inner glass  
+  - Select spacer
+  - Optional: Select gas filling
+  - Calculate: total thickness, combined U-value, total price
+
+TRIPLE GLAZING:
+  - Select outer glass
+  - Select middle glass
+  - Select inner glass
+  - Select spacer 1 (outer-middle)
+  - Select spacer 2 (middle-inner)
+  - Optional: Select gas filling
+  - Calculate: total thickness, combined U-value, total price
+
+================================================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glazing Builder - Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #fff; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .glazing-type-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .glazing-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .glazing-type-card.selected {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .component-section {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .glass-layer {
+            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+            border: 2px solid #0288d1;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            position: relative;
+        }
+        .spacer-layer {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+            border: 2px solid #ff9800;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 4px 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .calculation-result {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22c55e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div id="app" class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Glazing Builder</h1>
+            <p class="text-gray-600">Create glazing components and build complex glazing units.</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="flex gap-8">
+                <button onclick="showTab('components')" id="tab-components" class="pb-3 px-1 tab-active font-medium">
+                    <i class="fa-solid fa-plus-circle mr-1"></i> Add Components
+                </button>
+                <button onclick="showTab('builder')" id="tab-builder" class="pb-3 px-1 text-gray-500 font-medium hover:text-gray-700">
+                    <i class="fa-solid fa-layer-group mr-1"></i> Build Glazing
+                </button>
+                <button onclick="showTab('view')" id="tab-view" class="pb-3 px-1 text-gray-500 font-medium hover:text-gray-700">
+                    <i class="fa-solid fa-list mr-1"></i> View All
+                </button>
+            </nav>
+        </div>
+        <!-- Tab: Add Components -->
+        <div id="content-components">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Add New Component</h3>
+                
+                <!-- Component Type Selector -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Component Type</label>
+                    <select id="componentType" onchange="updateComponentForm()" class="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Type --</option>
+                        <option value="glass_type">Glass Type</option>
+                        <option value="spacer">Spacer</option>
+                        <option value="gas">Gas Filling</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Form Container -->
+                <div id="componentForm" class="hidden">
+                    <!-- Basic Fields (shown for all) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="componentName" placeholder="Enter name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Price per m² (€)</label>
+                            <input type="number" id="componentPrice" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="componentDescription" rows="2" placeholder="Optional description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Glass Type Specific Fields -->
+                    <div id="glassFields" class="hidden component-section">
+                        <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-stop text-blue-500 mr-1"></i> Glass Properties</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Thickness (mm)</label>
+                                <input type="number" id="glassThickness" placeholder="e.g. 6" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Light Transmittance (%)</label>
+                                <input type="number" id="glassLightTransmittance" placeholder="e.g. 89" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Solar Heat Gain Coefficient</label>
+                                <input type="number" id="glassSHGC" placeholder="e.g. 0.76" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">U-Value (W/m²K)</label>
+                                <input type="number" id="glassUValue" placeholder="e.g. 5.8" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Acoustic Performance (dB)</label>
+                                <input type="number" id="glassAcoustic" placeholder="e.g. 32" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Weight per m² (kg)</label>
+                                <input type="number" id="glassWeight" placeholder="e.g. 15" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Color</label>
+                                <input type="text" id="glassColor" placeholder="e.g. Clear, Bronze" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Color Code</label>
+                                <input type="text" id="glassColorCode" placeholder="e.g. #FFFFFF" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Spacer Specific Fields -->
+                    <div id="spacerFields" class="hidden component-section">
+                        <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-minus text-orange-500 mr-1"></i> Spacer Properties</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Material</label>
+                                <input type="text" id="spacerMaterial" placeholder="e.g. Aluminum, Stainless Steel" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Thickness (mm)</label>
+                                <input type="number" id="spacerThickness" placeholder="e.g. 16" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Color</label>
+                                <input type="text" id="spacerColor" placeholder="e.g. Silver, Black" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Thermal Conductivity (W/m·K)</label>
+                                <input type="number" id="spacerThermalConductivity" placeholder="e.g. 160" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Price per Linear Meter (€)</label>
+                                <input type="number" id="spacerPriceLinear" placeholder="e.g. 2.50" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Weight per Linear Meter (kg)</label>
+                                <input type="number" id="spacerWeightLinear" placeholder="e.g. 0.15" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gas Specific Fields -->
+                    <div id="gasFields" class="hidden component-section">
+                        <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-cloud text-green-500 mr-1"></i> Gas Properties</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Density (kg/m³)</label>
+                                <input type="number" id="gasDensity" placeholder="e.g. 1.78" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 mb-2">Thermal Conductivity (W/m·K)</label>
+                                <input type="number" id="gasThermalConductivity" placeholder="e.g. 0.0177" step="0.0001" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="mt-6">
+                        <button onclick="recordComponent()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                            <i class="fa-solid fa-save mr-1"></i> Record Component
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Tab: Build Glazing -->
+        <div id="content-builder" class="hidden">
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Build Glazing Unit</h3>
+                
+                <!-- Glazing Type Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Select Glazing Type</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="glazing-type-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectGlazingType('single')">
+                            <div class="text-3xl mb-2 text-blue-500"><i class="fa-solid fa-stop"></i></div>
+                            <h4 class="font-semibold text-gray-800">Single Glass</h4>
+                            <p class="text-sm text-gray-600 mt-1">One glass pane</p>
+                        </div>
+                        <div class="glazing-type-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectGlazingType('double')">
+                            <div class="text-3xl mb-2 text-blue-500"><i class="fa-solid fa-layer-group"></i></div>
+                            <h4 class="font-semibold text-gray-800">Double Glazing</h4>
+                            <p class="text-sm text-gray-600 mt-1">Two glass panes + spacer</p>
+                        </div>
+                        <div class="glazing-type-card border-2 border-gray-200 rounded-lg p-4 text-center" onclick="selectGlazingType('triple')">
+                            <div class="text-3xl mb-2 text-blue-500"><i class="fa-solid fa-bars"></i></div>
+                            <h4 class="font-semibold text-gray-800">Triple Glazing</h4>
+                            <p class="text-sm text-gray-600 mt-1">Three glass panes + spacers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Glazing Configuration Form -->
+                <div id="glazingConfig" class="hidden">
+                    <!-- Basic Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Glazing Unit Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="glazingName" placeholder="Enter glazing unit name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <input type="text" id="glazingDescription" placeholder="Optional description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Single Glass Configuration -->
+                    <div id="singleConfig" class="hidden">
+                        <div class="component-section">
+                            <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-stop text-blue-500 mr-1"></i> Single Glass Configuration</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Glass Type</label>
+                                    <select id="singleGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select glass type...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Double Glass Configuration -->
+                    <div id="doubleConfig" class="hidden">
+                        <div class="component-section">
+                            <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> Double Glazing Configuration</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Outer Glass</label>
+                                    <select id="doubleOuterGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select outer glass...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Inner Glass</label>
+                                    <select id="doubleInnerGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select inner glass...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Spacer</label>
+                                    <select id="doubleSpacer" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select spacer...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Gas Filling (Optional)</label>
+                                    <select id="doubleGas" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">No gas filling</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Triple Glass Configuration -->
+                    <div id="tripleConfig" class="hidden">
+                        <div class="component-section">
+                            <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-bars text-blue-500 mr-1"></i> Triple Glazing Configuration</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Outer Glass</label>
+                                    <select id="tripleOuterGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select outer glass...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Middle Glass</label>
+                                    <select id="tripleMiddleGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select middle glass...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Inner Glass</label>
+                                    <select id="tripleInnerGlass" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select inner glass...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Spacer 1 (Outer-Middle)</label>
+                                    <select id="tripleSpacer1" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select spacer 1...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Spacer 2 (Middle-Inner)</label>
+                                    <select id="tripleSpacer2" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">Select spacer 2...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Gas Filling (Optional)</label>
+                                    <select id="tripleGas" onchange="calculateGlazing()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        <option value="">No gas filling</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Preview -->
+                    <div id="glazingPreview" class="hidden component-section">
+                        <h4 class="font-medium text-gray-700 mb-3"><i class="fa-solid fa-eye text-purple-500 mr-1"></i> Visual Preview</h4>
+                        <div id="previewLayers" class="max-w-md mx-auto">
+                            <!-- Layers will be generated here -->
+                        </div>
+                    </div>
+
+                    <!-- Calculated Results -->
+                    <div id="calculatedResults" class="hidden calculation-result">
+                        <h4 class="font-semibold text-green-700 mb-3"><i class="fa-solid fa-calculator mr-1"></i> Calculated Properties</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600" id="calcTotalThickness">0</div>
+                                <div class="text-gray-600">Total Thickness (mm)</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600" id="calcUValue">0</div>
+                                <div class="text-gray-600">U-Value (W/m²K)</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600" id="calcPrice">€0</div>
+                                <div class="text-gray-600">Price per m²</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600" id="calcWeight">0</div>
+                                <div class="text-gray-600">Weight per m² (kg)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div class="mt-6">
+                        <button onclick="saveGlazingUnit()" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
+                            <i class="fa-solid fa-save mr-1"></i> Save Glazing Unit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Tab: View All -->
+        <div id="content-view" class="hidden">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-1 text-blue-600"><i class="fa-solid fa-stop"></i></div>
+                    <div class="text-2xl font-bold text-blue-700" id="countGlassTypes">0</div>
+                    <div class="text-xs text-blue-600">Glass Types</div>
+                </div>
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-1 text-orange-600"><i class="fa-solid fa-minus"></i></div>
+                    <div class="text-2xl font-bold text-orange-700" id="countSpacers">0</div>
+                    <div class="text-xs text-orange-600">Spacers</div>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-1 text-green-600"><i class="fa-solid fa-cloud"></i></div>
+                    <div class="text-2xl font-bold text-green-700" id="countGases">0</div>
+                    <div class="text-xs text-green-600">Gas Fillings</div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl mb-1 text-purple-600"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="text-2xl font-bold text-purple-700" id="countGlazingUnits">0</div>
+                    <div class="text-xs text-purple-600">Glazing Units</div>
+                </div>
+            </div>
+
+            <!-- Components Tables -->
+            <div class="space-y-6">
+                <!-- Glass Types -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 bg-blue-50">
+                        <h3 class="font-semibold text-gray-800"><i class="fa-solid fa-stop text-blue-600 mr-2"></i>Glass Types</h3>
+                    </div>
+                    <div id="glassTypesTable" class="overflow-x-auto hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 text-left text-sm text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Thickness</th>
+                                    <th class="px-4 py-3">U-Value</th>
+                                    <th class="px-4 py-3">Light Trans.</th>
+                                    <th class="px-4 py-3">Price/m²</th>
+                                    <th class="px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="glassTypesTableBody" class="text-sm"></tbody>
+                        </table>
+                    </div>
+                    <div id="noGlassTypes" class="p-8 text-center text-gray-500">
+                        No glass types created yet.
+                    </div>
+                </div>
+
+                <!-- Spacers -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 bg-orange-50">
+                        <h3 class="font-semibold text-gray-800"><i class="fa-solid fa-minus text-orange-600 mr-2"></i>Spacers</h3>
+                    </div>
+                    <div id="spacersTable" class="overflow-x-auto hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 text-left text-sm text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Material</th>
+                                    <th class="px-4 py-3">Thickness</th>
+                                    <th class="px-4 py-3">Thermal Cond.</th>
+                                    <th class="px-4 py-3">Price/m</th>
+                                    <th class="px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="spacersTableBody" class="text-sm"></tbody>
+                        </table>
+                    </div>
+                    <div id="noSpacers" class="p-8 text-center text-gray-500">
+                        No spacers created yet.
+                    </div>
+                </div>
+
+                <!-- Glazing Units -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 bg-purple-50">
+                        <h3 class="font-semibold text-gray-800"><i class="fa-solid fa-layer-group text-purple-600 mr-2"></i>Glazing Units</h3>
+                    </div>
+                    <div id="glazingUnitsTable" class="overflow-x-auto hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 text-left text-sm text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Type</th>
+                                    <th class="px-4 py-3">Total Thickness</th>
+                                    <th class="px-4 py-3">U-Value</th>
+                                    <th class="px-4 py-3">Price/m²</th>
+                                    <th class="px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="glazingUnitsTableBody" class="text-sm"></tbody>
+                        </table>
+                    </div>
+                    <div id="noGlazingUnits" class="p-8 text-center text-gray-500">
+                        No glazing units created yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+    <script>
+        // ============================================
+        // DATA STORE
+        // ============================================
+        const store = {
+            components: {
+                glass_type: [],
+                spacer: [],
+                gas: []
+            },
+            glazing_units: []
+        };
+
+        let currentGlazingType = null;
+
+        // ============================================
+        // TAB NAVIGATION
+        // ============================================
+        function showTab(tab) {
+            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('text-gray-500');
+            });
+            document.getElementById('content-' + tab).classList.remove('hidden');
+            const activeTab = document.getElementById('tab-' + tab);
+            activeTab.classList.add('tab-active');
+            activeTab.classList.remove('text-gray-500');
+            
+            if (tab === 'view') refreshViewTab();
+            if (tab === 'builder') populateBuilderDropdowns();
+        }
+
+        // ============================================
+        // COMPONENT FORM MANAGEMENT
+        // ============================================
+        function updateComponentForm() {
+            const type = document.getElementById('componentType').value;
+            const form = document.getElementById('componentForm');
+            const glassFields = document.getElementById('glassFields');
+            const spacerFields = document.getElementById('spacerFields');
+            const gasFields = document.getElementById('gasFields');
+            
+            // Reset
+            glassFields.classList.add('hidden');
+            spacerFields.classList.add('hidden');
+            gasFields.classList.add('hidden');
+            
+            if (!type) {
+                form.classList.add('hidden');
+                return;
+            }
+            
+            form.classList.remove('hidden');
+            clearComponentForm();
+            
+            // Show relevant fields
+            if (type === 'glass_type') {
+                glassFields.classList.remove('hidden');
+            } else if (type === 'spacer') {
+                spacerFields.classList.remove('hidden');
+            } else if (type === 'gas') {
+                gasFields.classList.remove('hidden');
+            }
+            
+            document.getElementById('componentName').focus();
+        }
+
+        function clearComponentForm() {
+            document.getElementById('componentName').value = '';
+            document.getElementById('componentPrice').value = '';
+            document.getElementById('componentDescription').value = '';
+            
+            // Clear all specific fields
+            ['glassThickness', 'glassLightTransmittance', 'glassSHGC', 'glassUValue', 
+             'glassAcoustic', 'glassWeight', 'glassColor', 'glassColorCode',
+             'spacerMaterial', 'spacerThickness', 'spacerColor', 'spacerThermalConductivity',
+             'spacerPriceLinear', 'spacerWeightLinear', 'gasDensity', 'gasThermalConductivity'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+        // ============================================
+        // RECORD COMPONENT
+        // ============================================
+        function recordComponent() {
+            const type = document.getElementById('componentType').value;
+            const name = document.getElementById('componentName').value.trim();
+            const price = document.getElementById('componentPrice').value;
+            const description = document.getElementById('componentDescription').value.trim();
+
+            if (!type || !name) {
+                showToast('Please select a type and enter a name', 'error');
+                return;
+            }
+
+            // Check for duplicates
+            if (store.components[type].some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showToast(`${name} already exists`, 'error');
+                return;
+            }
+
+            const component = {
+                id: Date.now(),
+                name: name,
+                price: price ? parseFloat(price) : null,
+                description: description || null
+            };
+
+            // Add type-specific properties
+            if (type === 'glass_type') {
+                component.thickness = parseFloat(document.getElementById('glassThickness').value) || null;
+                component.light_transmittance = parseFloat(document.getElementById('glassLightTransmittance').value) || null;
+                component.solar_heat_gain_coefficient = parseFloat(document.getElementById('glassSHGC').value) || null;
+                component.u_value = parseFloat(document.getElementById('glassUValue').value) || null;
+                component.acoustic_performance = parseFloat(document.getElementById('glassAcoustic').value) || null;
+                component.weight_per_sqm = parseFloat(document.getElementById('glassWeight').value) || null;
+                component.color = document.getElementById('glassColor').value.trim() || null;
+                component.color_code = document.getElementById('glassColorCode').value.trim() || null;
+            } else if (type === 'spacer') {
+                component.material = document.getElementById('spacerMaterial').value.trim() || null;
+                component.thickness = parseFloat(document.getElementById('spacerThickness').value) || null;
+                component.color = document.getElementById('spacerColor').value.trim() || null;
+                component.thermal_conductivity = parseFloat(document.getElementById('spacerThermalConductivity').value) || null;
+                component.price_per_linear_meter = parseFloat(document.getElementById('spacerPriceLinear').value) || null;
+                component.weight_per_linear_meter = parseFloat(document.getElementById('spacerWeightLinear').value) || null;
+            } else if (type === 'gas') {
+                component.density = parseFloat(document.getElementById('gasDensity').value) || null;
+                component.thermal_conductivity = parseFloat(document.getElementById('gasThermalConductivity').value) || null;
+            }
+
+            store.components[type].push(component);
+            showToast(`${name} added successfully`, 'success');
+            
+            // Reset form
+            clearComponentForm();
+            document.getElementById('componentName').focus();
+        }
+        // ============================================
+        // GLAZING BUILDER
+        // ============================================
+        function selectGlazingType(type) {
+            currentGlazingType = type;
+            
+            // Update visual selection
+            document.querySelectorAll('.glazing-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.glazing-type-card').classList.add('selected');
+            
+            // Show configuration form
+            document.getElementById('glazingConfig').classList.remove('hidden');
+            
+            // Hide all config sections
+            ['singleConfig', 'doubleConfig', 'tripleConfig'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            
+            // Show relevant config section
+            document.getElementById(type + 'Config').classList.remove('hidden');
+            
+            // Clear form
+            clearGlazingForm();
+            
+            // Populate dropdowns
+            populateBuilderDropdowns();
+        }
+
+        function clearGlazingForm() {
+            document.getElementById('glazingName').value = '';
+            document.getElementById('glazingDescription').value = '';
+            
+            // Clear all dropdowns
+            ['singleGlass', 'doubleOuterGlass', 'doubleInnerGlass', 'doubleSpacer', 'doubleGas',
+             'tripleOuterGlass', 'tripleMiddleGlass', 'tripleInnerGlass', 'tripleSpacer1', 'tripleSpacer2', 'tripleGas'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            
+            // Hide results
+            document.getElementById('glazingPreview').classList.add('hidden');
+            document.getElementById('calculatedResults').classList.add('hidden');
+        }
+
+        function populateBuilderDropdowns() {
+            // Populate glass dropdowns
+            const glassOptions = store.components.glass_type.map(g => 
+                `<option value="${g.id}">${g.name} (${g.thickness}mm)</option>`
+            ).join('');
+            
+            ['singleGlass', 'doubleOuterGlass', 'doubleInnerGlass', 'tripleOuterGlass', 'tripleMiddleGlass', 'tripleInnerGlass'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<option value="">Select glass...</option>' + glassOptions;
+                }
+            });
+            
+            // Populate spacer dropdowns
+            const spacerOptions = store.components.spacer.map(s => 
+                `<option value="${s.id}">${s.name} (${s.thickness}mm)</option>`
+            ).join('');
+            
+            ['doubleSpacer', 'tripleSpacer1', 'tripleSpacer2'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<option value="">Select spacer...</option>' + spacerOptions;
+                }
+            });
+            
+            // Populate gas dropdowns
+            const gasOptions = store.components.gas.map(g => 
+                `<option value="${g.id}">${g.name}</option>`
+            ).join('');
+            
+            ['doubleGas', 'tripleGas'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<option value="">No gas filling</option>' + gasOptions;
+                }
+            });
+        }
+
+        function calculateGlazing() {
+            if (!currentGlazingType) return;
+            
+            let totalThickness = 0;
+            let totalPrice = 0;
+            let totalWeight = 0;
+            let combinedUValue = 0;
+            let previewHtml = '';
+            
+            if (currentGlazingType === 'single') {
+                const glassId = document.getElementById('singleGlass').value;
+                if (!glassId) return;
+                
+                const glass = store.components.glass_type.find(g => g.id == glassId);
+                if (glass) {
+                    totalThickness = glass.thickness || 0;
+                    totalPrice = glass.price || 0;
+                    totalWeight = glass.weight_per_sqm || 0;
+                    combinedUValue = glass.u_value || 0;
+                    
+                    previewHtml = `<div class="glass-layer">${glass.name} (${glass.thickness}mm)</div>`;
+                }
+            } else if (currentGlazingType === 'double') {
+                const outerGlassId = document.getElementById('doubleOuterGlass').value;
+                const innerGlassId = document.getElementById('doubleInnerGlass').value;
+                const spacerId = document.getElementById('doubleSpacer').value;
+                
+                if (!outerGlassId || !innerGlassId || !spacerId) return;
+                
+                const outerGlass = store.components.glass_type.find(g => g.id == outerGlassId);
+                const innerGlass = store.components.glass_type.find(g => g.id == innerGlassId);
+                const spacer = store.components.spacer.find(s => s.id == spacerId);
+                
+                if (outerGlass && innerGlass && spacer) {
+                    totalThickness = (outerGlass.thickness || 0) + (innerGlass.thickness || 0) + (spacer.thickness || 0);
+                    totalPrice = (outerGlass.price || 0) + (innerGlass.price || 0) + (spacer.price || 0);
+                    totalWeight = (outerGlass.weight_per_sqm || 0) + (innerGlass.weight_per_sqm || 0);
+                    
+                    // Simplified U-value calculation (not accurate, just for demo)
+                    combinedUValue = ((outerGlass.u_value || 0) + (innerGlass.u_value || 0)) / 2 * 0.3; // Rough approximation
+                    
+                    previewHtml = `
+                        <div class="glass-layer">${outerGlass.name} (${outerGlass.thickness}mm)</div>
+                        <div class="spacer-layer">${spacer.name} (${spacer.thickness}mm)</div>
+                        <div class="glass-layer">${innerGlass.name} (${innerGlass.thickness}mm)</div>
+                    `;
+                }
+            } else if (currentGlazingType === 'triple') {
+                const outerGlassId = document.getElementById('tripleOuterGlass').value;
+                const middleGlassId = document.getElementById('tripleMiddleGlass').value;
+                const innerGlassId = document.getElementById('tripleInnerGlass').value;
+                const spacer1Id = document.getElementById('tripleSpacer1').value;
+                const spacer2Id = document.getElementById('tripleSpacer2').value;
+                
+                if (!outerGlassId || !middleGlassId || !innerGlassId || !spacer1Id || !spacer2Id) return;
+                
+                const outerGlass = store.components.glass_type.find(g => g.id == outerGlassId);
+                const middleGlass = store.components.glass_type.find(g => g.id == middleGlassId);
+                const innerGlass = store.components.glass_type.find(g => g.id == innerGlassId);
+                const spacer1 = store.components.spacer.find(s => s.id == spacer1Id);
+                const spacer2 = store.components.spacer.find(s => s.id == spacer2Id);
+                
+                if (outerGlass && middleGlass && innerGlass && spacer1 && spacer2) {
+                    totalThickness = (outerGlass.thickness || 0) + (middleGlass.thickness || 0) + (innerGlass.thickness || 0) + (spacer1.thickness || 0) + (spacer2.thickness || 0);
+                    totalPrice = (outerGlass.price || 0) + (middleGlass.price || 0) + (innerGlass.price || 0) + (spacer1.price || 0) + (spacer2.price || 0);
+                    totalWeight = (outerGlass.weight_per_sqm || 0) + (middleGlass.weight_per_sqm || 0) + (innerGlass.weight_per_sqm || 0);
+                    
+                    // Simplified U-value calculation (not accurate, just for demo)
+                    combinedUValue = ((outerGlass.u_value || 0) + (middleGlass.u_value || 0) + (innerGlass.u_value || 0)) / 3 * 0.2; // Rough approximation
+                    
+                    previewHtml = `
+                        <div class="glass-layer">${outerGlass.name} (${outerGlass.thickness}mm)</div>
+                        <div class="spacer-layer">${spacer1.name} (${spacer1.thickness}mm)</div>
+                        <div class="glass-layer">${middleGlass.name} (${middleGlass.thickness}mm)</div>
+                        <div class="spacer-layer">${spacer2.name} (${spacer2.thickness}mm)</div>
+                        <div class="glass-layer">${innerGlass.name} (${innerGlass.thickness}mm)</div>
+                    `;
+                }
+            }
+            
+            // Update display
+            document.getElementById('calcTotalThickness').textContent = totalThickness.toFixed(1);
+            document.getElementById('calcUValue').textContent = combinedUValue.toFixed(2);
+            document.getElementById('calcPrice').textContent = '€' + totalPrice.toFixed(2);
+            document.getElementById('calcWeight').textContent = totalWeight.toFixed(1);
+            
+            document.getElementById('previewLayers').innerHTML = previewHtml;
+            document.getElementById('glazingPreview').classList.remove('hidden');
+            document.getElementById('calculatedResults').classList.remove('hidden');
+        }
+        function saveGlazingUnit() {
+            const name = document.getElementById('glazingName').value.trim();
+            const description = document.getElementById('glazingDescription').value.trim();
+            
+            if (!name || !currentGlazingType) {
+                showToast('Please enter a name and select glazing type', 'error');
+                return;
+            }
+            
+            // Check if calculations are done
+            const thickness = parseFloat(document.getElementById('calcTotalThickness').textContent);
+            if (!thickness) {
+                showToast('Please complete the glazing configuration first', 'error');
+                return;
+            }
+            
+            // Check for duplicates
+            if (store.glazing_units.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+                showToast(`${name} already exists`, 'error');
+                return;
+            }
+            
+            const glazingUnit = {
+                id: Date.now(),
+                name: name,
+                description: description || null,
+                glazing_type: currentGlazingType,
+                total_thickness: thickness,
+                u_value: parseFloat(document.getElementById('calcUValue').textContent),
+                price_per_sqm: parseFloat(document.getElementById('calcPrice').textContent.replace('€', '')),
+                weight_per_sqm: parseFloat(document.getElementById('calcWeight').textContent),
+                created_at: new Date().toISOString()
+            };
+            
+            // Store component references
+            if (currentGlazingType === 'single') {
+                glazingUnit.components = {
+                    glass: document.getElementById('singleGlass').value
+                };
+            } else if (currentGlazingType === 'double') {
+                glazingUnit.components = {
+                    outer_glass: document.getElementById('doubleOuterGlass').value,
+                    inner_glass: document.getElementById('doubleInnerGlass').value,
+                    spacer: document.getElementById('doubleSpacer').value,
+                    gas: document.getElementById('doubleGas').value || null
+                };
+            } else if (currentGlazingType === 'triple') {
+                glazingUnit.components = {
+                    outer_glass: document.getElementById('tripleOuterGlass').value,
+                    middle_glass: document.getElementById('tripleMiddleGlass').value,
+                    inner_glass: document.getElementById('tripleInnerGlass').value,
+                    spacer1: document.getElementById('tripleSpacer1').value,
+                    spacer2: document.getElementById('tripleSpacer2').value,
+                    gas: document.getElementById('tripleGas').value || null
+                };
+            }
+            
+            store.glazing_units.push(glazingUnit);
+            showToast(`${name} saved successfully`, 'success');
+            
+            // Reset form
+            clearGlazingForm();
+            currentGlazingType = null;
+            document.querySelectorAll('.glazing-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('glazingConfig').classList.add('hidden');
+        }
+
+        // ============================================
+        // VIEW TAB
+        // ============================================
+        function refreshViewTab() {
+            // Update counts
+            document.getElementById('countGlassTypes').textContent = store.components.glass_type.length;
+            document.getElementById('countSpacers').textContent = store.components.spacer.length;
+            document.getElementById('countGases').textContent = store.components.gas.length;
+            document.getElementById('countGlazingUnits').textContent = store.glazing_units.length;
+            
+            // Glass Types Table
+            const glassTable = document.getElementById('glassTypesTable');
+            const glassTableBody = document.getElementById('glassTypesTableBody');
+            const noGlassTypes = document.getElementById('noGlassTypes');
+            
+            if (store.components.glass_type.length === 0) {
+                glassTable.classList.add('hidden');
+                noGlassTypes.classList.remove('hidden');
+            } else {
+                glassTable.classList.remove('hidden');
+                noGlassTypes.classList.add('hidden');
+                glassTableBody.innerHTML = store.components.glass_type.map(g => `
+                    <tr class="border-t border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium">${g.name}</td>
+                        <td class="px-4 py-3">${g.thickness || '-'} mm</td>
+                        <td class="px-4 py-3">${g.u_value || '-'} W/m²K</td>
+                        <td class="px-4 py-3">${g.light_transmittance || '-'}%</td>
+                        <td class="px-4 py-3">€${g.price || '0.00'}</td>
+                        <td class="px-4 py-3">
+                            <button onclick="deleteComponent('glass_type', ${g.id})" class="text-red-500 hover:text-red-700">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Spacers Table
+            const spacersTable = document.getElementById('spacersTable');
+            const spacersTableBody = document.getElementById('spacersTableBody');
+            const noSpacers = document.getElementById('noSpacers');
+            
+            if (store.components.spacer.length === 0) {
+                spacersTable.classList.add('hidden');
+                noSpacers.classList.remove('hidden');
+            } else {
+                spacersTable.classList.remove('hidden');
+                noSpacers.classList.add('hidden');
+                spacersTableBody.innerHTML = store.components.spacer.map(s => `
+                    <tr class="border-t border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium">${s.name}</td>
+                        <td class="px-4 py-3">${s.material || '-'}</td>
+                        <td class="px-4 py-3">${s.thickness || '-'} mm</td>
+                        <td class="px-4 py-3">${s.thermal_conductivity || '-'} W/m·K</td>
+                        <td class="px-4 py-3">€${s.price_per_linear_meter || '0.00'}</td>
+                        <td class="px-4 py-3">
+                            <button onclick="deleteComponent('spacer', ${s.id})" class="text-red-500 hover:text-red-700">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Glazing Units Table
+            const glazingUnitsTable = document.getElementById('glazingUnitsTable');
+            const glazingUnitsTableBody = document.getElementById('glazingUnitsTableBody');
+            const noGlazingUnits = document.getElementById('noGlazingUnits');
+            
+            if (store.glazing_units.length === 0) {
+                glazingUnitsTable.classList.add('hidden');
+                noGlazingUnits.classList.remove('hidden');
+            } else {
+                glazingUnitsTable.classList.remove('hidden');
+                noGlazingUnits.classList.add('hidden');
+                glazingUnitsTableBody.innerHTML = store.glazing_units.map(u => `
+                    <tr class="border-t border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium">${u.name}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                                ${u.glazing_type.charAt(0).toUpperCase() + u.glazing_type.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">${u.total_thickness} mm</td>
+                        <td class="px-4 py-3">${u.u_value} W/m²K</td>
+                        <td class="px-4 py-3">€${u.price_per_sqm}</td>
+                        <td class="px-4 py-3">
+                            <button onclick="deleteGlazingUnit(${u.id})" class="text-red-500 hover:text-red-700">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function deleteComponent(type, id) {
+            store.components[type] = store.components[type].filter(c => c.id !== id);
+            showToast('Component deleted', 'info');
+            refreshViewTab();
+        }
+
+        function deleteGlazingUnit(id) {
+            store.glazing_units = store.glazing_units.filter(u => u.id !== id);
+            showToast('Glazing unit deleted', 'info');
+            refreshViewTab();
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // No pre-defined data - start empty
+        });
+
+        // Handle Enter key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.activeElement.closest('#componentForm')) {
+                e.preventDefault();
+                recordComponent();
+            }
+        });
+    </script>
+</body>
+</html>
