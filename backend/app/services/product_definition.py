@@ -1,5 +1,8 @@
 """Relations Service for hierarchical option dependencies.
 
+⚠️  DEPRECATION WARNING: This module is deprecated and will be removed in a future version.
+    Please use the new scope-based services in app.services.product_definition instead.
+
 This module provides the RelationsService for managing hierarchical
 option dependencies (Company → Material → Opening System → System Series → Colors)
 using the existing EAV pattern with AttributeNode and LTREE.
@@ -8,7 +11,7 @@ The service now reads definition scopes from the database instead of hard-coded 
 making the system more flexible and configurable.
 
 Public Classes:
-    RelationsService: Service for managing relation entities and dependency paths
+    ProductDefinitionService: Service for managing relation entities and dependency paths (DEPRECATED)
 """
 
 from __future__ import annotations

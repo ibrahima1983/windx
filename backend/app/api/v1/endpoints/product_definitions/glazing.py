@@ -87,25 +87,38 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
             """Create a new glazing unit from components."""
-            # TODO: Implement glazing unit creation logic
-            # This is a placeholder for Phase 2 implementation
-            return {
-                "success": True,
-                "message": f"Glazing unit '{data.name}' creation not yet implemented",
-                "glazing_unit": {
-                    "name": data.name,
-                    "glazing_type": data.glazing_type,
-                    "description": data.description,
-                    "components": {
-                        "outer_glass_id": data.outer_glass_id,
-                        "middle_glass_id": data.middle_glass_id,
-                        "inner_glass_id": data.inner_glass_id,
-                        "spacer1_id": data.spacer1_id,
-                        "spacer2_id": data.spacer2_id,
-                        "gas_id": data.gas_id,
-                    }
+            from app.services.product_definition import get_product_definition_service
+            from app.services.product_definition.types import GlazingUnitData
+            
+            try:
+                service = get_product_definition_service("glazing", db)
+                
+                # Convert request data to service data
+                unit_data = GlazingUnitData(
+                    name=data.name,
+                    glazing_type=data.glazing_type,
+                    description=data.description,
+                    outer_glass_id=data.outer_glass_id,
+                    middle_glass_id=data.middle_glass_id,
+                    inner_glass_id=data.inner_glass_id,
+                    spacer1_id=data.spacer1_id,
+                    spacer2_id=data.spacer2_id,
+                    gas_id=data.gas_id,
+                )
+                
+                glazing_unit = await service.create_glazing_unit(unit_data)
+                
+                return {
+                    "success": True,
+                    "message": f"Glazing unit '{data.name}' created successfully",
+                    "glazing_unit": glazing_unit
                 }
-            }
+            except Exception as e:
+                print(f"[ERROR] Failed to create glazing unit: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to create glazing unit. Please try again."
+                )
 
         @self.router.get("/glazing-units")
         async def get_glazing_units(
@@ -113,12 +126,12 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
             """Get all glazing units."""
-            # TODO: Implement glazing unit retrieval logic
-            # This is a placeholder for Phase 2 implementation
+            # TODO: Implement glazing unit storage and retrieval
+            # For now, return empty list since glazing units are not yet stored in database
             return {
                 "success": True,
                 "glazing_units": [],
-                "message": "Glazing unit retrieval not yet implemented"
+                "message": "Glazing units are created dynamically and not yet stored in database"
             }
 
         @self.router.post("/calculate")
@@ -127,18 +140,35 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 db: AsyncSession = Depends(get_db),
         ) -> dict[str, Any]:
             """Calculate technical properties for a glazing unit configuration."""
-            # TODO: Implement glazing calculation logic
-            # This is a placeholder for Phase 2 implementation
-            return {
-                "success": True,
-                "calculated_properties": {
-                    "total_thickness": 0.0,
-                    "u_value": 0.0,
-                    "price_per_sqm": 0.0,
-                    "weight_per_sqm": 0.0,
-                },
-                "message": "Glazing calculation not yet implemented"
-            }
+            from app.services.product_definition import get_product_definition_service
+            
+            try:
+                service = get_product_definition_service("glazing", db)
+                
+                # Convert request data to calculation format
+                unit_data = {
+                    "glazing_type": data.glazing_type,
+                    **data.components
+                }
+                
+                calculation_result = await service.calculate_glazing_properties(unit_data)
+                
+                return {
+                    "success": True,
+                    "calculated_properties": {
+                        "total_thickness": calculation_result.total_thickness,
+                        "u_value": calculation_result.u_value,
+                        "price_per_sqm": float(calculation_result.price_per_sqm),
+                        "weight_per_sqm": calculation_result.weight_per_sqm,
+                        "technical_properties": calculation_result.technical_properties,
+                    }
+                }
+            except Exception as e:
+                print(f"[ERROR] Failed to calculate glazing properties: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to calculate glazing properties. Please try again."
+                )
 
         @self.router.get("/components")
         async def get_all_components(
@@ -147,45 +177,14 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         ) -> dict[str, Any]:
             """Get all glazing components grouped by type."""
             try:
-                # Get components by type
-                glass_types = await self.get_entities_by_type_impl("glass_type", db)
-                spacers = await self.get_entities_by_type_impl("spacer", db)
-                gases = await self.get_entities_by_type_impl("gas", db)
+                from app.services.product_definition import get_product_definition_service
+                
+                service = get_product_definition_service("glazing", db)
+                components = await service.get_all_components()
                 
                 return {
                     "success": True,
-                    "components": {
-                        "glass_types": [
-                            {
-                                "id": e.id,
-                                "name": e.name,
-                                "description": e.description,
-                                "image_url": e.image_url,
-                                "metadata_": e.metadata_,
-                            }
-                            for e in glass_types[0]
-                        ],
-                        "spacers": [
-                            {
-                                "id": e.id,
-                                "name": e.name,
-                                "description": e.description,
-                                "image_url": e.image_url,
-                                "metadata_": e.metadata_,
-                            }
-                            for e in spacers[0]
-                        ],
-                        "gases": [
-                            {
-                                "id": e.id,
-                                "name": e.name,
-                                "description": e.description,
-                                "image_url": e.image_url,
-                                "metadata_": e.metadata_,
-                            }
-                            for e in gases[0]
-                        ],
-                    }
+                    "components": components
                 }
             except Exception as e:
                 print(f"[ERROR] Failed to load glazing components: {str(e)}")
@@ -199,13 +198,9 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
     # ============================================================================
 
     async def create_entity_impl(self, data: EntityCreateRequest, db: AsyncSession) -> Any:
-        """Create a glazing entity.
-        
-        For now, this delegates to the existing ProductDefinitionService
-        but stores glazing-specific metadata.
-        """
-        # Import here to avoid circular imports
-        from app.services.product_definition import ProductDefinitionService
+        """Create a glazing entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
+        from app.services.product_definition.types import EntityCreateData
         
         # Prepare metadata for glazing components
         metadata = data.metadata or {}
@@ -225,8 +220,10 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
             if data.density is not None:
                 metadata["density"] = data.density
         
-        service = ProductDefinitionService(db)
-        return await service.create_entity(
+        service = get_product_definition_service("glazing", db)
+        
+        # Convert request data to service data
+        entity_data = EntityCreateData(
             entity_type=data.entity_type,
             name=data.name,
             image_url=data.image_url,
@@ -234,50 +231,50 @@ class GlazingProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
             description=data.description,
             metadata=metadata,
         )
+        
+        return await service.create_entity(entity_data)
 
     async def update_entity_impl(self, entity_id: int, data: EntityUpdateRequest, db: AsyncSession) -> Any:
-        """Update a glazing entity using the existing service."""
-        from app.services.product_definition import ProductDefinitionService
+        """Update a glazing entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
+        from app.services.product_definition.types import EntityUpdateData
         
-        service = ProductDefinitionService(db)
-        return await service.update_entity(
-            entity_id=entity_id,
+        service = get_product_definition_service("glazing", db)
+        
+        # Convert request data to service data
+        update_data = EntityUpdateData(
             name=data.name,
             image_url=data.image_url,
             price_from=data.price_from,
             description=data.description,
             metadata=data.metadata,
         )
+        
+        return await service.update_entity(entity_id, update_data)
 
     async def delete_entity_impl(self, entity_id: int, db: AsyncSession) -> dict[str, Any]:
-        """Delete a glazing entity using the existing service."""
-        from app.services.product_definition import ProductDefinitionService
+        """Delete a glazing entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
         
-        service = ProductDefinitionService(db)
+        service = get_product_definition_service("glazing", db)
         return await service.delete_entity(entity_id)
 
     async def get_entities_by_type_impl(self, entity_type: str, db: AsyncSession) -> tuple[list[Any], dict[str, Any]]:
-        """Get glazing entities by type.
+        """Get glazing entities by type using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
         
-        For now, this uses the existing service but filters by glazing scope.
-        """
-        from app.services.product_definition import ProductDefinitionService
-        
-        service = ProductDefinitionService(db)
+        service = get_product_definition_service("glazing", db)
         
         try:
-            entities = await service.get_entities_by_type(entity_type, scope="glazing")
+            entities = await service.get_entities(entity_type)
             
-            # Get type metadata - for now return empty metadata since glazing scope may not be fully configured
-            type_metadata = {
-                "label": entity_type.replace('_', ' ').title(),
-                "icon": "pi pi-box",
-                "help_text": f"Manage {entity_type} for glazing system"
-            }
+            # Get type metadata from service
+            scope_metadata = await service.get_scope_metadata()
+            type_metadata = scope_metadata.get("entities", {}).get(entity_type, {})
             
             return entities, type_metadata
             
         except Exception as e:
             # If glazing scope is not configured, return empty results
-            print(f"[WARNING] Glazing scope not configured for {entity_type}: {str(e)}")
+            print(f"[WARNING] Glazing scope error for {entity_type}: {str(e)}")
             return [], {}

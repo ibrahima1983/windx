@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.api.types import CurrentSuperuser
-from app.services.product_definition import ProductDefinitionService
 from .base import BaseProductDefinitionEndpoints, EntityCreateRequest, EntityUpdateRequest
 
 __all__ = ["ProfileProductDefinitionEndpoints"]
@@ -74,16 +73,22 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
             """Create a new profile dependency path."""
-            service = ProductDefinitionService(db)
+            from app.services.product_definition import get_product_definition_service
+            from app.services.product_definition.types import ProfilePathData
+            
+            service = get_product_definition_service("profile", db)
 
             try:
-                path_node = await service.create_dependency_path(
+                # Convert request data to service data
+                path_data = ProfilePathData(
                     company_id=data.company_id,
                     material_id=data.material_id,
                     opening_system_id=data.opening_system_id,
                     system_series_id=data.system_series_id,
                     color_id=data.color_id,
                 )
+                
+                path_node = await service.create_dependency_path(path_data)
 
                 return {
                     "success": True,
@@ -104,7 +109,9 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
             """Delete a profile dependency path."""
-            service = ProductDefinitionService(db)
+            from app.services.product_definition import get_product_definition_service
+            
+            service = get_product_definition_service("profile", db)
             result = await service.delete_dependency_path(data.ltree_path)
 
             if not result["success"]:
@@ -120,7 +127,9 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         ) -> dict[str, Any]:
             """Get detailed path information with all related entities."""
             try:
-                service = ProductDefinitionService(db)
+                from app.services.product_definition import get_product_definition_service
+                
+                service = get_product_definition_service("profile", db)
                 path_details = await service.get_path_details(path_id)
 
                 if not path_details:
@@ -146,7 +155,9 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
                 current_user: CurrentSuperuser = None,
         ) -> dict[str, Any]:
             """Get all profile dependency paths."""
-            service = ProductDefinitionService(db)
+            from app.services.product_definition import get_product_definition_service
+            
+            service = get_product_definition_service("profile", db)
             paths = await service.get_all_paths()
 
             return {
@@ -164,16 +175,20 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
             Used for cascading dropdowns in profile entry.
             Note: This endpoint doesn't require authentication as it's used by the public profile entry.
             """
-            service = ProductDefinitionService(db)
+            from app.services.product_definition import get_product_definition_service
+            from app.services.product_definition.types import ProfileDependentOptions
+            
+            service = get_product_definition_service("profile", db)
 
-            parent_selections = {
-                "company_id": data.company_id,
-                "material_id": data.material_id,
-                "opening_system_id": data.opening_system_id,
-                "system_series_id": data.system_series_id,
-            }
+            # Convert request data to service data
+            selections = ProfileDependentOptions(
+                company_id=data.company_id,
+                material_id=data.material_id,
+                opening_system_id=data.opening_system_id,
+                system_series_id=data.system_series_id,
+            )
 
-            options = await service.get_dependent_options(parent_selections)
+            options = await service.get_dependent_options(selections)
 
             return {
                 "success": True,
@@ -187,7 +202,9 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
         ) -> dict[str, Any]:
             """Get available definition scopes with full schema details."""
             try:
-                service = ProductDefinitionService(db)
+                from app.services.product_definition import get_product_definition_service
+                
+                service = get_product_definition_service("profile", db)
                 scopes = await service.get_definition_scopes()
 
                 if not scopes:
@@ -215,9 +232,14 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
     # ============================================================================
 
     async def create_entity_impl(self, data: EntityCreateRequest, db: AsyncSession) -> Any:
-        """Create a profile entity using the existing service."""
-        service = ProductDefinitionService(db)
-        return await service.create_entity(
+        """Create a profile entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
+        from app.services.product_definition.types import EntityCreateData
+        
+        service = get_product_definition_service("profile", db)
+        
+        # Convert request data to service data
+        entity_data = EntityCreateData(
             entity_type=data.entity_type,
             name=data.name,
             image_url=data.image_url,
@@ -225,32 +247,43 @@ class ProfileProductDefinitionEndpoints(BaseProductDefinitionEndpoints):
             description=data.description,
             metadata=data.metadata,
         )
+        
+        return await service.create_entity(entity_data)
 
     async def update_entity_impl(self, entity_id: int, data: EntityUpdateRequest, db: AsyncSession) -> Any:
-        """Update a profile entity using the existing service."""
-        service = ProductDefinitionService(db)
-        return await service.update_entity(
-            entity_id=entity_id,
+        """Update a profile entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
+        from app.services.product_definition.types import EntityUpdateData
+        
+        service = get_product_definition_service("profile", db)
+        
+        # Convert request data to service data
+        update_data = EntityUpdateData(
             name=data.name,
             image_url=data.image_url,
             price_from=data.price_from,
             description=data.description,
             metadata=data.metadata,
         )
+        
+        return await service.update_entity(entity_id, update_data)
 
     async def delete_entity_impl(self, entity_id: int, db: AsyncSession) -> dict[str, Any]:
-        """Delete a profile entity using the existing service."""
-        service = ProductDefinitionService(db)
+        """Delete a profile entity using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
+        
+        service = get_product_definition_service("profile", db)
         return await service.delete_entity(entity_id)
 
     async def get_entities_by_type_impl(self, entity_type: str, db: AsyncSession) -> tuple[list[Any], dict[str, Any]]:
-        """Get profile entities by type using the existing service."""
-        service = ProductDefinitionService(db)
-        entities = await service.get_entities_by_type(entity_type, scope="profile")
+        """Get profile entities by type using the new service factory."""
+        from app.services.product_definition import get_product_definition_service
         
-        # Get type metadata from database
-        scopes = await service.get_definition_scopes()
-        resolved_scope = await service.get_scope_for_entity(entity_type)
-        type_metadata = scopes.get(resolved_scope, {}).get("entities", {}).get(entity_type, {})
+        service = get_product_definition_service("profile", db)
+        entities = await service.get_entities(entity_type)
+        
+        # Get type metadata from service
+        scope_metadata = await service.get_scope_metadata()
+        type_metadata = scope_metadata.get("entities", {}).get(entity_type, {})
         
         return entities, type_metadata

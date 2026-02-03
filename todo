@@ -35,6 +35,7 @@ This page is a **full, structured edit view**, not a dynamic form.
 
 - now we need to refactor our application to depend on setup scripts, and instead of hardcoded relations inside the backend they should be a setup script
 - ✅ COMPLETED: Updated the name "relations" in backend to be "product-definitions" as the frontend to ensure consistency
+- ✅ COMPLETED: Phase 2 - Service Layer Refactoring (scope-based architecture with factory pattern)
 - third thing we may need to refactor the full file because it violates Repository pattern
 
 ----------
@@ -47,5 +48,26 @@ but the spacer is not like that
 
 ------
 
+✅ PHASE 2 COMPLETED - Service Layer Refactoring:
+- ✅ Scope-based service architecture (profile, glazing)
+- ✅ Service factory pattern with dynamic service creation
+- ✅ Profile service with legacy delegation (backward compatibility)
+- ✅ Glazing service with full compositional implementation
+- ✅ Scope-based endpoint architecture
+- ✅ Router factory with combined and individual routers
+- ✅ Type-safe schemas across all layers
+- ✅ Cross-layer communication working
+- ✅ Comprehensive error handling
+- ✅ API documentation support
+- ✅ All tests passing (services, endpoints, integration)
+
+NEXT PHASES:
+- 🔄 Phase 3: Schema layer refactoring
+- 🔄 Phase 4: Script layer refactoring  
+- 🔄 Phase 5: Frontend refactoring
+- 🔄 Phase 6: Remove backward compatibility
+
+------
+
 low priority:
-the placeholders at profile page are not yet good enoguh, but this is good for now 
+the placeholders at profile page are not yet good enoguh, but this is good for now
