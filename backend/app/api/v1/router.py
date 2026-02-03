@@ -31,6 +31,7 @@ from app.api.v1.endpoints import (
     templates,
     users,
 )
+from app.api.v1.endpoints.product_definitions import get_product_definition_router
 
 __all__ = ["api_router"]
 
@@ -48,8 +49,16 @@ api_router.include_router(quotes.router, prefix="/quotes")
 api_router.include_router(templates.router, prefix="/templates")
 api_router.include_router(customers.router, prefix="/customers")
 api_router.include_router(orders.router, prefix="/orders")
+
+# New scope-based product definition endpoints
 api_router.include_router(
-    admin_product_definitions.router, prefix="/admin", tags=["Admin Product Definitions"]
+    get_product_definition_router(), prefix="/admin", tags=["Product Definitions (New)"]
 )
+
+# Legacy product definition endpoints (deprecated)
+api_router.include_router(
+    admin_product_definitions.router, prefix="/admin", tags=["Admin Product Definitions (Deprecated)"]
+)
+
 api_router.include_router(policy.router, prefix="/admin")
 api_router.include_router(entry.router, prefix="/admin")

@@ -1,5 +1,8 @@
 """Admin Product Definitions API endpoints.
 
+⚠️  DEPRECATION WARNING: This module is deprecated and will be removed in a future version.
+    Please use the new scope-based endpoints in app.api.v1.endpoints.product_definitions instead.
+
 This module provides API endpoints for managing hierarchical option
 dependencies (Company → Material → Opening System → System Series → Colors).
 
