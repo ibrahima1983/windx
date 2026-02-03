@@ -409,39 +409,53 @@ class GlazingProductDefinitionService(BaseProductDefinitionService):
                 glass = components[data.outer_glass_id]
                 metadata = glass.metadata_ or {}
                 
-                total_thickness = metadata.get("thickness", 6.0)
+                # Handle None values properly
+                thickness_value = metadata.get("thickness")
+                total_thickness = thickness_value if thickness_value is not None else 6.0
                 total_price = glass.price_impact_value or Decimal("35.00")
-                total_weight = metadata.get("weight_per_sqm", 15.0)
-                u_values.append(metadata.get("u_value", 5.8))
+                weight_value = metadata.get("weight_per_sqm")
+                total_weight = weight_value if weight_value is not None else 15.0
+                u_value = metadata.get("u_value")
+                u_values.append(u_value if u_value is not None else 5.8)
                 
         elif data.glazing_type == "double":
             # Double glazing: outer glass + spacer + inner glass + optional gas
             glass_thickness = 0.0
-            spacer_thickness = 0.0
+            spacer_thickness = 0.0  # Always initialize to 0
             
             # Outer glass
             if data.outer_glass_id and data.outer_glass_id in components:
                 glass = components[data.outer_glass_id]
                 metadata = glass.metadata_ or {}
-                glass_thickness += metadata.get("thickness", 6.0)
+                # Handle None values properly
+                thickness_value = metadata.get("thickness")
+                glass_thickness += thickness_value if thickness_value is not None else 6.0
                 total_price += glass.price_impact_value or Decimal("0.00")
-                total_weight += metadata.get("weight_per_sqm", 15.0)
-                u_values.append(metadata.get("u_value", 5.8))
+                weight_value = metadata.get("weight_per_sqm")
+                total_weight += weight_value if weight_value is not None else 15.0
+                u_value = metadata.get("u_value")
+                u_values.append(u_value if u_value is not None else 5.8)
             
             # Inner glass
             if data.inner_glass_id and data.inner_glass_id in components:
                 glass = components[data.inner_glass_id]
                 metadata = glass.metadata_ or {}
-                glass_thickness += metadata.get("thickness", 4.0)
+                # Handle None values properly
+                thickness_value = metadata.get("thickness")
+                glass_thickness += thickness_value if thickness_value is not None else 4.0
                 total_price += glass.price_impact_value or Decimal("0.00")
-                total_weight += metadata.get("weight_per_sqm", 10.0)
-                u_values.append(metadata.get("u_value", 5.8))
+                weight_value = metadata.get("weight_per_sqm")
+                total_weight += weight_value if weight_value is not None else 10.0
+                u_value = metadata.get("u_value")
+                u_values.append(u_value if u_value is not None else 5.8)
             
-            # Spacer
+            # Spacer - update the initialized value
             if data.spacer1_id and data.spacer1_id in components:
                 spacer = components[data.spacer1_id]
                 metadata = spacer.metadata_ or {}
-                spacer_thickness = metadata.get("thickness", 16.0)
+                # Handle None values properly - use default if value is None or missing
+                thickness_value = metadata.get("thickness")
+                spacer_thickness = thickness_value if thickness_value is not None else 16.0
                 total_price += spacer.price_impact_value or Decimal("0.00")
             
             total_thickness = glass_thickness + spacer_thickness
@@ -456,17 +470,25 @@ class GlazingProductDefinitionService(BaseProductDefinitionService):
                 if glass_id and glass_id in components:
                     glass = components[glass_id]
                     metadata = glass.metadata_ or {}
-                    glass_thickness += metadata.get("thickness", 6.0)
+                    # Handle None values properly
+                    thickness_value = metadata.get("thickness")
+                    glass_thickness += thickness_value if thickness_value is not None else 6.0
                     total_price += glass.price_impact_value or Decimal("0.00")
-                    total_weight += metadata.get("weight_per_sqm", 15.0)
-                    u_values.append(metadata.get("u_value", 5.8))
+                    # Handle None values for weight
+                    weight_value = metadata.get("weight_per_sqm")
+                    total_weight += weight_value if weight_value is not None else 15.0
+                    # Handle None values for u_value
+                    u_value = metadata.get("u_value")
+                    u_values.append(u_value if u_value is not None else 5.8)
             
             # Both spacers
             for spacer_id in [data.spacer1_id, data.spacer2_id]:
                 if spacer_id and spacer_id in components:
                     spacer = components[spacer_id]
                     metadata = spacer.metadata_ or {}
-                    spacer_thickness += metadata.get("thickness", 12.0)
+                    # Handle None values properly
+                    thickness_value = metadata.get("thickness")
+                    spacer_thickness += thickness_value if thickness_value is not None else 12.0
                     total_price += spacer.price_impact_value or Decimal("0.00")
             
             total_thickness = glass_thickness + spacer_thickness

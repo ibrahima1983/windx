@@ -45,10 +45,8 @@ class ProfileProductDefinitionService(BaseProductDefinitionService):
             Legacy service instance
         """
         if self._legacy_service is None:
-            # Import dynamically to avoid circular import
-            import importlib
-            module = importlib.import_module("app.services.product_definition")
-            ProductDefinitionService = getattr(module, "ProductDefinitionService")
+            # Import from the package which now exports the legacy service
+            from app.services.product_definition import ProductDefinitionService
             self._legacy_service = ProductDefinitionService(self.db)
         return self._legacy_service
 
