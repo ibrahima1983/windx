@@ -59,9 +59,29 @@ def get_shared_enforcer():
             # Parent -> backend/app
             # Parent.Parent -> backend
             # Config -> backend/config
+            # Try multiple locations to find the config files:
+            # 1. Relative to this file (development)
+            # 2. In the Current Working Directory (production/docker)
+            # 3. In /app/backend/config (specific for certain setups)
+            
+            # Location 1: Relative to source
             base_path = Path(__file__).resolve().parent.parent.parent
-            model_path = str(base_path / "config" / "rbac_model.conf")
-            policy_path = str(base_path / "config" / "rbac_policy.csv")
+            model_path = base_path / "config" / "rbac_model.conf"
+            policy_path = base_path / "config" / "rbac_policy.csv"
+
+            # Location 2: Root of project (CWD)
+            if not model_path.exists():
+                cwd_config = Path.cwd() / "backend" / "config"
+                if not (cwd_config / "rbac_model.conf").exists():
+                    # Check if we are already inside backend/ during execution
+                    cwd_config = Path.cwd() / "config"
+                
+                if (cwd_config / "rbac_model.conf").exists():
+                    model_path = cwd_config / "rbac_model.conf"
+                    policy_path = cwd_config / "rbac_policy.csv"
+
+            model_path = str(model_path)
+            policy_path = str(policy_path)
 
             logger.info(f"Initializing Casbin enforcer with paths: {model_path}, {policy_path}")
 
