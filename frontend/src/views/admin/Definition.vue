@@ -94,7 +94,7 @@
               <!-- Image Column -->
               <Column v-if="selectedEntityDef?.hasImage" header="Image" style="width: 6rem">
                 <template #body="{ data }">
-                  <div class="relative group cursor-pointer overflow-hidden rounded-md border border-slate-200 transition-all hover:border-blue-400">
+                  <div class="relative group cursor-pointer overflow-hidden rounded-md border border-slate-200 transition-all hover:border-blue-400" @click.stop>
                     <Image v-if="data.image_url" :src="getImagePath(data.image_url)" alt="Image" width="50" preview class="w-full h-full object-cover" />
                     <div v-else class="w-12 h-12 bg-slate-50 flex items-center justify-center text-slate-300">
                       <i class="pi pi-image text-xl"></i>
@@ -132,8 +132,8 @@
               <!-- Actions column -->
               <Column header="Actions" :exportable="false" style="min-width: 8rem" alignFrozen="right" :frozen="true">
                 <template #body="slotProps">
-                    <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editDefinition(slotProps.data)" />
-                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteDefinition(slotProps.data)" />
+                    <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click.stop="editDefinition(slotProps.data)" />
+                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click.stop="confirmDeleteDefinition(slotProps.data)" />
                 </template>
               </Column>
               
@@ -349,28 +349,35 @@ function confirmBulkDelete() {
 
 async function executeBulkDelete() {
   const service = getService()
-  let deletedCount = 0
+  const allResults = []
   let errorCount = 0
 
-  // TODO: make a real bulk delete and swap it out
   for (const def of selectedDefinitions.value) {
     try {
       const res = await service.deleteEntity(def.id)
-      if (res.success) deletedCount++
+      if (res.success) allResults.push(def.id)
       else errorCount++
     } catch (e) {
       errorCount++
     }
   }
 
-  // Reload table
-  await loadDefinitions()
-  selectedDefinitions.value = [] // clear selection
-
-  if (errorCount === 0) {
-    toast.add({ severity: 'success', summary: 'Successful', detail: `${deletedCount} definitions deleted`, life: 3000 })
-  } else {
-    toast.add({ severity: 'warn', summary: 'Partial Success', detail: `${deletedCount} deleted, ${errorCount} failed`, life: 5000 })
+  if (allResults.length > 0) {
+    const deletedIds = new Set(allResults)
+    definitionOptions.value = definitionOptions.value.filter(d => !deletedIds.has(d.id))
+    
+    // Clear editor if currently edited item was in the bulk delete
+    if (selectedDefinition.value && deletedIds.has(selectedDefinition.value.id)) {
+      cancelEdit()
+      selectedDefinition.value = null
+    }
+    
+    selectedDefinitions.value = []
+    toast.add({ severity: 'success', summary: 'Bulk Delete', detail: `Successfully deleted ${allResults.length} items`, life: 3000 })
+  }
+  
+  if (errorCount > 0) {
+    toast.add({ severity: 'warn', summary: 'Partial Success', detail: `${allResults.length} deleted, ${errorCount} failed`, life: 5000 })
   }
 }
 
@@ -383,16 +390,20 @@ function confirmDeleteDefinition(definition: any) {
         accept: async () => {
             try {
                 const service = getService()
-                const ds = await service.deleteEntity(definition.id)
-                if (ds.success) {
-                    toast.add({ severity: 'success', summary: 'Successful', detail: 'Definition Deleted', life: 3000 })
-                    // Clear selected if it was the one deleted
-                    if (selectedDefinition.value && selectedDefinition.value.id === definition.id) {
+                const response = await service.deleteEntity(definition.id)
+                if (response.success) {
+                    definitionOptions.value = definitionOptions.value.filter(d => d.id !== definition.id)
+                    selectedDefinitions.value = selectedDefinitions.value.filter(d => d.id !== definition.id)
+                    
+                    // Clear editor if deleted item was open
+                    if (selectedDefinition.value?.id === definition.id) {
+                        cancelEdit()
                         selectedDefinition.value = null
                     }
-                    await loadDefinitions()
+                    
+                    toast.add({ severity: 'success', summary: 'Deleted', detail: 'Definition removed', life: 3000 })
                 } else {
-                    toast.add({ severity: 'error', summary: 'Error', detail: ds.message, life: 3000 })
+                    toast.add({ severity: 'error', summary: 'Error', detail: response.message, life: 3000 })
                 }
             } catch(e) {
                 toast.add({ severity: 'error', summary: 'Error', detail: parseApiError(e).message, life: 3000 })

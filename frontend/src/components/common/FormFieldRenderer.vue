@@ -217,6 +217,7 @@
           :maxFileSize="5000000"
           customUpload
           @uploader="handleFileUpload"
+          @click.stop
           :auto="true"
           class="hidden"
           :disabled="disabled"
