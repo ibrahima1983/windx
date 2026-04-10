@@ -576,11 +576,13 @@ def setup_middleware(app: FastAPI, settings: Settings | None = None) -> None:
     logger.info("Setting up MINIMAL middleware for Azure - no bullshit")
 
     # ONLY CORS - nothing else that can cause redirects
-    if settings.backend_cors_origins:
-        logger.info(f"Adding CORS for origins: {settings.backend_cors_origins}")
+    if settings.backend_cors_origins or settings.backend_cors_origin_regex:
+        explicit_origins = [str(o).rstrip("/") for o in settings.backend_cors_origins]
+        logger.info(f"Adding CORS for origins: {explicit_origins}, regex: {settings.backend_cors_origin_regex}")
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=[str(origin).rstrip("/") for origin in settings.backend_cors_origins],
+            allow_origins=explicit_origins,
+            allow_origin_regex=settings.backend_cors_origin_regex,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             allow_headers=["*"],

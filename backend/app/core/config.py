@@ -925,6 +925,13 @@ class Settings(BaseSettings):
             description="List of allowed CORS origins",
         ),
     ]
+    backend_cors_origin_regex: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Regex pattern for allowed CORS origins (e.g. https://.*\\.railway\\.app)",
+        ),
+    ] = None
 
     # Currency settings
     currency: Annotated[
