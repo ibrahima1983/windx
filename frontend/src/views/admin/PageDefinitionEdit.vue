@@ -285,13 +285,18 @@ async function loadData() {
     entityData.value = response.path.entities || {}
     definitions.value = response.path.definitions || {}
     
-    // Setup path metadata (the core IDs)
-    const metadata: Record<string, any> = {}
+    // Setup path metadata (the core IDs and any other metadata)
+    const metadata: Record<string, any> = { ...response.path }
+    // Clean up IDs to ensure they are the right types (sometimes IDs come as strings depending on serialization, but here they should be numbers)
     Object.keys(definitions.value).forEach(etype => {
-      metadata[`${etype}_id`] = response.path[`${etype}_id`]
+      const idKey = `${etype}_id`
+      if (metadata[idKey] && typeof metadata[idKey] === 'string') {
+        metadata[idKey] = parseInt(metadata[idKey])
+      }
     })
+    
     pathMetadata.value = metadata
-    originalPathMetadata.value = { ...metadata }
+    originalPathMetadata.value = JSON.parse(JSON.stringify(metadata))
 
     // Load available entities for all types to support re-selection
     loadAvailableEntities()
@@ -606,14 +611,19 @@ async function saveChanges() {
       const pathPromise = (async () => {
         try {
           const profileService = getProfileService()
-          // Construct payload for path node update
-          // Path node uses the IDs in its metadata_ column
+          // Construct payload for path node update. 
+          // We use the full pathMetadata to ensure no IDs or other metadata fields are wiped.
           const updatePayload = {
             metadata: { 
-              ...(pathData.value.metadata_ || {}),
-              ...pathChanges 
+              ...pathMetadata.value 
             }
           }
+          
+          // Clean up the payload - remove top-level pathData fields that aren't metadata
+          const nonMetadataKeys = ['id', 'ltree_path', 'name', 'created_at', 'updated_at', 'entities', 'definitions', 'display_path']
+          nonMetadataKeys.forEach(key => {
+            delete (updatePayload.metadata as any)[key]
+          })
           
           logger.debug('Updating path node', { id: pathData.value.id, updatePayload })
           const response = await profileService.updateEntity(pathData.value.id, updatePayload)
