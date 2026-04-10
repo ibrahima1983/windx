@@ -45,6 +45,7 @@ classifiers = [
 dependencies = [
     "fastapi",
     "uvicorn[standard]",
+    "gunicorn",
     "sqlalchemy",
     "asyncpg",
     "pydantic",
