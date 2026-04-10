@@ -137,12 +137,16 @@ async function onTypeChange() {
 }
 
 async function saveConfiguration(data: any) {
-  logger.info('Saving configuration')
+  logger.info('Saving configuration', { data })
   isSaving.value = true
+
+  // Sanitize data before sending to backend
+  const sanitizedData = sanitizePayload(data)
+  logger.info('Sanitized payload', { sanitizedData })
 
   try {
     await configStore.createConfiguration({
-      ...data,
+      ...sanitizedData,
       manufacturing_type_id: selectedTypeId.value
     })
     
@@ -158,7 +162,25 @@ async function saveConfiguration(data: any) {
       await configStore.loadPreviews(selectedTypeId.value, props.pageType)
     }
   } catch (error: any) {
-    toast.add({ severity: 'error', summary: 'Error', detail: error.message, life: 5000 })
+    const errorDetail = error.response?.data?.detail
+    const errorMessage = typeof errorDetail === 'object' 
+      ? JSON.stringify(errorDetail, null, 2) 
+      : (error.message || 'Unknown error')
+    
+    logger.error('Failed to save configuration', { 
+      error, 
+      detail: errorDetail,
+      message: errorMessage
+    })
+    
+    toast.add({ 
+      severity: 'error', 
+      summary: 'Validation Error', 
+      detail: typeof errorDetail === 'object' && errorDetail.message 
+        ? errorDetail.message 
+        : errorMessage, 
+      life: 5000 
+    })
   } finally {
     isSaving.value = false
   }
@@ -167,6 +189,46 @@ async function saveConfiguration(data: any) {
 function clearForm() {
   formData.value = {}
   logger.debug('Form cleared')
+}
+
+/**
+ * Sanitizes the payload by converting known numeric fields to real numbers
+ * and stripping any currency/percentage symbols that might have leaked in.
+ */
+function sanitizePayload(data: Record<string, any>): Record<string, any> {
+  const sanitized = { ...data }
+  const schema = manufacturingStore.schema
+  
+  if (!schema?.sections) return sanitized
+
+  schema.sections.forEach((section: any) => {
+    section.fields.forEach((field: any) => {
+      const value = sanitized[field.name]
+      // If value is an array (multi-select), join it into a string
+      if (Array.isArray(value)) {
+        sanitized[field.name] = value.join(', ')
+        return
+      }
+
+      if (value === undefined || value === null || value === '') return
+
+      // If field is numeric, ensure it's a number
+      if (['number', 'float', 'dimension'].includes(field.data_type) || 
+          ['number', 'currency', 'percentage'].includes(field.ui_component)) {
+        
+        if (typeof value === 'string') {
+          // Strip everything except digits, dots, and minus signs
+          const cleanValue = value.replace(/[^\d.-]/g, '')
+          const num = parseFloat(cleanValue)
+          sanitized[field.name] = isNaN(num) ? 0 : num
+        } else if (typeof value !== 'number') {
+          sanitized[field.name] = Number(value) || 0
+        }
+      }
+    })
+  })
+
+  return sanitized
 }
 
 function onRowEditSave(event: any) {

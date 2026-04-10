@@ -25,7 +25,7 @@
             v-if="hasPendingChanges"
             label="Save All Changes"
             icon="pi pi-check"
-            @click="$emit('commit')"
+            @click.stop="$emit('commit')"
             :loading="loading"
             severity="success"
             size="small"
@@ -87,7 +87,7 @@
                 <img 
                   :src="getImagePath(String(getFieldValue(data, String(field))))" 
                   class="w-12 h-12 object-cover rounded border cursor-pointer"
-                  @click="openImagePreview(String(getFieldValue(data, String(field))))"
+                  @click.stop="openImagePreview(String(getFieldValue(data, String(field))))"
                   @error="(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/48x48?text=Invalid'"
                   :title="String(getFieldValue(data, String(field)))"
                 />
@@ -99,37 +99,82 @@
               />
             </div>
           </template>
-          <template #editor="{ data, field }">
-            <!-- Dynamic editor based on field type -->
-            <div v-if="isImageField(String(field))" class="image-editor">
-              <div v-if="data[field]" class="current-image mb-2">
-                <img 
-                  :src="getImagePath(data[field])" 
-                  class="w-16 h-16 object-cover rounded border"
-                  @error="(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/64x64?text=Invalid'"
+            <template #editor="{ data, field }">
+              <div v-if="isImageField(String(field))" class="image-editor">
+                <div v-if="data[field]" class="current-image mb-2">
+                  <img 
+                    :src="getImagePath(data[field])" 
+                    class="w-16 h-16 object-cover rounded border"
+                    @error="(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/64x64?text=Invalid'"
+                  />
+                </div>
+                <FileUpload
+                  mode="basic"
+                  name="file"
+                  accept="image/*"
+                  :maxFileSize="5000000"
+                  customUpload
+                  @uploader="(event) => handleImageUpload(event, data, String(field))"
+                  :auto="true"
+                  :chooseLabel="data[field] ? 'Change' : 'Upload'"
+                  class="p-button-sm"
+                  size="small"
                 />
               </div>
-              <FileUpload
-                mode="basic"
-                name="file"
-                accept="image/*"
-                :maxFileSize="5000000"
-                customUpload
-                @uploader="(event) => handleImageUpload(event, data, String(field))"
-                :auto="true"
-                :chooseLabel="data[field] ? 'Change' : 'Upload'"
-                class="p-button-sm"
+              <SmartSelect
+                v-else-if="getFieldDef(String(field))?.ui_component === 'dropdown' || getFieldDef(String(field))?.ui_component === 'select'"
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
+                size="small"
+                :options="getFieldDef(String(field))?.options_data || getFieldDef(String(field))?.options || []"
+                optionLabel="label"
+                optionValue="value"
+              />
+              <SmartMultiSelect
+                v-else-if="['multi-select', 'multiselect'].includes(getFieldDef(String(field))?.ui_component)"
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
+                size="small"
+                :options="getFieldDef(String(field))?.options_data || getFieldDef(String(field))?.options || []"
+                optionLabel="label"
+                optionValue="value"
+              />
+              <InputNumber
+                v-else-if="getFieldDef(String(field))?.ui_component === 'currency'"
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
+                size="small"
+                mode="currency"
+                currency="USD"
+                locale="en-US"
+              />
+              <InputNumber
+                v-else-if="getFieldDef(String(field))?.ui_component === 'percentage'"
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
+                size="small"
+                suffix="%"
+              />
+              <InputNumber
+                v-else-if="['number', 'float', 'dimension'].includes(getFieldDef(String(field))?.data_type || '') || getFieldDef(String(field))?.ui_component === 'number'"
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
+                size="small"
+                :maxFractionDigits="getFieldDef(String(field))?.precision || 2"
+              />
+              <InputText 
+                v-else
+                v-model="data[field]" 
+                class="w-full" 
+                @update:modelValue="(value) => onCellEdit(data, String(field), value)"
                 size="small"
               />
-            </div>
-            <InputText 
-              v-else
-              v-model="data[field]" 
-              class="w-full" 
-              @update:modelValue="(value) => onCellEdit(data, String(field), value)"
-              size="small"
-            />
-          </template>
+            </template>
         </Column>
 
         <Column :rowEditor="true" style="width:10%; min-width:8rem" header="Edit" />
@@ -138,7 +183,7 @@
           <template #body="slotProps">
             <Button 
               icon="pi pi-trash" 
-              @click="confirmSingleDelete(slotProps.data)"
+              @click.stop="confirmSingleDelete(slotProps.data)"
               severity="danger"
               text
               rounded
@@ -319,10 +364,13 @@ import Card from 'primevue/card'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Badge from 'primevue/badge'
 import FileUpload from 'primevue/fileupload'
+import SmartSelect from '@/components/common/SmartSelect.vue'
+import SmartMultiSelect from '@/components/common/SmartMultiSelect.vue'
 import SearchBar from '@/components/common/SearchBar.vue'
 import { useAutoCalculation } from '@/composables/useAutoCalculation'
 import { useTableSearch } from '@/composables/useTableSearch'
@@ -634,6 +682,16 @@ async function handleImageUpload(event: any, rowData: any, field: string) {
 function openImagePreview(imageUrl: string) {
   previewImageUrl.value = getImagePath(imageUrl)
   showImagePreview.value = true
+}
+
+// Helper to find field definition in schema
+function getFieldDef(name: string) {
+  if (!props.schema?.sections) return null
+  for (const section of props.schema.sections) {
+    const field = section.fields.find((f: any) => f.name === name)
+    if (field) return field
+  }
+  return null
 }
 </script>
 

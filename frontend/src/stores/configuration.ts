@@ -85,10 +85,10 @@ export const useConfigurationStore = defineStore('configuration', () => {
     function updateCell(rowId: number, field: string, value: any) {
         logger.debug('Updating cell locally', { rowId, field, value })
 
-        // Update local state immediately
-        const row = configurations.value.find(r => r.id === rowId)
-        if (row) {
-            (row as any)[field] = value
+        // Update local state with reactivity-guaranteed replacement
+        const index = configurations.value.findIndex(r => r.id === rowId)
+        if (index !== -1) {
+            configurations.value[index] = { ...configurations.value[index], [field]: value } as Configuration
         }
 
         // Track pending change

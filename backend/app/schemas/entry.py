@@ -26,7 +26,7 @@ from decimal import Decimal
 from typing import Annotated, Any
 from typing_extensions import TypedDict, NotRequired
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator
 
 from app.schemas.attribute_node import CalculatedFieldMetadata
 
@@ -539,13 +539,21 @@ class ProfileEntryData(BaseModel):
         ),
     ] = None
     colours: Annotated[
-        str | None,
+        list[str] | str | None,
         Field(
             default=None,
             description="Available colors",
-            examples=["White", "Black", "Brown"],
+            examples=["White", ["Black", "Brown"]],
         ),
     ] = None
+
+    @field_validator("colours", mode="before")
+    @classmethod
+    def normalize_multi_select(cls, v: Any) -> Any:
+        """Normalize multi-select fields (like colours) from array to comma-separated string."""
+        if isinstance(v, list):
+            return ", ".join(str(item) for item in v if item)
+        return v
     price_per_meter: Annotated[
         Decimal | None,
         Field(

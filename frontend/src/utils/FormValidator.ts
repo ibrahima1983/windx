@@ -47,20 +47,33 @@ export class FormValidator {
             return errors
         }
 
+        // Data type validation
+        if (['number', 'float', 'dimension'].includes(field.data_type || '')) {
+            if (value !== undefined && value !== null && value !== '') {
+                const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : Number(value)
+                if (isNaN(numValue)) {
+                    errors[field.name] = `${field.label} must be a valid number`
+                    return errors
+                }
+            }
+        }
+
         // Validation rules
         if (field.validation_rules) {
             const rules = field.validation_rules as any
 
             // Range validation for numbers
-            if ((rules.min !== undefined || rules.max !== undefined) && !isNaN(value)) {
-                const numValue = parseFloat(value)
-                if (rules.min !== undefined && numValue < rules.min) {
-                    errors[field.name] = `${field.label} must be at least ${rules.min}`
-                    return errors
-                }
-                if (rules.max !== undefined && numValue > rules.max) {
-                    errors[field.name] = `${field.label} must be at most ${rules.max}`
-                    return errors
+            if (rules.min !== undefined || rules.max !== undefined) {
+                const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : Number(value)
+                if (!isNaN(numValue)) {
+                    if (rules.min !== undefined && numValue < rules.min) {
+                        errors[field.name] = `${field.label} must be at least ${rules.min}`
+                        return errors
+                    }
+                    if (rules.max !== undefined && numValue > rules.max) {
+                        errors[field.name] = `${field.label} must be at most ${rules.max}`
+                        return errors
+                    }
                 }
             }
 

@@ -11,43 +11,66 @@
       ></i>
     </label>
 
-    <!-- Text Input -->
-    <InputText
-      v-if="['text', 'string'].includes(field.type) || field.ui_component === 'text'"
+    <!-- Specific UI Component Overrides -->
+    
+    <!-- Select / Dropdown -->
+    <SmartSelect
+      v-if="field.ui_component === 'dropdown' || field.ui_component === 'select'"
       :id="field.name"
       :modelValue="modelValue"
       @update:modelValue="(val) => emit('update:modelValue', val)"
-      :placeholder="placeholder"
+      :options="resolvedOptions"
+      :optionLabel="optionLabel"
+      :optionValue="optionValue"
+      :placeholder="placeholder || 'Select ' + field.label"
       class="w-full"
       :disabled="disabled"
+      @change="emit('change', field.name)"
       @blur="emit('blur', field.name)"
     />
 
-    <!-- Textarea -->
-    <Textarea
-      v-else-if="field.type === 'textarea' || field.ui_component === 'textarea'"
+    <!-- MultiSelect -->
+    <SmartMultiSelect
+      v-else-if="['multi-select', 'multiselect'].includes(field.ui_component)"
       :id="field.name"
       :modelValue="modelValue"
       @update:modelValue="(val) => emit('update:modelValue', val)"
-      :rows="3"
-      :placeholder="placeholder"
+      :options="resolvedOptions"
+      :optionLabel="optionLabel"
+      :optionValue="optionValue"
+      :placeholder="placeholder || 'Select items...'"
       class="w-full"
       :disabled="disabled"
-      @blur="emit('blur', field.name)"
+      @change="emit('change', field.name)"
     />
 
-    <!-- Number Input -->
-    <InputNumber
-      v-else-if="field.type === 'number' || field.ui_component === 'number'"
+    <!-- Color MultiSelect -->
+    <ColorChipMultiSelect
+      v-else-if="field.ui_component === 'color-multi-select'"
       :id="field.name"
       :modelValue="modelValue"
       @update:modelValue="(val) => emit('update:modelValue', val)"
-      :placeholder="placeholder || '0'"
+      :options="resolvedOptions"
+      :optionLabel="optionLabel"
+      :optionValue="optionValue"
+      :placeholder="placeholder || 'Select colors...'"
       class="w-full"
-      :maxFractionDigits="field.precision || 2"
       :disabled="disabled"
-      @blur="emit('blur', field.name)"
+      @change="emit('change', field.name)"
     />
+
+    <!-- Checkbox / Boolean -->
+    <div v-else-if="field.data_type === 'boolean' || field.ui_component === 'checkbox'" class="flex items-center gap-2 h-[42px]">
+      <Checkbox
+        :id="field.name"
+        :modelValue="modelValue"
+        @update:modelValue="(val) => emit('update:modelValue', val)"
+        :binary="true"
+        :disabled="disabled"
+        @change="emit('change', field.name)"
+      />
+      <label :for="field.name" class="cursor-pointer text-slate-600">{{ field.label || 'Enabled' }}</label>
+    </div>
 
     <!-- Currency Input -->
     <InputNumber
@@ -79,86 +102,20 @@
       @blur="emit('blur', field.name)"
     />
 
-    <!-- Checkbox / Boolean -->
-    <div v-else-if="field.type === 'boolean' || field.ui_component === 'checkbox'" class="flex items-center gap-2 h-[42px]">
-      <Checkbox
-        :id="field.name"
-        :modelValue="modelValue"
-        @update:modelValue="(val) => emit('update:modelValue', val)"
-        :binary="true"
-        :disabled="disabled"
-        @change="emit('change', field.name)"
-      />
-      <label :for="field.name" class="cursor-pointer text-slate-600">{{ field.label || 'Enabled' }}</label>
-    </div>
-
-    <!-- Select / Dropdown -->
-    <SmartSelect
-      v-else-if="field.ui_component === 'dropdown' || field.ui_component === 'select'"
+    <!-- Number Input -->
+    <InputNumber
+      v-else-if="field.data_type === 'number' || field.data_type === 'float' || field.ui_component === 'number'"
       :id="field.name"
       :modelValue="modelValue"
       @update:modelValue="(val) => emit('update:modelValue', val)"
-      :options="resolvedOptions"
-      :optionLabel="optionLabel"
-      :optionValue="optionValue"
-      :placeholder="placeholder || 'Select...'"
+      :placeholder="placeholder || '0'"
       class="w-full"
-      showClear
+      :maxFractionDigits="field.precision || 2"
       :disabled="disabled"
-      @change="emit('change', field.name)"
-      @auto-selected="() => emit('change', field.name)"
+      @blur="emit('blur', field.name)"
     />
 
-    <!-- MultiSelect -->
-    <SmartMultiSelect
-      v-else-if="['multi-select', 'multiselect'].includes(field.ui_component)"
-      :id="field.name"
-      :modelValue="modelValue"
-      @update:modelValue="(val) => emit('update:modelValue', val)"
-      :options="resolvedOptions"
-      :optionLabel="optionLabel"
-      :optionValue="optionValue"
-      :placeholder="placeholder || 'Select items...'"
-      class="w-full"
-      :disabled="disabled"
-      @change="emit('change', field.name)"
-      @auto-selected="() => emit('change', field.name)"
-    />
-
-    <!-- Color MultiSelect (Special case) -->
-    <ColorChipMultiSelect
-      v-else-if="field.ui_component === 'color-multi-select'"
-      :id="field.name"
-      :modelValue="modelValue"
-      @update:modelValue="(val) => emit('update:modelValue', val)"
-      :options="resolvedOptions"
-      :optionLabel="optionLabel"
-      :optionValue="optionValue"
-      :placeholder="placeholder || 'Select colors...'"
-      class="w-full"
-      :disabled="disabled"
-      @change="emit('change', field.name)"
-    />
-
-    <!-- Radio -->
-    <div v-else-if="field.ui_component === 'radio'" class="flex flex-wrap gap-4 mt-1">
-      <div v-for="option in resolvedOptions" :key="getErrorKey(option)" class="flex items-center">
-        <RadioButton 
-          :inputId="`${field.name}_${getErrorKey(option)}`"
-          :modelValue="modelValue" 
-          @update:modelValue="(val) => emit('update:modelValue', val)"
-          :name="field.name" 
-          :value="optionValue ? option[optionValue] : option" 
-          :disabled="disabled"
-          @change="emit('change', field.name)"
-        />
-        <label :for="`${field.name}_${getErrorKey(option)}`" class="ml-2 cursor-pointer">
-          {{ optionLabel ? option[optionLabel] : option }}
-        </label>
-      </div>
-    </div>
-
-    <!-- Slider -->
+    <!-- Range Slider -->
     <div v-else-if="field.ui_component === 'slider'" class="px-2 py-4">
       <Slider 
         :modelValue="modelValue || 0" 
@@ -173,6 +130,24 @@
         <span>{{ field.validation_rules?.min || 0 }}</span>
         <span class="font-bold text-primary">{{ modelValue || 0 }}</span>
         <span>{{ field.validation_rules?.max || 100 }}</span>
+      </div>
+    </div>
+
+    <!-- Radio Group -->
+    <div v-else-if="field.ui_component === 'radio'" class="flex flex-wrap gap-4 mt-1">
+      <div v-for="option in resolvedOptions" :key="getErrorKey(option)" class="flex items-center">
+        <RadioButton 
+          :inputId="`${field.name}_${getErrorKey(option)}`"
+          :modelValue="modelValue" 
+          @update:modelValue="(val) => emit('update:modelValue', val)"
+          :name="field.name" 
+          :value="optionValue ? option[optionValue] : option" 
+          :disabled="disabled"
+          @change="emit('change', field.name)"
+        />
+        <label :for="`${field.name}_${getErrorKey(option)}`" class="ml-2 cursor-pointer text-slate-600">
+          {{ optionLabel ? option[optionLabel] : option }}
+        </label>
       </div>
     </div>
 
@@ -226,15 +201,30 @@
       <ProgressBar v-if="isUploading" mode="indeterminate" style="height: 4px" class="w-64 rounded-full mt-2" />
     </div>
 
-    <!-- Fallback -->
+    <!-- Textarea Fallback for large text -->
+    <Textarea
+      v-else-if="field.data_type === 'textarea' || field.ui_component === 'textarea'"
+      :id="field.name"
+      :modelValue="modelValue"
+      @update:modelValue="(val) => emit('update:modelValue', val)"
+      :rows="3"
+      :placeholder="placeholder"
+      class="w-full"
+      :disabled="disabled"
+      @blur="emit('blur', field.name)"
+    />
+
+    <!-- Standard Text Input / Fallback for any other string field -->
     <InputText
       v-else
       :id="field.name"
       :modelValue="modelValue"
       @update:modelValue="(val) => emit('update:modelValue', val)"
-      :placeholder="`Type unknown (${field.ui_component || field.type})`"
-      class="w-full border-dashed border-slate-300"
+      :placeholder="placeholder"
+      class="w-full"
       :disabled="disabled"
+      @blur="emit('blur', field.name)"
+      :class="{ 'border-dashed border-slate-300': !field.ui_component }"
     />
 
     <!-- Error Message -->

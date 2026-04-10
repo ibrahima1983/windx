@@ -1655,7 +1655,10 @@ class EntryService(BaseService):
                 selection.json_value = value
                 print(f"🦆 [UPDATE DEBUG] Set json_value: {selection.json_value}")
             else:
-                selection.string_value = str(value)
+                if isinstance(value, list):
+                    selection.string_value = ", ".join(str(item) for item in v if item) if (v := value) else ""
+                else:
+                    selection.string_value = str(value)
                 print(f"🦆 [UPDATE DEBUG] Set string_value: {selection.string_value}")
 
         config.updated_at = datetime.now()
